@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -44,7 +43,7 @@ func New(cfg Config) (*Context, error) {
 	siteroot := cfg.Siteroot
 	ctx := Context{
 		cfg:       cfg,
-		msg:       logger.NewLogger("pkr", logger.INFO, bufio.NewWriter(os.Stdout)),
+		msg:       logger.NewLogger("pkr", logger.INFO, os.Stdout),
 		siteroot:  siteroot,
 		repourl:   cfg.RepoUrl,
 		rpmprefix: cfg.RpmPrefix(),

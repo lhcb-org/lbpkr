@@ -57,6 +57,9 @@ func New(cfg Config) (*Context, error) {
 		libdir:    filepath.Join(siteroot, "lib"),
 		initfile:  filepath.Join(siteroot, "etc", "repoinit"),
 	}
+	if cfg.Debug {
+		ctx.msg.SetLevel(logger.DEBUG)
+	}
 	for _, dir := range []string{
 		ctx.tmpdir,
 		ctx.bindir,

@@ -304,20 +304,37 @@ func (ctx *Context) install(project, version, cmtconfig string) error {
 	return err
 }
 
-// installRPM installs a RPM by name
-func (ctx *Context) installRPM(name, version, release string, forceInstall, update bool) error {
+// InstallRPM installs a RPM by name
+func (ctx *Context) InstallRPM(name, version, release string, forceInstall, update bool) error {
 	var err error
 	pkg, err := ctx.yum.FindLatestMatchingName(name, version, release)
 	if err != nil {
 		return err
 	}
-	err = ctx.installPackage(pkg, forceInstall, update)
+	err = ctx.InstallPackage(pkg, forceInstall, update)
 	return err
 }
 
-// installPackage installs a specific RPM, checking if not already installed
-func (ctx *Context) installPackage(pkg string, forceInstall, update bool) error {
+// InstallPackage installs a specific RPM, checking if not already installed
+func (ctx *Context) InstallPackage(pkg string, forceInstall, update bool) error {
 	var err error
+	return err
+}
+
+// ListPackages lists all packages satisfying pattern (a regexp)
+func (ctx *Context) ListPackages(pattern string) error {
+	var err error
+	total := 0
+	pkgs, err := ctx.yum.ListPackages(pattern)
+	if err != nil {
+		return err
+	}
+
+	for _, pkg := range pkgs {
+		fmt.Printf("%s\n", pkg.Name)
+		total += 1
+	}
+	ctx.msg.Infof("Total matching: %d\n", total)
 	return err
 }
 

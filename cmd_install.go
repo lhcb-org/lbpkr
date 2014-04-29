@@ -83,6 +83,6 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 
 	forceInstall := false
 	update := false
-	err = ctx.installRPM(rpmname, version, release, forceInstall, update)
+	err = ctx.InstallRPM(rpmname, version, release, forceInstall, update)
 	return err
 }

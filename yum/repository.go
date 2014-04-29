@@ -12,13 +12,13 @@ type Backend interface {
 	LoadDB() error
 
 	// FindLatestMatchingName locats a package by name, returns the latest available version.
-	FindLatestMatchingName(name, version, release string) (string, error)
+	FindLatestMatchingName(name, version, release string) (*Package, error)
 
 	// FindLatestMatchingRequire locates a package providing a given functionality.
-	FindLatestMatchingRequire(requirement string) (string, error)
+	FindLatestMatchingRequire(requirement string) (*Package, error)
 
 	// GetPackages returns all the packages known by a YUM repository
-	GetPackages() []string
+	GetPackages() []*Package
 }
 
 // Repository represents a YUM repository with all associated metadata.

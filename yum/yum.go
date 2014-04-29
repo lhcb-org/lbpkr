@@ -24,9 +24,9 @@ func (yum *Client) FindLatestMatchingName(name, version, release string) (string
 }
 
 // ListPackages lists all packages satisfying pattern (a regexp)
-func (yum *Client) ListPackages(pattern string) ([]Package, error) {
+func (yum *Client) ListPackages(pattern string) ([]*Package, error) {
 	var err error
-	pkgs := make([]Package, 0)
+	pkgs := make([]*Package, 0)
 
 	return pkgs, err
 }

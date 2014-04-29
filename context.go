@@ -331,7 +331,7 @@ func (ctx *Context) ListPackages(pattern string) error {
 	}
 
 	for _, pkg := range pkgs {
-		fmt.Printf("%s\n", pkg.Name)
+		fmt.Printf("%s\n", pkg.RpmName())
 		total += 1
 	}
 	ctx.msg.Infof("Total matching: %d\n", total)

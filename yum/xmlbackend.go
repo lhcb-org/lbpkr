@@ -1,6 +1,9 @@
 package yum
 
 import (
+	"io"
+	"net/http"
+	"os"
 	"path/filepath"
 )
 
@@ -26,9 +29,26 @@ func NewRepositoryXMLBackend(repo *Repository) *RepositoryXMLBackend {
 	}
 }
 
+// YumDataType returns the ID for the data type as used in the repomd.xml file
+func (repo *RepositoryXMLBackend) YumDataType() string {
+	return "primary"
+}
+
 // Download the DB from server
 func (repo *RepositoryXMLBackend) GetLatestDB(url string) error {
 	var err error
+	out, err := os.Create(repo.Primary)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	_, err = io.Copy(out, resp.Body)
 	return err
 }
 
@@ -40,6 +60,7 @@ func (repo *RepositoryXMLBackend) HasDB() bool {
 // Load loads the DB
 func (repo *RepositoryXMLBackend) LoadDB() error {
 	var err error
+
 	return err
 }
 

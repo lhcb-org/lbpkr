@@ -2,6 +2,10 @@ package yum
 
 // Backend queries a YUM DB repository
 type Backend interface {
+
+	// YumDataType returns the ID for the data type as used in the repomd.xml file
+	YumDataType() string
+
 	// Download the DB from server
 	GetLatestDB(url string) error
 

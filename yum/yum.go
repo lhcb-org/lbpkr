@@ -1,12 +1,28 @@
 package yum
 
+import "path/filepath"
+
 type Client struct {
-	siteroot string
+	siteroot    string
+	etcdir      string
+	lbyumcache  string
+	yumconf     string
+	yumreposdir string
+	configured  bool
+	repos       map[string]*Repository
+	repourls    map[string]string
 }
 
 func New(siteroot string) *Client {
 	return &Client{
-		siteroot: siteroot,
+		siteroot:    siteroot,
+		etcdir:      filepath.Join(siteroot, "etc"),
+		lbyumcache:  filepath.Join(siteroot, "var", "cache", "lbyum"),
+		yumconf:     filepath.Join(siteroot, "etc", "yum.conf"),
+		yumreposdir: filepath.Join(siteroot, "etc", "yum.repos.d"),
+		configured:  false,
+		repos:       make(map[string]*Repository),
+		repourls:    make(map[string]string),
 	}
 }
 

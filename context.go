@@ -41,6 +41,10 @@ type Context struct {
 func New(cfg Config, dbg bool) (*Context, error) {
 	var err error
 	siteroot := cfg.Siteroot()
+	if siteroot == "" {
+		siteroot = "/opt/cern-sw"
+	}
+
 	ctx := Context{
 		cfg:       cfg,
 		msg:       logger.NewLogger("pkr", logger.INFO, os.Stdout),

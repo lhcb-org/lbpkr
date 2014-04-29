@@ -30,7 +30,7 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 
 	cfg := NewConfig(cfgtype)
-	ctx, err := New(cfg, dbg)
+	ctx, err := New(cfg, debug)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/gonuts/commander"
 	"github.com/gonuts/flag"
@@ -63,6 +64,22 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 		)
 	}
 
+	re := regexp.MustCompile(`(.*)-([\d\.]+)-(\d)$`).FindAllStringSubmatch(rpmname, -1)
+	if len(re) == 1 {
+		m := re[0]
+		switch len(m) {
+		case 2:
+			rpmname = m[1]
+		case 3:
+			rpmname = m[1]
+			version = m[2]
+		case 4:
+			rpmname = m[1]
+			version = m[2]
+			release = m[3]
+		}
+	}
+	ctx.msg.Infof("installing RPM %s %s %s\n", rpmname, version, release)
 	err = ctx.install(rpmname, version, release)
 	return err
 }

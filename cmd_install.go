@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gonuts/commander"
 	"github.com/gonuts/flag"
 )
@@ -36,5 +38,27 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	}
 
 	ctx.msg.Infof("hello: %v\n", cfg.Prefix())
+
+	rpmname := ""
+	version := ""
+	release := ""
+	switch len(args) {
+	case 1:
+		rpmname = args[0]
+	case 2:
+		rpmname = args[0]
+		version = args[1]
+	case 3:
+		rpmname = args[0]
+		version = args[1]
+		release = args[2]
+	default:
+		return fmt.Errorf("pkr: invalid number of arguments. expected n=1|2|3. got=%d (%v)",
+			len(args),
+			args,
+		)
+	}
+
+	err = ctx.install(rpmname, version, release)
 	return err
 }

@@ -25,13 +25,16 @@ ex:
 
 func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	var err error
-	cfg := NewConfig()
-	cfg.Type = cmd.Flag.Lookup("type").Value.Get().(string)
-	cfg.Debug = cmd.Flag.Lookup("v").Value.Get().(bool)
-	ctx, err := New(cfg)
+
+	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
+	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
+
+	cfg := NewConfig(cfgtype)
+	ctx, err := New(cfg, dbg)
 	if err != nil {
 		return err
 	}
-	ctx.msg.Infof("hello\n")
+
+	ctx.msg.Infof("hello: %v\n", cfg.Prefix())
 	return err
 }

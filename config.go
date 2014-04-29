@@ -1,34 +1,63 @@
 package main
 
-import "os"
-
 const Version = "20140428"
 
-// Config holds the options and defaults for the installer
-type Config struct {
-	Siteroot     string // where to install software, binaries, ...
-	RepoUrl      string
-	Debug        bool
-	NoAutoUpdate bool
-	RpmUpdate    bool   // install/update switch
-	Type         string // atlas|lhcb installation type
+type Config interface {
+	Siteroot() string
+	RepoUrl() string
+	Prefix() string
+	Debug() bool
+	NoAutoUpdate() bool
+	RpmUpdate() bool
+
+	InitYum(*Context) error
+}
+
+// ConfigBase holds the options and defaults for the installer
+type ConfigBase struct {
+	siteroot     string // where to install software, binaries, ...
+	repourl      string
+	prefix       string // prefix path for RPMs
+	debug        bool
+	noautoupdate bool
+	rpmupdate    bool // install/update switch
+}
+
+func (cfg *ConfigBase) Siteroot() string {
+	return cfg.siteroot
+}
+
+func (cfg *ConfigBase) RepoUrl() string {
+	return cfg.repourl
+}
+
+func (cfg *ConfigBase) Prefix() string {
+	return cfg.prefix
+}
+
+func (cfg *ConfigBase) Debug() bool {
+	return cfg.debug
+}
+
+func (cfg *ConfigBase) NoAutoUpdate() bool {
+	return cfg.noautoupdate
+}
+
+func (cfg *ConfigBase) RpmUpdate() bool {
+	return cfg.rpmupdate
 }
 
 // NewConfig returns a default configuration value.
-func NewConfig() Config {
-	return Config{
-		Siteroot: os.Getenv("MYSITEROOT"),
-		Type:     "lhcb",
+func NewConfig(cfgtype string) Config {
+	switch cfgtype {
+	case "atlas":
+		return AtlasConfig
+	case "lhcb":
+		return LHCbConfig
+	default:
+		panic("pkr: unknown config [" + cfgtype + "]")
 	}
-}
-
-func (cfg *Config) RpmPrefix() string {
-	return ""
-}
-
-func (cfg *Config) initYum() error {
-	var err error
-	return err
+	panic("unreachable")
 }
 
 // EOF

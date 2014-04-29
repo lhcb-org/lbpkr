@@ -38,15 +38,15 @@ type Context struct {
 	extfix    map[string]FixFct
 }
 
-func New(cfg Config) (*Context, error) {
+func New(cfg Config, dbg bool) (*Context, error) {
 	var err error
-	siteroot := cfg.Siteroot
+	siteroot := cfg.Siteroot()
 	ctx := Context{
 		cfg:       cfg,
 		msg:       logger.NewLogger("pkr", logger.INFO, os.Stdout),
 		siteroot:  siteroot,
-		repourl:   cfg.RepoUrl,
-		rpmprefix: cfg.RpmPrefix(),
+		repourl:   cfg.RepoUrl(),
+		rpmprefix: cfg.Prefix(),
 		dbpath:    filepath.Join(siteroot, "var", "lib", "rpm"),
 		etcdir:    filepath.Join(siteroot, "etc"),
 		yumconf:   filepath.Join(siteroot, "etc", "yum.conf"),
@@ -56,7 +56,7 @@ func New(cfg Config) (*Context, error) {
 		libdir:    filepath.Join(siteroot, "lib"),
 		initfile:  filepath.Join(siteroot, "etc", "repoinit"),
 	}
-	if cfg.Debug {
+	if dbg {
 		ctx.msg.SetLevel(logger.DEBUG)
 	}
 	for _, dir := range []string{
@@ -168,7 +168,7 @@ func (ctx *Context) initYum() error {
 			return err
 		}
 	}
-	err = ctx.cfg.initYum()
+	err = ctx.cfg.InitYum(ctx)
 	return err
 }
 
@@ -266,6 +266,23 @@ installroot=%s
 reposdir=/etc/yum.repos.d
 `
 	_, err = fmt.Fprintf(w, tmpl, ctx.siteroot)
+	return err
+}
+
+func (ctx *Context) writeYumRepo(w io.Writer, data map[string]string) error {
+	var err error
+	const tmpl = `
+[%s]
+#REPOVERSION 0001
+name=%s
+baseurl=%s
+enabled=1
+`
+	_, err = fmt.Fprintf(w, tmpl,
+		data["name"],
+		data["name"],
+		data["url"],
+	)
 	return err
 }
 

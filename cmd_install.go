@@ -43,6 +43,10 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	version := ""
 	release := ""
 	switch len(args) {
+	case 0:
+		ctx.msg.Errorf("please specify at least the name of the RPM to install\n")
+		cmd.Usage()
+		return fmt.Errorf("pkr: invalid number of arguments (got=%d)", len(args))
 	case 1:
 		rpmname = args[0]
 	case 2:

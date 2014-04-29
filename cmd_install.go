@@ -80,6 +80,9 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 		}
 	}
 	ctx.msg.Infof("installing RPM %s %s %s\n", rpmname, version, release)
-	err = ctx.install(rpmname, version, release)
+
+	forceInstall := false
+	update := false
+	err = ctx.installRPM(rpmname, version, release, forceInstall, update)
 	return err
 }

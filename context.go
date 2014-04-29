@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gonuts/logger"
+	"github.com/lhcb-org/pkr/yum"
 )
 
 type External struct {
@@ -27,7 +28,7 @@ type Context struct {
 	etcdir    string
 	yumconf   string
 	yumreposd string
-	yum       *YumClient
+	yum       *yum.Client
 	tmpdir    string
 	bindir    string
 	libdir    string
@@ -88,7 +89,7 @@ func New(cfg Config, dbg bool) (*Context, error) {
 		return nil, err
 	}
 
-	ctx.yum = NewClient(ctx.siteroot)
+	ctx.yum = yum.New(ctx.siteroot)
 	if ctx.yum == nil {
 		return nil, err
 	}

@@ -1,7 +1,7 @@
 package yum
 
 import (
-	"compress/zlib"
+	"compress/gzip"
 	"encoding/xml"
 	"io"
 	"net/http"
@@ -146,10 +146,16 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 	}
 	defer f.Close()
 
-	r, err := zlib.NewReader(f)
+	var r io.ReadCloser
+	r, err = gzip.NewReader(f)
 	if err != nil {
-		repo.msg.Errorf("zip failed to open [%s]: %v\n", repo.Primary, err)
-		return err
+		if err == gzip.ErrHeader {
+			// perhaps not a compressed file after all...
+			r = f
+		} else {
+			repo.msg.Errorf("zip failed to open [%s]: %v\n", repo.Primary, err)
+			return err
+		}
 	}
 	defer r.Close()
 

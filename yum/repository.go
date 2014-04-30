@@ -2,12 +2,17 @@ package yum
 
 import (
 	"bytes"
+	"encoding/xml"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/gonuts/logger"
 )
 
 // global registry of known backends
@@ -49,6 +54,7 @@ type Backend interface {
 
 // Repository represents a YUM repository with all associated metadata.
 type Repository struct {
+	msg            *logger.Logger
 	Name           string
 	RepoUrl        string
 	RepoMdUrl      string
@@ -62,6 +68,7 @@ type Repository struct {
 func NewRepository(name, url, cachedir string, backends []string, setupBackend, checkForUpdates bool) (*Repository, error) {
 
 	repo := Repository{
+		msg:            logger.NewLogger("yum", logger.INFO, os.Stdout),
 		Name:           name,
 		RepoUrl:        url,
 		RepoMdUrl:      url + "/repodata/repomd.xml",
@@ -111,17 +118,145 @@ func (repo *Repository) GetPackages() []*Package {
 // setupBackendFromRemote checks which backend should be used and updates the DB files.
 func (repo *Repository) setupBackendFromRemote() error {
 	var err error
+	var backend Backend
 	// get repo metadata with list of available files
-	data, err := repo.remoteMetadata()
+	remotedata, err := repo.remoteMetadata()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("metadata: %v\n", string(data))
+
+	remotemd, err := repo.checkRepoMD(remotedata)
+	if err != nil {
+		return err
+	}
+
+	localdata, err := repo.localMetadata()
+	if err != nil {
+		return err
+	}
+
+	localmd, err := repo.checkRepoMD(localdata)
+	if err != nil {
+		return err
+	}
+
+	for _, bname := range repo.Backends {
+		repo.msg.Infof("checking availability of backend [%s]\n", bname)
+		ba, err := NewBackend(bname, repo)
+		if err != nil {
+			continue
+		}
+
+		rrepomd, ok := remotemd[ba.YumDataType()]
+		if !ok {
+			repo.msg.Warnf("remote repository does not provide [%s] DB\n", bname)
+			continue
+		}
+
+		// a priori a match
+		backend = ba
+		repo.Backend = backend
+
+		lrepomd, ok := localmd[ba.YumDataType()]
+		if !ok {
+			// doesn't matter, we download the DB in any case
+		}
+
+		if !repo.Backend.HasDB() || rrepomd.Timestamp.After(lrepomd.Timestamp) {
+			// we need to update the DB
+			url := repo.RepoUrl + "/" + rrepomd.Location
+			repo.msg.Infof("updating the RPM database for %s\n", bname)
+			err = repo.Backend.GetLatestDB(url)
+			if err != nil {
+				repo.msg.Warnf("problem updating RPM database for backend [%s]: %v\n", bname, err)
+				err = nil
+				backend = nil
+				repo.Backend = nil
+				continue
+			}
+			// save metadata to local repomd file
+			err = ioutil.WriteFile(repo.LocalRepoMdXml, remotedata, 0644)
+			if err != nil {
+				repo.msg.Warnf("problem updating local repomd.xml file for backend [%s]: %v\n", bname, err)
+				err = nil
+				backend = nil
+				repo.Backend = nil
+				continue
+			}
+		}
+
+		// load data necessary for the backend
+		err = repo.Backend.LoadDB()
+		if err != nil {
+			repo.msg.Warnf("problem loading data for backend [%s]: %v\n", bname, err)
+			err = nil
+			backend = nil
+			repo.Backend = nil
+			continue
+		}
+
+		// stop at first one found
+		break
+	}
+
+	if backend == nil {
+		repo.msg.Errorf("No valid backend found\n")
+		return fmt.Errorf("No valid backend found")
+	}
+
+	repo.msg.Infof("repository [%s] - chosen backend [%T]\n", repo.Name, repo.Backend)
 	return err
 }
 
 func (repo *Repository) setupBackendFromLocal() error {
 	var err error
+	data, err := repo.localMetadata()
+	if err != nil {
+		return err
+	}
+
+	md, err := repo.checkRepoMD(data)
+	if err != nil {
+		return err
+	}
+
+	var backend Backend
+	for _, bname := range repo.Backends {
+		repo.msg.Infof("checking availability of backend [%s]\n", bname)
+		ba, err := NewBackend(bname, repo)
+		if err != nil {
+			continue
+		}
+		_ /*repomd*/, ok := md[ba.YumDataType()]
+		if !ok {
+			repo.msg.Warnf("local repository does not provide [%s] DB\n", bname)
+			continue
+		}
+
+		// a priori a match
+		backend = ba
+		repo.Backend = backend
+
+		// loading data necessary for the backend
+		err = repo.Backend.LoadDB()
+		if err != nil {
+			repo.msg.Warnf("problem loading data for backend [%s]: %v\n", bname, err)
+			err = nil
+			backend = nil
+			repo.Backend = nil
+			continue
+		}
+
+		// stop at first one found.
+		break
+	}
+
+	if backend == nil {
+		repo.msg.Errorf("No valid backend found\n")
+		return fmt.Errorf("No valid backend found")
+	}
+
+	repo.msg.Infof("repository [%s] - chosen backend [%T]\n", repo.Name, repo.Backend)
 	return err
 }
 
@@ -158,9 +293,35 @@ func (repo *Repository) localMetadata() ([]byte, error) {
 
 // checkRepoMD parses the Repository metadata XML content
 func (repo *Repository) checkRepoMD(data []byte) (map[string]RepoMD, error) {
-	db := make(map[string]RepoMD)
-	var err error
 
+	type xmlTree struct {
+		XMLName xml.Name `xml:"repomd"`
+		Data    []struct {
+			Type     string `xml:"type,attr"`
+			Checksum string `xml:"checksum"`
+			Location struct {
+				Href string `xml:"href,attr"`
+			} `xml:"location"`
+			Timestamp float64 `xml:"timestamp"`
+		}
+	}
+
+	var tree xmlTree
+	err := xml.Unmarshal(data, &tree)
+	if err != nil {
+		return nil, err
+	}
+
+	db := make(map[string]RepoMD)
+	for _, data := range tree.Data {
+		sec := int64(math.Floor(data.Timestamp))
+		nsec := int64((data.Timestamp - float64(sec)) * 1e9)
+		db[data.Type] = RepoMD{
+			Checksum:  data.Checksum,
+			Timestamp: time.Unix(sec, nsec),
+			Location:  data.Location.Href,
+		}
+	}
 	return db, err
 }
 

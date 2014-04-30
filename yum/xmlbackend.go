@@ -67,7 +67,7 @@ func (repo *RepositoryXMLBackend) HasDB() bool {
 func (repo *RepositoryXMLBackend) LoadDB() error {
 	var err error
 
-	repo.msg.Debugf("start parsing metadata XML file...\n")
+	repo.msg.Infof("start parsing metadata XML file... (%s)\n", repo.Primary)
 	type xmlTree struct {
 		XMLName  xml.Name `xml:"metadata"`
 		Packages []struct {

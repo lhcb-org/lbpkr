@@ -315,7 +315,7 @@ func (repo *Repository) checkRepoMD(data []byte) (map[string]RepoMD, error) {
 				Href string `xml:"href,attr"`
 			} `xml:"location"`
 			Timestamp float64 `xml:"timestamp"`
-		}
+		} `xml:"data"`
 	}
 
 	var tree xmlTree

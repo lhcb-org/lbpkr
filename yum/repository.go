@@ -110,6 +110,12 @@ func (repo *Repository) GetPackages() []*Package {
 // setupBackendFromRemote checks which backend should be used and updates the DB files.
 func (repo *Repository) setupBackendFromRemote() error {
 	var err error
+	// get repo metadata with list of available files
+	data, err := repo.remoteMetadata()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("metadata: %v\n", string(data))
 	return err
 }
 

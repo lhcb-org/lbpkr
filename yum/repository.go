@@ -302,6 +302,7 @@ func (repo *Repository) localMetadata() ([]byte, error) {
 func (repo *Repository) checkRepoMD(data []byte) (map[string]RepoMD, error) {
 
 	if len(data) <= 0 {
+		repo.msg.Infof("checkRepoMD: no data\n")
 		return nil, nil
 	}
 

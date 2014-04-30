@@ -60,6 +60,9 @@ type Repository struct {
 
 // NewRepository create a new Repository with name and from url.
 func NewRepository(name, url, cachedir string, backends []string, setupBackend, checkForUpdates bool) (*Repository, error) {
+	if url[len(url)-1] == '/' {
+		url = url[:len(url)-1]
+	}
 	repo := Repository{
 		Name:           name,
 		RepoUrl:        url,

@@ -89,8 +89,8 @@ func New(cfg Config, dbg bool) (*Context, error) {
 		return nil, err
 	}
 
-	ctx.yum = yum.New(ctx.siteroot)
-	if ctx.yum == nil {
+	ctx.yum, err = yum.New(ctx.siteroot)
+	if err != nil {
 		return nil, err
 	}
 

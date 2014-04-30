@@ -13,8 +13,8 @@ type Client struct {
 	repourls    map[string]string
 }
 
-func New(siteroot string) *Client {
-	return &Client{
+func New(siteroot string) (*Client, error) {
+	client := &Client{
 		siteroot:    siteroot,
 		etcdir:      filepath.Join(siteroot, "etc"),
 		lbyumcache:  filepath.Join(siteroot, "var", "cache", "lbyum"),
@@ -24,6 +24,26 @@ func New(siteroot string) *Client {
 		repos:       make(map[string]*Repository),
 		repourls:    make(map[string]string),
 	}
+
+	// load the config and set the URLs accordingly
+	urls, err := client.loadConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	// At this point we have the repo names and URLs in self.repourls
+	// we know connect to them to get the best method to get the appropriate files
+	checkForUpdates := true
+	backends := []string{
+		//"RepositorySQLiteBackend",
+		"RepositoryXMLBackend",
+	}
+	err = client.initRepositories(urls, checkForUpdates, backends)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, err
 }
 
 // FindLatestMatchingName locates a package by name and returns the latest available version

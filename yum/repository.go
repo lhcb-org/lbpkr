@@ -297,6 +297,10 @@ func (repo *Repository) localMetadata() ([]byte, error) {
 // checkRepoMD parses the Repository metadata XML content
 func (repo *Repository) checkRepoMD(data []byte) (map[string]RepoMD, error) {
 
+	if len(data) <= 0 {
+		return nil, nil
+	}
+
 	type xmlTree struct {
 		XMLName xml.Name `xml:"repomd"`
 		Data    []struct {

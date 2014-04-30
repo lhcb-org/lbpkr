@@ -117,21 +117,20 @@ func (repo *Repository) GetPackages() []*Package {
 
 // setupBackendFromRemote checks which backend should be used and updates the DB files.
 func (repo *Repository) setupBackendFromRemote() error {
-	repo.msg.Infof("setupBackendFromRemote...\n")
+	repo.msg.Debugf("setupBackendFromRemote...\n")
 	var err error
 	var backend Backend
+
 	// get repo metadata with list of available files
 	remotedata, err := repo.remoteMetadata()
 	if err != nil {
 		return err
 	}
 
-	repo.msg.Infof("...checkRepoMD [remote]...\n")
 	remotemd, err := repo.checkRepoMD(remotedata)
 	if err != nil {
 		return err
 	}
-	repo.msg.Infof("...checkRepoMD [remote]...: %v\n", remotemd)
 
 	localdata, err := repo.localMetadata()
 	if err != nil {
@@ -212,7 +211,7 @@ func (repo *Repository) setupBackendFromRemote() error {
 }
 
 func (repo *Repository) setupBackendFromLocal() error {
-	repo.msg.Infof("setupBackendFromLocal...\n")
+	repo.msg.Debugf("setupBackendFromLocal...\n")
 	var err error
 	data, err := repo.localMetadata()
 	if err != nil {
@@ -302,7 +301,7 @@ func (repo *Repository) localMetadata() ([]byte, error) {
 func (repo *Repository) checkRepoMD(data []byte) (map[string]RepoMD, error) {
 
 	if len(data) <= 0 {
-		repo.msg.Infof("checkRepoMD: no data\n")
+		repo.msg.Debugf("checkRepoMD: no data\n")
 		return nil, nil
 	}
 
@@ -333,7 +332,6 @@ func (repo *Repository) checkRepoMD(data []byte) (map[string]RepoMD, error) {
 			Timestamp: time.Unix(sec, nsec),
 			Location:  data.Location.Href,
 		}
-		repo.msg.Infof(">>> %s: %v\n", data.Type, db[data.Type])
 	}
 	return db, err
 }

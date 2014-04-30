@@ -3,6 +3,7 @@ package yum
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 
@@ -131,6 +132,27 @@ func (yum *Client) parseRepoConfigFile(fname string) (map[string]string, error) 
 
 func (yum *Client) initRepositories(urls map[string]string, checkForUpdates bool, backends []string) error {
 	var err error
+
+	const setupBackend = true
+
+	// setup the repositories
+	for repo, repourl := range urls {
+		cachedir := filepath.Join(yum.lbyumcache, repo)
+		err = os.MkdirAll(cachedir, 0644)
+		if err != nil {
+			return err
+		}
+		r, err := NewRepository(
+			repo, repourl, cachedir,
+			backends, setupBackend, checkForUpdates,
+		)
+		if err != nil {
+			return err
+		}
+		yum.repos[repo] = r
+	}
+
+	yum.repourls = urls
 	return err
 }
 

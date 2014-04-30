@@ -17,7 +17,7 @@ type RepositoryXMLBackend struct {
 	Repository *Repository
 }
 
-func NewRepositoryXMLBackend(repo *Repository) *RepositoryXMLBackend {
+func NewRepositoryXMLBackend(repo *Repository) (Backend, error) {
 	const dbname = "primary.xml.gz"
 	return &RepositoryXMLBackend{
 		Name:       "RepositoryXMLBackend",
@@ -26,7 +26,7 @@ func NewRepositoryXMLBackend(repo *Repository) *RepositoryXMLBackend {
 		DBName:     dbname,
 		Primary:    filepath.Join(repo.CacheDir, dbname),
 		Repository: repo,
-	}
+	}, nil
 }
 
 // YumDataType returns the ID for the data type as used in the repomd.xml file
@@ -87,4 +87,8 @@ func (repo *RepositoryXMLBackend) GetPackages() []*Package {
 		pkgs = append(pkgs, pkg)
 	}
 	return pkgs
+}
+
+func init() {
+	g_backends["RepositoryXMLBackend"] = NewRepositoryXMLBackend
 }

@@ -11,7 +11,7 @@ import (
 )
 
 // global registry of known backends
-var g_backends map[string]func(repo *Repository) (Backend, error)
+var g_backends = make(map[string]func(repo *Repository) (Backend, error))
 
 // NewBackend returns a new backend of type "backend"
 func NewBackend(backend string, repo *Repository) (Backend, error) {

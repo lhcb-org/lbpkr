@@ -42,12 +42,11 @@ func pkr_run_cmd_list(cmd *commander.Command, args []string) error {
 	rpmname := ""
 	switch len(args) {
 	case 0:
-		cmd.Usage()
-		return fmt.Errorf("pkr: invalid number of arguments (got=%d)", len(args))
+		rpmname = ".*"
 	case 1:
 		rpmname = args[0]
 	default:
-		return fmt.Errorf("pkr: invalid number of arguments. expected n=1. got=%d (%v)",
+		return fmt.Errorf("pkr: invalid number of arguments. expected n=0|1. got=%d (%v)",
 			len(args),
 			args,
 		)

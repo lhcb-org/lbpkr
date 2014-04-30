@@ -149,16 +149,16 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 	defer f.Close()
 
 	var r io.Reader
-	rr, err := gzip.NewReader(f)
-	if err != nil {
-		if err == gzip.ErrHeader {
-			// perhaps not a compressed file after all...
-			f.Seek(0, 0)
-			r = f
-		} else {
-			repo.msg.Errorf("zip failed to open [%s]: %v\n", repo.Primary, err)
+	if rr, err := gzip.NewReader(f); err != nil {
+		if err != gzip.ErrHeader {
 			return err
 		}
+		// perhaps not a compressed file after all...
+		_, err = f.Seek(0, 0)
+		if err != nil {
+			return err
+		}
+		r = f
 	} else {
 		r = rr
 		defer rr.Close()

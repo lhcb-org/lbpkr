@@ -125,7 +125,7 @@ func (yum *Client) parseRepoConfigFile(fname string) (map[string]string, error) 
 			return nil, err
 		}
 		repos[section] = repourl
-		fmt.Printf(">>> [%s] repo=%q url=%q\n", fname, section, repourl)
+		//fmt.Printf(">>> [%s] repo=%q url=%q\n", fname, section, repourl)
 	}
 	return repos, err
 }

@@ -15,6 +15,12 @@ import (
 	"github.com/gonuts/logger"
 )
 
+// List of packages to ignore for our case
+var g_IGNORED_PACKAGES = []string{
+	"rpmlib(CompressedFileNames)", "/bin/sh", "rpmlib(PayloadFilesHavePrefix)",
+	"rpmlib(PartialHardlinkSets)", "DBASE_Gen_DecFiles",
+}
+
 // global registry of known backends
 var g_backends = make(map[string]func(repo *Repository) (Backend, error))
 

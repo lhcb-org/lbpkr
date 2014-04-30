@@ -8,8 +8,8 @@ import (
 type RPM interface {
 	Name() string
 	Version() string
-	Release() string
-	Epoch() string
+	Release() int
+	Epoch() int
 	Flags() string
 	StandardVersion() []string
 
@@ -21,8 +21,8 @@ type RPM interface {
 type rpmBase struct {
 	name    string
 	version string
-	release string
-	epoch   string
+	release int
+	epoch   int
 	flags   string
 }
 
@@ -34,11 +34,11 @@ func (rpm *rpmBase) Version() string {
 	return rpm.version
 }
 
-func (rpm *rpmBase) Release() string {
+func (rpm *rpmBase) Release() int {
 	return rpm.release
 }
 
-func (rpm *rpmBase) Epoch() string {
+func (rpm *rpmBase) Epoch() int {
 	return rpm.epoch
 }
 
@@ -51,11 +51,11 @@ func (rpm *rpmBase) StandardVersion() []string {
 }
 
 func (rpm *rpmBase) RpmName() string {
-	return fmt.Sprintf("%s-%s-%s", rpm.name, rpm.version, rpm.release)
+	return fmt.Sprintf("%s-%s-%d", rpm.name, rpm.version, rpm.release)
 }
 
 func (rpm *rpmBase) RpmFileName() string {
-	return fmt.Sprintf("%s-%s-%s.rpm", rpm.name, rpm.version, rpm.release)
+	return fmt.Sprintf("%s-%s-%d.rpm", rpm.name, rpm.version, rpm.release)
 }
 
 // Provides represents a functionality provided by a RPM package
@@ -64,10 +64,36 @@ type Provides struct {
 	pkg RPM // pkg is the package Provides provides for.
 }
 
+func NewProvides(name, version string, release, epoch int, flags string, pkg RPM) *Provides {
+	return &Provides{
+		rpmBase: rpmBase{
+			name:    name,
+			version: version,
+			release: release,
+			epoch:   epoch,
+			flags:   flags,
+		},
+		pkg: pkg,
+	}
+}
+
 // Requires represents a functionality required by a RPM package
 type Requires struct {
 	rpmBase
-	pre RPM // pre is the prequisite required by a RPM package
+	pre string // pre is the prequisite required by a RPM package
+}
+
+func NewRequires(name, version string, release, epoch int, flags string, pre string) *Requires {
+	return &Requires{
+		rpmBase: rpmBase{
+			name:    name,
+			version: version,
+			release: release,
+			epoch:   epoch,
+			flags:   flags,
+		},
+		pre: pre,
+	}
 }
 
 // Package represents a RPM package in a YUM repository
@@ -80,6 +106,22 @@ type Package struct {
 	requires   []RPM
 	provides   []RPM
 	repository *Repository
+}
+
+// NewPackage creates a new RPM package
+func NewPackage(name, version string, release, epoch int) *Package {
+	pkg := Package{
+		rpmBase: rpmBase{
+			name:    name,
+			version: version,
+			release: release,
+			epoch:   epoch,
+		},
+		requires: make([]RPM, 0),
+		provides: make([]RPM, 0),
+	}
+
+	return &pkg
 }
 
 func (pkg *Package) String() string {
@@ -96,14 +138,14 @@ func (pkg *Package) String() string {
 	if len(pkg.provides) > 0 {
 		str = append(str, "Provides:")
 		for _, p := range pkg.provides {
-			str = append(str, "\t%s-%s-%s", p.Name(), p.Version(), p.Release())
+			str = append(str, fmt.Sprintf("\t%s-%s-%s", p.Name(), p.Version(), p.Release()))
 		}
 	}
 
 	if len(pkg.requires) > 0 {
 		str = append(str, "Requires:")
 		for _, p := range pkg.requires {
-			str = append(str, "\t%s-%s-%s\t%s", p.Name(), p.Version(), p.Release(), p.Flags())
+			str = append(str, fmt.Sprintf("\t%s-%s-%s\t%s", p.Name(), p.Version(), p.Release(), p.Flags()))
 		}
 	}
 

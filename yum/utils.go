@@ -14,3 +14,12 @@ func path_exists(name string) bool {
 	}
 	return false
 }
+
+func str_in_slice(str string, slice []string) bool {
+	for _, v := range slice {
+		if str == v {
+			return true
+		}
+	}
+	return false
+}

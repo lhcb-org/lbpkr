@@ -1,6 +1,13 @@
 package yum
 
-import "path/filepath"
+import (
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"regexp"
+
+	gocfg "github.com/gonuts/config"
+)
 
 type Client struct {
 	siteroot    string
@@ -65,6 +72,66 @@ func (yum *Client) ListPackages(pattern string) ([]*Package, error) {
 	pkgs := make([]*Package, 0)
 
 	return pkgs, err
+}
+
+// loadConfig looks up the location of the yum repository
+func (yum *Client) loadConfig() (map[string]string, error) {
+	fis, err := ioutil.ReadDir(yum.yumreposdir)
+	if err != nil {
+		return nil, err
+	}
+	pattern := regexp.MustCompile(`(.*)\.repo$`)
+	for _, fi := range fis {
+		if fi.IsDir() {
+			continue
+		}
+		if !pattern.MatchString(fi.Name()) {
+			continue
+		}
+		fname := filepath.Join(yum.yumreposdir, fi.Name())
+		repos, err := yum.parseRepoConfigFile(fname)
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range repos {
+			yum.repourls[k] = v
+		}
+	}
+
+	yum.configured = true
+	if len(yum.repourls) <= 0 {
+		return nil, fmt.Errorf("could not find repository config file in [%s]", yum.yumreposdir)
+	}
+	return yum.repourls, err
+}
+
+// parseRepoConfigFile parses the xyz.repo file and returns a map of reponame/repourl
+func (yum *Client) parseRepoConfigFile(fname string) (map[string]string, error) {
+	var err error
+	repos := make(map[string]string)
+
+	cfg, err := gocfg.ReadDefault(fname)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, section := range cfg.Sections() {
+		if !cfg.HasOption(section, "baseurl") {
+			continue
+		}
+		repourl, err := cfg.String(section, "baseurl")
+		if err != nil {
+			return nil, err
+		}
+		repos[section] = repourl
+		fmt.Printf(">>> [%s] repo=%q url=%q\n", fname, section, repourl)
+	}
+	return repos, err
+}
+
+func (yum *Client) initRepositories(urls map[string]string, checkForUpdates bool, backends []string) error {
+	var err error
+	return err
 }
 
 // EOF

@@ -32,12 +32,6 @@ func pkr_run_cmd_list(cmd *commander.Command, args []string) error {
 	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 
-	cfg := NewConfig(cfgtype)
-	ctx, err := New(cfg, debug)
-	if err != nil {
-		return err
-	}
-
 	name := ""
 	vers := ""
 	release := ""
@@ -60,6 +54,12 @@ func pkr_run_cmd_list(cmd *commander.Command, args []string) error {
 			len(args),
 			args,
 		)
+	}
+
+	cfg := NewConfig(cfgtype)
+	ctx, err := New(cfg, debug)
+	if err != nil {
+		return err
 	}
 
 	err = ctx.ListPackages(name, vers, release)

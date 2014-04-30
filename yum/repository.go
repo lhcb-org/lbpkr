@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -61,9 +60,7 @@ type Repository struct {
 
 // NewRepository create a new Repository with name and from url.
 func NewRepository(name, url, cachedir string, backends []string, setupBackend, checkForUpdates bool) (*Repository, error) {
-	if url[len(url)-1] == '/' {
-		url = url[:len(url)-1]
-	}
+
 	repo := Repository{
 		Name:           name,
 		RepoUrl:        url,
@@ -73,14 +70,6 @@ func NewRepository(name, url, cachedir string, backends []string, setupBackend, 
 		Backends:       make([]string, len(backends)),
 	}
 	copy(repo.Backends, backends)
-
-	// 'http:///' appears thru filepath.Join(someurl, bla)
-	cleanup := func(url *string) {
-		*url = strings.Replace(*url, "http:///", "http://", 1)
-		*url = strings.Replace(*url, "https:///", "https://", 1)
-	}
-	cleanup(&repo.RepoUrl)
-	cleanup(&repo.RepoMdUrl)
 
 	err := os.MkdirAll(cachedir, 0644)
 	if err != nil {

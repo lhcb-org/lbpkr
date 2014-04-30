@@ -277,6 +277,9 @@ func (repo *Repository) remoteMetadata() ([]byte, error) {
 
 // localMetadata retrieves the repo metadata from the repomd file
 func (repo *Repository) localMetadata() ([]byte, error) {
+	if !path_exists(repo.LocalRepoMdXml) {
+		return nil, nil
+	}
 	f, err := os.Open(repo.LocalRepoMdXml)
 	if err != nil {
 		return nil, err

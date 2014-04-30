@@ -68,13 +68,18 @@ func (yum *Client) FindLatestMatchingName(name, version, release string) (string
 }
 
 // ListPackages lists all packages satisfying pattern (a regexp)
-func (yum *Client) ListPackages(pattern string) ([]*Package, error) {
+func (yum *Client) ListPackages(name, version, release string) ([]*Package, error) {
 	var err error
-	re := regexp.MustCompile(pattern)
+	re_name := regexp.MustCompile(name)
+	re_vers := regexp.MustCompile(version)
+	re_rel := regexp.MustCompile(release)
 	pkgs := make([]*Package, 0)
 	for _, repo := range yum.repos {
 		for _, pkg := range repo.GetPackages() {
-			if re.MatchString(pkg.Name()) {
+			if re_name.MatchString(pkg.Name()) &&
+				re_vers.MatchString(pkg.Version()) &&
+				// FIXME: sprintf is ugly
+				re_rel.MatchString(fmt.Sprintf("%d", pkg.Release())) {
 				pkgs = append(pkgs, pkg)
 			}
 		}

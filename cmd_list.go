@@ -10,13 +10,14 @@ import (
 func pkr_make_cmd_list() *commander.Command {
 	cmd := &commander.Command{
 		Run:       pkr_run_cmd_list,
-		UsageLine: "list [options] <name-pattern>",
-		Short:     "list all RPM packages satisfying <name-pattern>",
+		UsageLine: "list [options] <name-pattern> [<version-pattern> [<release-pattern>]]",
+		Short:     "list all RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]",
 		Long: `
 list lists all RPM packages satisfying <name-pattern>.
 
 ex:
- $ pkr list LHCb
+ $ pkr list GAUDI
+ $ pkr list GAUDI v23r2
 `,
 		Flag: *flag.NewFlagSet("pkr-list", flag.ExitOnError),
 	}
@@ -37,21 +38,30 @@ func pkr_run_cmd_list(cmd *commander.Command, args []string) error {
 		return err
 	}
 
-	ctx.msg.Infof("hello: %v\n", cfg.Prefix())
+	name := ""
+	vers := ""
+	release := ""
 
-	rpmname := ""
 	switch len(args) {
 	case 0:
-		rpmname = ".*"
+		name = ""
 	case 1:
-		rpmname = args[0]
+		name = args[0]
+	case 2:
+		name = args[0]
+		vers = args[1]
+	case 3:
+		name = args[0]
+		vers = args[1]
+		release = args[2]
 	default:
-		return fmt.Errorf("pkr: invalid number of arguments. expected n=0|1. got=%d (%v)",
+		cmd.Usage()
+		return fmt.Errorf("pkr: invalid number of arguments. expected n=0|1|2|3. got=%d (%v)",
 			len(args),
 			args,
 		)
 	}
 
-	err = ctx.ListPackages(rpmname)
+	err = ctx.ListPackages(name, vers, release)
 	return err
 }

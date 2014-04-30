@@ -322,10 +322,10 @@ func (ctx *Context) InstallPackage(pkg string, forceInstall, update bool) error 
 }
 
 // ListPackages lists all packages satisfying pattern (a regexp)
-func (ctx *Context) ListPackages(pattern string) error {
+func (ctx *Context) ListPackages(name, version, release string) error {
 	var err error
 	total := 0
-	pkgs, err := ctx.yum.ListPackages(pattern)
+	pkgs, err := ctx.yum.ListPackages(name, version, release)
 	if err != nil {
 		return err
 	}

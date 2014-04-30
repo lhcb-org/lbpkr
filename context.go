@@ -331,7 +331,7 @@ func (ctx *Context) ListPackages(name, version, release string) error {
 	}
 
 	for _, pkg := range pkgs {
-		fmt.Printf("%s (name=%q version=%q rel=%d)\n", pkg.RpmName(), pkg.Name(), pkg.Version(), pkg.Release())
+		fmt.Printf("%s\n", pkg.RpmName())
 		total += 1
 	}
 	ctx.msg.Infof("Total matching: %d\n", total)

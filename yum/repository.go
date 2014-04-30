@@ -117,6 +117,7 @@ func (repo *Repository) GetPackages() []*Package {
 
 // setupBackendFromRemote checks which backend should be used and updates the DB files.
 func (repo *Repository) setupBackendFromRemote() error {
+	repo.msg.Infof("setupBackendFromRemote...\n")
 	var err error
 	var backend Backend
 	// get repo metadata with list of available files
@@ -209,6 +210,7 @@ func (repo *Repository) setupBackendFromRemote() error {
 }
 
 func (repo *Repository) setupBackendFromLocal() error {
+	repo.msg.Infof("setupBackendFromLocal...\n")
 	var err error
 	data, err := repo.localMetadata()
 	if err != nil {

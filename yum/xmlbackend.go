@@ -148,18 +148,21 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 	}
 	defer f.Close()
 
-	var r io.ReadCloser
-	r, err = gzip.NewReader(f)
+	var r io.Reader
+	rr, err := gzip.NewReader(f)
 	if err != nil {
 		if err == gzip.ErrHeader {
 			// perhaps not a compressed file after all...
+			f.Seek(0, 0)
 			r = f
 		} else {
 			repo.msg.Errorf("zip failed to open [%s]: %v\n", repo.Primary, err)
 			return err
 		}
+	} else {
+		r = rr
+		defer rr.Close()
 	}
-	defer r.Close()
 
 	var tree xmlTree
 	err = xml.NewDecoder(r).Decode(&tree)

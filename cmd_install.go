@@ -32,20 +32,11 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 
-	cfg := NewConfig(cfgtype)
-	ctx, err := New(cfg, debug)
-	if err != nil {
-		return err
-	}
-
-	ctx.msg.Infof("hello: %v\n", cfg.Prefix())
-
 	rpmname := ""
 	version := ""
 	release := ""
 	switch len(args) {
 	case 0:
-		ctx.msg.Errorf("please specify at least the name of the RPM to install\n")
 		cmd.Usage()
 		return fmt.Errorf("pkr: invalid number of arguments (got=%d)", len(args))
 	case 1:
@@ -79,6 +70,13 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 			release = m[3]
 		}
 	}
+
+	cfg := NewConfig(cfgtype)
+	ctx, err := New(cfg, debug)
+	if err != nil {
+		return err
+	}
+
 	ctx.msg.Infof("installing RPM %s %s %s\n", rpmname, version, release)
 
 	forceInstall := false

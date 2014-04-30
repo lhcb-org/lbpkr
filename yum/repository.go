@@ -328,6 +328,7 @@ func (repo *Repository) checkRepoMD(data []byte) (map[string]RepoMD, error) {
 			Timestamp: time.Unix(sec, nsec),
 			Location:  data.Location.Href,
 		}
+		repo.msg.Infof(">>> %s: %v\n", data.Type, db[data.Type])
 	}
 	return db, err
 }

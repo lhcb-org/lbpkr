@@ -70,8 +70,15 @@ func (yum *Client) FindLatestMatchingName(name, version, release string) (string
 // ListPackages lists all packages satisfying pattern (a regexp)
 func (yum *Client) ListPackages(pattern string) ([]*Package, error) {
 	var err error
+	re := regexp.MustCompile(pattern)
 	pkgs := make([]*Package, 0)
-
+	for _, repo := range yum.repos {
+		for _, pkg := range repo.GetPackages() {
+			if re.MatchString(pkg.Name()) {
+				pkgs = append(pkgs, pkg)
+			}
+		}
+	}
 	return pkgs, err
 }
 

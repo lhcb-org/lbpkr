@@ -135,6 +135,8 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 					Release int    `xml:"rel,attr"`
 					Pre     string `xml:"pre,attr"`
 				} `xml:"rpm-requires"`
+
+				Files []string `xml:"file"`
 			} `xml:"format"`
 		} `xml:"package"`
 	}

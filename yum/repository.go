@@ -126,10 +126,12 @@ func (repo *Repository) setupBackendFromRemote() error {
 		return err
 	}
 
+	repo.msg.Infof("...checkRepoMD [remote]...\n")
 	remotemd, err := repo.checkRepoMD(remotedata)
 	if err != nil {
 		return err
 	}
+	repo.msg.Infof("...checkRepoMD [remote]...: %v\n", remotemd)
 
 	localdata, err := repo.localMetadata()
 	if err != nil {

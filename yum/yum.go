@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 
 	gocfg "github.com/gonuts/config"
 )
@@ -55,15 +56,46 @@ func New(siteroot string) (*Client, error) {
 }
 
 // FindLatestMatchingName locates a package by name and returns the latest available version
-func (yum *Client) FindLatestMatchingName(name, version, release string) (string, error) {
+func (yum *Client) FindLatestMatchingName(name, version, release string) (*Package, error) {
 	var err error
-	if version == "" {
-		version = "0.0.1"
+	var pkg *Package
+	found := make(Packages, 0)
+	
+	for _, repo := range yum.repos {
+		p, err := repo.FindLatestMatchingName(name, version, release)
+		if err != nil {
+			return nil, err
+		}
+		found = append(found, p)
 	}
-	if release == "" {
-		release = "1"
+
+	if len(found) > 0 {
+		sort.Sort(found)
+		pkg = found[len(found)-1]
 	}
-	pkg := name + "-" + version + "-" + release
+
+	return pkg, err
+}
+
+// FindLatestMatchingRequire locates a package providing a given functionality.
+func (yum *Client) FindLatestMatchingRequire(requirement *Requires) (*Package, error) {
+	var err error
+	var pkg *Package
+	found := make(Packages, 0)
+	
+	for _, repo := range yum.repos {
+		p, err := repo.FindLatestMatchingRequire(requirement)
+		if err != nil {
+			return nil, err
+		}
+		found = append(found, p)
+	}
+
+	if len(found) > 0 {
+		sort.Sort(found)
+		pkg = found[len(found)-1]
+	}
+
 	return pkg, err
 }
 

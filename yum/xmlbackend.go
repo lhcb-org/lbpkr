@@ -122,26 +122,22 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 					End int64 `xml:"end,attr"`
 				} `xml:"header-range"`
 
-				Provides struct {
-					Items []struct {
-						Name    string `xml:"name,attr"`
-						Flags   string `xml:"flags,attr"`
-						Epoch   int    `xml:"epoch,attr"`
-						Version string `xml:"ver,attr"`
-						Release int    `xml:"rel,attr"`
-					} `xml:"entry"`
-				} `xml:"provides"`
+				Provides []struct {
+					Name    string `xml:"name,attr"`
+					Flags   string `xml:"flags,attr"`
+					Epoch   int    `xml:"epoch,attr"`
+					Version string `xml:"ver,attr"`
+					Release int    `xml:"rel,attr"`
+				} `xml:"provides>entry"`
 
-				Requires struct {
-					Items []struct{
-						Name    string `xml:"name,attr"`
-						Flags   string `xml:"flags,attr"`
-						Epoch   int    `xml:"epoch,attr"`
-						Version string `xml:"ver,attr"`
-						Release int    `xml:"rel,attr"`
-						Pre     string `xml:"pre,attr"`
-					} `xml:"entry"`
-				} `xml:"requires"`
+				Requires []struct {
+					Name    string `xml:"name,attr"`
+					Flags   string `xml:"flags,attr"`
+					Epoch   int    `xml:"epoch,attr"`
+					Version string `xml:"ver,attr"`
+					Release int    `xml:"rel,attr"`
+					Pre     string `xml:"pre,attr"`
+				} `xml:"requires>entry"`
 
 				Files []string `xml:"file"`
 			} `xml:"format"`
@@ -182,7 +178,7 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 		pkg.arch = xml.Arch
 		pkg.group = xml.Format.Group
 		pkg.location = xml.Location.Href
-		for _, v := range xml.Format.Provides.Items {
+		for _, v := range xml.Format.Provides {
 			prov := NewProvides(
 				v.Name,
 				v.Version,
@@ -198,7 +194,7 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 			}
 		}
 
-		for _, v := range xml.Format.Requires.Items {
+		for _, v := range xml.Format.Requires {
 			req := NewRequires(
 				v.Name,
 				v.Version,

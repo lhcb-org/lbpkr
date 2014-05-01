@@ -266,6 +266,34 @@ func (repo *RepositoryXMLBackend) FindLatestMatchingRequire(requirement *Require
 	var pkg *Package
 	var err error
 
+	pkgs, ok := repo.Provides[requirement.Name()]
+	if !ok {
+		repo.msg.Debugf("could not find package providing %s-%s\n", requirement.Name(), requirement.Version())
+		return nil, fmt.Errorf("no package providing %s-%s", requirement.Name(), requirement.Version())
+	}
+
+	if requirement.Version() == "" && len(pkgs) > 0 {
+		// return latest
+		sorted := make([]RPM, 0, len(pkgs))
+		for _, p := range pkgs {
+			sorted = append(sorted, p)
+		}
+		sort.Sort(RPMSlice(sorted))
+		pkg = sorted[len(sorted)-1].(*Provides).Package
+	} else {
+		// trying to match the requirements
+		sorted := make(RPMSlice, 0, len(pkgs))
+		for _, p := range pkgs {
+			if requirement.ProvideMatches(p) {
+				sorted = append(sorted, p)
+			}
+		}
+		if len(sorted) > 0 {
+			sort.Sort(sorted)
+			pkg = sorted[len(sorted)-1].(*Provides).Package
+		}
+	}
+
 	return pkg, err
 }
 

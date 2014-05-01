@@ -235,3 +235,38 @@ func TestDependencyEqual(t *testing.T) {
 		t.Fatalf("expected version=%q. got=%q\n", exp, dep.Version())
 	}
 }
+
+func TestCyclicDependency(t *testing.T) {
+
+	yum, err := getTestClient(t)
+	if err != nil {
+		t.Fatalf("could not create test repo: %v\n", err)
+	}
+
+	pkg, err := yum.FindLatestMatchingName("TCyclicDep", "", "")
+	if err != nil {
+		t.Fatalf("could not find latest matching name: %v\n", err)
+	}
+
+	if pkg == nil {
+		t.Fatalf("could not find latest matching name: nil package\n")
+	}
+
+	exp := "1.0.0"
+	if pkg.Version() != exp {
+		t.Fatalf("expected version=%q. got=%q\n", exp, pkg.Version())
+	}
+
+	if pkg.Release() != 1 {
+		t.Fatalf("expected release=1. got=%d\n", 1, pkg.Release())
+	}
+
+	deps, err := yum.PackageDeps(pkg)
+	if err != nil {
+		t.Fatalf("could not find package deps: %v\n", err)
+	}
+
+	if len(deps) != 2 {
+		t.Fatalf("expected #deps=%d. got=%d\n", 1, len(deps))
+	}
+}

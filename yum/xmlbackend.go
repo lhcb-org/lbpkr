@@ -221,7 +221,7 @@ func (repo *RepositoryXMLBackend) FindLatestMatchingName(name, version, release 
 }
 
 // FindLatestMatchingRequire locates a package providing a given functionality.
-func (repo *RepositoryXMLBackend) FindLatestMatchingRequire(requirement RPM) (*Package, error) {
+func (repo *RepositoryXMLBackend) FindLatestMatchingRequire(requirement *Requires) (*Package, error) {
 	var pkg *Package
 	var err error
 

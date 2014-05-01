@@ -52,7 +52,7 @@ type Backend interface {
 	FindLatestMatchingName(name, version, release string) (*Package, error)
 
 	// FindLatestMatchingRequire locates a package providing a given functionality.
-	FindLatestMatchingRequire(requirement RPM) (*Package, error)
+	FindLatestMatchingRequire(requirement *Requires) (*Package, error)
 
 	// GetPackages returns all the packages known by a YUM repository
 	GetPackages() []*Package
@@ -112,7 +112,7 @@ func (repo *Repository) FindLatestMatchingName(name, version, release string) (*
 }
 
 // FindLatestMatchingRequire locates a package providing a given functionality.
-func (repo *Repository) FindLatestMatchingRequire(requirement RPM) (*Package, error) {
+func (repo *Repository) FindLatestMatchingRequire(requirement *Requires) (*Package, error) {
 	return repo.Backend.FindLatestMatchingRequire(requirement)
 }
 

@@ -10,8 +10,8 @@ import (
 func getTestClient(t *testing.T) (*Client, error) {
 	const siteroot = "testdata/mysiteroot"
 	client := &Client{
-		msg: logger.New("yum"),
-		siteroot: siteroot,
+		msg:         logger.New("yum"),
+		siteroot:    siteroot,
 		etcdir:      filepath.Join(siteroot, "etc"),
 		lbyumcache:  filepath.Join(siteroot, "var", "cache", "lbyum"),
 		yumconf:     filepath.Join(siteroot, "etc", "yum.conf"),
@@ -296,7 +296,7 @@ func TestFindReleaseUpdate(t *testing.T) {
 		t.Fatalf("expected release=1. got=%d\n", 1, pkg.Release())
 	}
 
-	for _, table := range []struct{
+	for _, table := range []struct {
 		req *Requires
 		ver string
 		rel int
@@ -309,9 +309,9 @@ func TestFindReleaseUpdate(t *testing.T) {
 		{
 			req: NewRequires(pkg.Name(), pkg.Version(), 0, 0, "EQ", ""),
 			ver: "4.2.7",
-			rel: 2,			
+			rel: 2,
 		},
-	}{
+	} {
 		n, err := yum.FindLatestMatchingRequire(table.req)
 		if err != nil {
 			t.Fatalf("could not find match: %v\n", err)
@@ -329,6 +329,5 @@ func TestFindReleaseUpdate(t *testing.T) {
 			t.Fatalf("expected release=%d. got=%d\n", table.rel, n.Release())
 		}
 	}
-
 
 }

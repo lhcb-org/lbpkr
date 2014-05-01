@@ -13,7 +13,7 @@ import (
 )
 
 type Client struct {
-	msg *logger.Logger
+	msg         *logger.Logger
 	siteroot    string
 	etcdir      string
 	lbyumcache  string
@@ -26,7 +26,7 @@ type Client struct {
 
 func New(siteroot string) (*Client, error) {
 	client := &Client{
-		msg: logger.New("yum"),
+		msg:         logger.New("yum"),
 		siteroot:    siteroot,
 		etcdir:      filepath.Join(siteroot, "etc"),
 		lbyumcache:  filepath.Join(siteroot, "var", "cache", "lbyum"),
@@ -63,7 +63,7 @@ func (yum *Client) FindLatestMatchingName(name, version, release string) (*Packa
 	var err error
 	var pkg *Package
 	found := make(Packages, 0)
-	
+
 	for _, repo := range yum.repos {
 		p, err := repo.FindLatestMatchingName(name, version, release)
 		if err != nil {
@@ -85,7 +85,7 @@ func (yum *Client) FindLatestMatchingRequire(requirement *Requires) (*Package, e
 	var err error
 	var pkg *Package
 	found := make(Packages, 0)
-	
+
 	for _, repo := range yum.repos {
 		p, err := repo.FindLatestMatchingRequire(requirement)
 		if err != nil {

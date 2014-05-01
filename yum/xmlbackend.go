@@ -175,7 +175,7 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 
 	for _, xml := range tree.Packages {
 		pkg := NewPackage(
-			xml.Name, xml.Version.Version, xml.Version.Release, 
+			xml.Name, xml.Version.Version, xml.Version.Release,
 			xml.Version.Epoch,
 		)
 		pkg.arch = xml.Arch
@@ -306,7 +306,7 @@ func (repo *RepositoryXMLBackend) GetPackages() []*Package {
 }
 
 func init() {
-	g_backends["RepositoryXMLBackend"] = func(repo *Repository)(Backend,error) {
+	g_backends["RepositoryXMLBackend"] = func(repo *Repository) (Backend, error) {
 		return NewRepositoryXMLBackend(repo)
 	}
 }

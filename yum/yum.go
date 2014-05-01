@@ -157,7 +157,7 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*
 			return nil, err
 		}
 		if _, dup := processed[p]; dup {
-			msg.Warnf("cyclic dependency in repository with package: %v\n", p)
+			msg.Warnf("cyclic dependency in repository with package: %s.%s-%d\n", p.Name(), p.Version(), p.Release())
 			continue
 		}
 		if p == nil {

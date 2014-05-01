@@ -31,8 +31,9 @@ func testRepo(t *testing.T) (*Repository, error) {
 	return repo, err
 }
 
-/*
 func TestPackageMatching(t *testing.T) {
+	t.Skip("not ready yet")
+
 	repo, err := testRepo(t)
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
@@ -43,11 +44,18 @@ func TestPackageMatching(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not find match: %v\n", err)
 	}
-	
+
+	if pkg == nil {
+		t.Fatalf("could not find match: nil package\n")
+	}
+
+	if pkg.Version() != "1.0.0" {
+		t.Fatalf("expected version=%q. got=%q\n", "1.0.0", pkg.Version())
+	}
 }
-*/
 
 func TestPackageByNameWithRelease(t *testing.T) {
+	t.Skip("not ready yet")
 
 	repo, err := testRepo(t)
 	if err != nil {

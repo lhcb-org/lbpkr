@@ -58,6 +58,67 @@ func (rpm *rpmBase) RpmFileName() string {
 	return fmt.Sprintf("%s-%s-%d.rpm", rpm.name, rpm.version, rpm.release)
 }
 
+func (rpm *rpmBase) ProvideMatches(p RPM) bool {
+
+	if p.Name() != rpm.Name() {
+		return false
+	}
+
+	if rpm.Version() == "" {
+		return true
+	}
+
+	switch rpm.Flags() {
+	case "EQ", "eq", "==":
+		return RpmEqual(rpm, p)
+	case "LT", "lt", "<":
+		return RpmLessThan(rpm, p)
+	case "GT", "gt", ">":
+		return !(RpmEqual(rpm, p) || RpmLessThan(rpm, p))
+	case "LE", "le", "<=":
+		return RpmEqual(rpm, p) || RpmLessThan(rpm, p)
+	case "GE", "ge", ">=":
+		return !RpmLessThan(rpm, p)
+	default:
+		panic(fmt.Errorf("invalid Flags %q (package=%v)", rpm.Flags(), rpm.Name()))
+	}
+
+	return false
+}
+
+func RpmEqual(i, j RPM) bool {
+	if i.Name() != j.Name() {
+		return false
+	}
+	if i.Version() != j.Version() {
+		return false
+	}
+
+	// if i or j misses a releases number, ignore release number
+	if i.Release() == 0 || j.Release() == 0 {
+		return true
+	}
+
+	return i.Release() == j.Release()
+}
+
+func RpmLessThan(i, j RPM) bool {
+	if i.Name() != j.Name() {
+		return i.Name() < j.Name()
+	}
+
+	if i.Version() != j.Version() {
+		//FIXME: more thorough ?
+		return i.Version() < j.Version()
+	}
+
+	// if i or j misses a releases number, ignore release number
+	if i.Release() == 0 || j.Release() == 0 {
+		return i.Version() < j.Version()
+	}
+	return i.Release() < j.Release()
+}
+
 // Provides represents a functionality provided by a RPM package
 type Provides struct {
 	rpmBase
@@ -178,4 +239,37 @@ func (pkg *Package) Repository() *Repository {
 
 func (pkg *Package) Url() string {
 	return pkg.repository.RepoUrl + "/" + pkg.location
+}
+
+
+type Packages []*Package
+func (p Packages) Len() int {
+	return len(p)
+}
+
+func (p Packages) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+func (p Packages) Less(i,j int) bool {
+	pi := p[i]
+	pj := p[j]
+
+	return RpmLessThan(pi, pj)
+}
+
+type RPMSlice []RPM
+func (p RPMSlice) Len() int {
+	return len(p)
+}
+
+func (p RPMSlice) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+func (p RPMSlice) Less(i,j int) bool {
+	pi := p[i]
+	pj := p[j]
+
+	return RpmLessThan(pi, pj)
 }

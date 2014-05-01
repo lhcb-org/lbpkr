@@ -224,6 +224,40 @@ func (repo *RepositoryXMLBackend) FindLatestMatchingName(name, version, release 
 	var pkg *Package
 	var err error
 
+	pkgs, ok := repo.Packages[name]
+	if !ok {
+		repo.msg.Debugf("could not find package %q\n", name)
+		return nil, fmt.Errorf("no such package %q", name)
+	}
+
+	if version == "" && len(pkgs) > 0 {
+		// return latest
+		sorted := make([]*Package, len(pkgs))
+		copy(sorted, pkgs)
+		sort.Sort(Packages(sorted))
+		pkg = sorted[len(sorted)-1]
+	} else {
+		// trying to match the requirements
+		rel := 0
+		if release != "" {
+			rel, err = strconv.Atoi(release)
+			if err != nil {
+				return nil, err
+			}
+		}
+		req := NewRequires(name, version, rel, 0, "EQ", "")
+		sorted := make(Packages, 0, len(pkgs))
+		for _, p := range pkgs {
+			if req.ProvideMatches(p) {
+				sorted = append(sorted, p)
+			}
+		}
+		if len(sorted) > 0 {
+			sort.Sort(sorted)
+			pkg = sorted[len(sorted)-1]
+		}
+	}
+
 	return pkg, err
 }
 

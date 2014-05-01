@@ -20,7 +20,7 @@ func testRepo(t *testing.T) (*Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	backend.(*RepositoryXMLBackend).Primary = "testdata/repo.xml"
+	backend.Primary = "testdata/repo.xml"
 
 	repo.Backend = backend
 	err = repo.Backend.LoadDB()

@@ -25,7 +25,7 @@ type RepositoryXMLBackend struct {
 	msg        *logger.Logger
 }
 
-func NewRepositoryXMLBackend(repo *Repository) (Backend, error) {
+func NewRepositoryXMLBackend(repo *Repository) (*RepositoryXMLBackend, error) {
 	const dbname = "primary.xml.gz"
 	return &RepositoryXMLBackend{
 		Name:       "RepositoryXMLBackend",
@@ -303,5 +303,7 @@ func (repo *RepositoryXMLBackend) GetPackages() []*Package {
 }
 
 func init() {
-	g_backends["RepositoryXMLBackend"] = NewRepositoryXMLBackend
+	g_backends["RepositoryXMLBackend"] = func(repo *Repository)(Backend,error) {
+		return NewRepositoryXMLBackend(repo)
+	}
 }

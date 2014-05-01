@@ -70,17 +70,17 @@ func (rpm *rpmBase) ProvideMatches(p RPM) bool {
 
 	switch rpm.Flags() {
 	case "EQ", "eq", "==":
-		return RpmEqual(rpm, p)
+		return RpmEqual(p, rpm)
 	case "LT", "lt", "<":
-		return RpmLessThan(rpm, p)
+		return RpmLessThan(p, rpm)
 	case "GT", "gt", ">":
-		return !(RpmEqual(rpm, p) || RpmLessThan(rpm, p))
+		return !(RpmEqual(p, rpm) || RpmLessThan(p, rpm))
 	case "LE", "le", "<=":
-		return RpmEqual(rpm, p) || RpmLessThan(rpm, p)
+		return RpmEqual(p, rpm) || RpmLessThan(p, rpm)
 	case "GE", "ge", ">=":
-		return !RpmLessThan(rpm, p)
+		return !RpmLessThan(p, rpm)
 	default:
-		panic(fmt.Errorf("invalid Flags %q (package=%v)", rpm.Flags(), rpm.Name()))
+		panic(fmt.Errorf("invalid Flags %q (package=%v %T)", rpm.Flags(), rpm.Name(), rpm))
 	}
 
 	return false

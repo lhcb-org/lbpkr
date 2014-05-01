@@ -32,7 +32,6 @@ func testRepo(t *testing.T) (*Repository, error) {
 }
 
 func TestPackageMatching(t *testing.T) {
-	t.Skip("not ready yet")
 
 	repo, err := testRepo(t)
 	if err != nil {
@@ -55,7 +54,6 @@ func TestPackageMatching(t *testing.T) {
 }
 
 func TestPackageByNameWithRelease(t *testing.T) {
-	t.Skip("not ready yet")
 
 	repo, err := testRepo(t)
 	if err != nil {
@@ -77,5 +75,55 @@ func TestPackageByNameWithRelease(t *testing.T) {
 
 	if pkg.Release() != 1 {
 		t.Fatalf("expected release=1. got=%d\n", 1, pkg.Release())
+	}
+}
+
+func TestPackageByNameWithoutRelease(t *testing.T) {
+
+	repo, err := testRepo(t)
+	if err != nil {
+		t.Fatalf("could not create test repo: %v\n", err)
+	}
+
+	pkg, err := repo.FindLatestMatchingName("TP2", "1.2.5", "")
+	if err != nil {
+		t.Fatalf("could not find latest matching name: %v\n", err)
+	}
+
+	if pkg == nil {
+		t.Fatalf("could not find latest matching name: nil package\n")
+	}
+
+	if pkg.Version() != "1.2.5" {
+		t.Fatalf("expected version=%q. got=%q\n", "1.2.5", pkg.Version())
+	}
+
+	if pkg.Release() != 2 {
+		t.Fatalf("expected release=1. got=%d\n", 2, pkg.Release())
+	}
+}
+
+func TestPackageByNameWithoutVersion(t *testing.T) {
+
+	repo, err := testRepo(t)
+	if err != nil {
+		t.Fatalf("could not create test repo: %v\n", err)
+	}
+
+	pkg, err := repo.FindLatestMatchingName("TP2", "", "")
+	if err != nil {
+		t.Fatalf("could not find latest matching name: %v\n", err)
+	}
+
+	if pkg == nil {
+		t.Fatalf("could not find latest matching name: nil package\n")
+	}
+
+	if pkg.Version() != "1.2.5" {
+		t.Fatalf("expected version=%q. got=%q\n", "1.2.5", pkg.Version())
+	}
+
+	if pkg.Release() != 2 {
+		t.Fatalf("expected release=1. got=%d\n", 2, pkg.Release())
 	}
 }

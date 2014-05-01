@@ -144,3 +144,94 @@ func TestPackageByNameWithoutVersion(t *testing.T) {
 		t.Fatalf("expected release=1. got=%d\n", 2, pkg.Release())
 	}
 }
+
+func TestDependencyGreater(t *testing.T) {
+
+	yum, err := getTestClient(t)
+	if err != nil {
+		t.Fatalf("could not create test repo: %v\n", err)
+	}
+
+	pkg, err := yum.FindLatestMatchingName("TP2", "", "")
+	if err != nil {
+		t.Fatalf("could not find latest matching name: %v\n", err)
+	}
+
+	if pkg == nil {
+		t.Fatalf("could not find latest matching name: nil package\n")
+	}
+
+	if pkg.Version() != "1.2.5" {
+		t.Fatalf("expected version=%q. got=%q\n", "1.2.5", pkg.Version())
+	}
+
+	if pkg.Release() != 2 {
+		t.Fatalf("expected release=1. got=%d\n", 2, pkg.Release())
+	}
+
+	deps, err := yum.PackageDeps(pkg)
+	if err != nil {
+		t.Fatalf("could not find package deps: %v\n", err)
+	}
+
+	if len(deps) != 1 {
+		t.Fatalf("expected #deps=%d. got=%d\n", 1, len(deps))
+	}
+
+	dep := deps[0]
+	exp := "TestPackage"
+	if dep.Name() != exp {
+		t.Fatalf("expected name=%q. got=%q\n", exp, dep.Name())
+	}
+
+	exp = "1.3.7"
+	if dep.Version() != exp {
+		t.Fatalf("expected version=%q. got=%q\n", exp, dep.Version())
+	}
+}
+
+func TestDependencyEqual(t *testing.T) {
+
+	yum, err := getTestClient(t)
+	if err != nil {
+		t.Fatalf("could not create test repo: %v\n", err)
+	}
+
+	pkg, err := yum.FindLatestMatchingName("TP3", "", "")
+	if err != nil {
+		t.Fatalf("could not find latest matching name: %v\n", err)
+	}
+
+	if pkg == nil {
+		t.Fatalf("could not find latest matching name: nil package\n")
+	}
+
+	exp := "1.18.22"
+	if pkg.Version() != exp {
+		t.Fatalf("expected version=%q. got=%q\n", exp, pkg.Version())
+	}
+
+	if pkg.Release() != 2 {
+		t.Fatalf("expected release=1. got=%d\n", 2, pkg.Release())
+	}
+
+	deps, err := yum.PackageDeps(pkg)
+	if err != nil {
+		t.Fatalf("could not find package deps: %v\n", err)
+	}
+
+	if len(deps) != 1 {
+		t.Fatalf("expected #deps=%d. got=%d\n", 1, len(deps))
+	}
+
+	dep := deps[0]
+	exp = "TestPackage"
+	if dep.Name() != exp {
+		t.Fatalf("expected name=%q. got=%q\n", exp, dep.Name())
+	}
+
+	exp = "1.2.5"
+	if dep.Version() != exp {
+		t.Fatalf("expected version=%q. got=%q\n", exp, dep.Version())
+	}
+}

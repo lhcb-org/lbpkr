@@ -9,9 +9,11 @@ import (
 	"sort"
 
 	gocfg "github.com/gonuts/config"
+	"github.com/gonuts/logger"
 )
 
 type Client struct {
+	msg *logger.Logger
 	siteroot    string
 	etcdir      string
 	lbyumcache  string
@@ -24,6 +26,7 @@ type Client struct {
 
 func New(siteroot string) (*Client, error) {
 	client := &Client{
+		msg: logger.New("yum"),
 		siteroot:    siteroot,
 		etcdir:      filepath.Join(siteroot, "etc"),
 		lbyumcache:  filepath.Join(siteroot, "var", "cache", "lbyum"),

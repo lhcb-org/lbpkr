@@ -3,11 +3,14 @@ package yum
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/gonuts/logger"
 )
 
 func getTestClient(t *testing.T) (*Client, error) {
 	const siteroot = "testdata/mysiteroot"
 	client := &Client{
+		msg: logger.New("yum"),
 		siteroot: siteroot,
 		etcdir:      filepath.Join(siteroot, "etc"),
 		lbyumcache:  filepath.Join(siteroot, "var", "cache", "lbyum"),

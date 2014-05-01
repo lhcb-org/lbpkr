@@ -1,10 +1,22 @@
 package yum
 
 import (
+	"path/filepath"
 	"testing"
 )
 
-func testRepo(t *testing.T) (*Repository, error) {
+func getTestClient(t *testing.T) (*Client, error) {
+	const siteroot = "testdata/mysiteroot"
+	client := &Client{
+		siteroot: siteroot,
+		etcdir:      filepath.Join(siteroot, "etc"),
+		lbyumcache:  filepath.Join(siteroot, "var", "cache", "lbyum"),
+		yumconf:     filepath.Join(siteroot, "etc", "yum.conf"),
+		yumreposdir: filepath.Join(siteroot, "etc", "yum.repos.d"),
+		configured:  false,
+		repos:       make(map[string]*Repository),
+		repourls:    make(map[string]string),
+	}
 	setupBackend := false
 	checkForUpdates := true
 	repo, err := NewRepository("testrepo", "http://dummy-url.org", "testdata/cachedir.tmp",
@@ -28,18 +40,20 @@ func testRepo(t *testing.T) (*Repository, error) {
 		return nil, err
 	}
 
-	return repo, err
+	client.repos[repo.Name] = repo
+	client.configured = true
+	return client, err
 }
 
 func TestPackageMatching(t *testing.T) {
 
-	repo, err := testRepo(t)
+	yum, err := getTestClient(t)
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
 	p := NewRequires("TestPackage", "1.0.0", 1, 0, "EQ", "")
-	pkg, err := repo.FindLatestMatchingRequire(p)
+	pkg, err := yum.FindLatestMatchingRequire(p)
 	if err != nil {
 		t.Fatalf("could not find match: %v\n", err)
 	}
@@ -55,12 +69,12 @@ func TestPackageMatching(t *testing.T) {
 
 func TestPackageByNameWithRelease(t *testing.T) {
 
-	repo, err := testRepo(t)
+	yum, err := getTestClient(t)
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := repo.FindLatestMatchingName("TP2", "1.2.5", "1")
+	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", "1")
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -80,12 +94,12 @@ func TestPackageByNameWithRelease(t *testing.T) {
 
 func TestPackageByNameWithoutRelease(t *testing.T) {
 
-	repo, err := testRepo(t)
+	yum, err := getTestClient(t)
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := repo.FindLatestMatchingName("TP2", "1.2.5", "")
+	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", "")
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -105,12 +119,12 @@ func TestPackageByNameWithoutRelease(t *testing.T) {
 
 func TestPackageByNameWithoutVersion(t *testing.T) {
 
-	repo, err := testRepo(t)
+	yum, err := getTestClient(t)
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := repo.FindLatestMatchingName("TP2", "", "")
+	pkg, err := yum.FindLatestMatchingName("TP2", "", "")
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}

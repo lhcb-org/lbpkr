@@ -316,7 +316,7 @@ func (ctx *Context) InstallRPM(name, version, release string, forceInstall, upda
 }
 
 // InstallPackage installs a specific RPM, checking if not already installed
-func (ctx *Context) InstallPackage(pkg string, forceInstall, update bool) error {
+func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) error {
 	var err error
 	return err
 }

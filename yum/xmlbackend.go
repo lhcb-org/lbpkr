@@ -3,10 +3,13 @@ package yum
 import (
 	"compress/gzip"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 
 	"github.com/gonuts/logger"
 )
@@ -67,7 +70,7 @@ func (repo *RepositoryXMLBackend) HasDB() bool {
 func (repo *RepositoryXMLBackend) LoadDB() error {
 	var err error
 
-	repo.msg.Infof("start parsing metadata XML file... (%s)\n", repo.Primary)
+	repo.msg.Debugf("start parsing metadata XML file... (%s)\n", repo.Primary)
 	type xmlTree struct {
 		XMLName  xml.Name `xml:"metadata"`
 		Packages []struct {
@@ -208,7 +211,7 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 		repo.Packages[pkg.Name()] = append(repo.Packages[pkg.Name()], pkg)
 	}
 
-	repo.msg.Infof("start parsing metadata XML file... (%s) [done]\n", repo.Primary)
+	repo.msg.Debugf("start parsing metadata XML file... (%s) [done]\n", repo.Primary)
 	return err
 }
 

@@ -122,10 +122,10 @@ func RpmLessThan(i, j RPM) bool {
 // Provides represents a functionality provided by a RPM package
 type Provides struct {
 	rpmBase
-	pkg RPM // pkg is the package Provides provides for.
+	Package *Package // pkg is the package Provides provides for.
 }
 
-func NewProvides(name, version string, release, epoch int, flags string, pkg RPM) *Provides {
+func NewProvides(name, version string, release, epoch int, flags string, pkg *Package) *Provides {
 	return &Provides{
 		rpmBase: rpmBase{
 			name:    name,
@@ -134,7 +134,7 @@ func NewProvides(name, version string, release, epoch int, flags string, pkg RPM
 			epoch:   epoch,
 			flags:   flags,
 		},
-		pkg: pkg,
+		Package: pkg,
 	}
 }
 

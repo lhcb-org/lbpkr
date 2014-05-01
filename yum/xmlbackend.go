@@ -111,33 +111,37 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 			} `xml:"location"`
 
 			Format struct {
-				License   string `xml:"rpm:license"`
-				Vendor    string `xml:"rpm:vendor"`
-				Group     string `xml:"rpm:group"`
-				BuildHost string `xml:"rpm:buildhost"`
-				SourceRpm string `xml:"rpm:sourcerpm"`
+				License   string `xml:"license"`
+				Vendor    string `xml:"vendor"`
+				Group     string `xml:"group"`
+				BuildHost string `xml:"buildhost"`
+				SourceRpm string `xml:"sourcerpm"`
 
 				HeaderRange struct {
 					Beg int64 `xml:"start,attr"`
 					End int64 `xml:"end,attr"`
-				} `xml:"rpm:header-range"`
+				} `xml:"header-range"`
 
-				Provides []struct {
-					Name    string `xml:"name,attr"`
-					Flags   string `xml:"flags,attr"`
-					Epoch   int    `xml:"epoch,attr"`
-					Version string `xml:"ver,attr"`
-					Release int    `xml:"rel,attr"`
-				} `xml:"rpm-provides"`
+				Provides struct {
+					Items []struct {
+						Name    string `xml:"name,attr"`
+						Flags   string `xml:"flags,attr"`
+						Epoch   int    `xml:"epoch,attr"`
+						Version string `xml:"ver,attr"`
+						Release int    `xml:"rel,attr"`
+					} `xml:"entry"`
+				} `xml:"provides"`
 
-				Requires []struct {
-					Name    string `xml:"name,attr"`
-					Flags   string `xml:"flags,attr"`
-					Epoch   int    `xml:"epoch,attr"`
-					Version string `xml:"ver,attr"`
-					Release int    `xml:"rel,attr"`
-					Pre     string `xml:"pre,attr"`
-				} `xml:"rpm-requires"`
+				Requires struct {
+					Items []struct{
+						Name    string `xml:"name,attr"`
+						Flags   string `xml:"flags,attr"`
+						Epoch   int    `xml:"epoch,attr"`
+						Version string `xml:"ver,attr"`
+						Release int    `xml:"rel,attr"`
+						Pre     string `xml:"pre,attr"`
+					} `xml:"entry"`
+				} `xml:"requires"`
 
 				Files []string `xml:"file"`
 			} `xml:"format"`
@@ -178,7 +182,7 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 		pkg.arch = xml.Arch
 		pkg.group = xml.Format.Group
 		pkg.location = xml.Location.Href
-		for _, v := range xml.Format.Provides {
+		for _, v := range xml.Format.Provides.Items {
 			prov := NewProvides(
 				v.Name,
 				v.Version,
@@ -194,7 +198,7 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 			}
 		}
 
-		for _, v := range xml.Format.Requires {
+		for _, v := range xml.Format.Requires.Items {
 			req := NewRequires(
 				v.Name,
 				v.Version,

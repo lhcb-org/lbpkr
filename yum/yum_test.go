@@ -37,7 +37,7 @@ func TestPackageMatching(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
-	
+
 	p := NewRequires("TestPackage", "1.0.0", 1, 0, "EQ", "")
 	pkg, err := repo.FindLatestMatchingRequire(p)
 	if err != nil {

@@ -241,8 +241,8 @@ func (pkg *Package) Url() string {
 	return pkg.repository.RepoUrl + "/" + pkg.location
 }
 
-
 type Packages []*Package
+
 func (p Packages) Len() int {
 	return len(p)
 }
@@ -251,7 +251,7 @@ func (p Packages) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
-func (p Packages) Less(i,j int) bool {
+func (p Packages) Less(i, j int) bool {
 	pi := p[i]
 	pj := p[j]
 
@@ -259,6 +259,7 @@ func (p Packages) Less(i,j int) bool {
 }
 
 type RPMSlice []RPM
+
 func (p RPMSlice) Len() int {
 	return len(p)
 }
@@ -267,7 +268,7 @@ func (p RPMSlice) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
-func (p RPMSlice) Less(i,j int) bool {
+func (p RPMSlice) Less(i, j int) bool {
 	pi := p[i]
 	pj := p[j]
 

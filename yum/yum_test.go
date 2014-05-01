@@ -270,3 +270,65 @@ func TestCyclicDependency(t *testing.T) {
 		t.Fatalf("expected #deps=%d. got=%d\n", 1, len(deps))
 	}
 }
+
+func TestFindReleaseUpdate(t *testing.T) {
+
+	yum, err := getTestClient(t)
+	if err != nil {
+		t.Fatalf("could not create test repo: %v\n", err)
+	}
+
+	pkg, err := yum.FindLatestMatchingName("TPRel", "4.2.7", "1")
+	if err != nil {
+		t.Fatalf("could not find latest matching name: %v\n", err)
+	}
+
+	if pkg == nil {
+		t.Fatalf("could not find latest matching name: nil package\n")
+	}
+
+	exp := "4.2.7"
+	if pkg.Version() != exp {
+		t.Fatalf("expected version=%q. got=%q\n", exp, pkg.Version())
+	}
+
+	if pkg.Release() != 1 {
+		t.Fatalf("expected release=1. got=%d\n", 1, pkg.Release())
+	}
+
+	for _, table := range []struct{
+		req *Requires
+		ver string
+		rel int
+	}{
+		{
+			req: NewRequires(pkg.Name(), "", 0, 0, "EQ", ""),
+			ver: "4.2.8",
+			rel: 1,
+		},
+		{
+			req: NewRequires(pkg.Name(), pkg.Version(), 0, 0, "EQ", ""),
+			ver: "4.2.7",
+			rel: 2,			
+		},
+	}{
+		n, err := yum.FindLatestMatchingRequire(table.req)
+		if err != nil {
+			t.Fatalf("could not find match: %v\n", err)
+		}
+
+		if n == nil {
+			t.Fatalf("could not find match: nil package\n")
+		}
+
+		if n.Version() != table.ver {
+			t.Fatalf("expected version=%q. got=%q\n", table.ver, n.Version())
+		}
+
+		if n.Release() != table.rel {
+			t.Fatalf("expected release=%d. got=%d\n", table.rel, n.Release())
+		}
+	}
+
+
+}

@@ -188,7 +188,7 @@ func NewPackage(name, version string, release, epoch int) *Package {
 func (pkg *Package) String() string {
 	str := []string{
 		fmt.Sprintf(
-			"Package: %s-%s-%s\t%s",
+			"Package: %s-%s-%d\t%s",
 			pkg.Name(),
 			pkg.Version(),
 			pkg.Release(),
@@ -199,14 +199,14 @@ func (pkg *Package) String() string {
 	if len(pkg.provides) > 0 {
 		str = append(str, "Provides:")
 		for _, p := range pkg.provides {
-			str = append(str, fmt.Sprintf("\t%s-%s-%s", p.Name(), p.Version(), p.Release()))
+			str = append(str, fmt.Sprintf("\t%s-%s-%d", p.Name(), p.Version(), p.Release()))
 		}
 	}
 
 	if len(pkg.requires) > 0 {
 		str = append(str, "Requires:")
 		for _, p := range pkg.requires {
-			str = append(str, fmt.Sprintf("\t%s-%s-%s\t%s", p.Name(), p.Version(), p.Release(), p.Flags()))
+			str = append(str, fmt.Sprintf("\t%s-%s-%d\t%s", p.Name(), p.Version(), p.Release(), p.Flags()))
 		}
 	}
 

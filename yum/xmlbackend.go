@@ -174,7 +174,10 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 	}
 
 	for _, xml := range tree.Packages {
-		pkg := NewPackage(xml.Name, xml.Version.Version, xml.Version.Release, xml.Version.Epoch)
+		pkg := NewPackage(
+			xml.Name, xml.Version.Version, xml.Version.Release, 
+			xml.Version.Epoch,
+		)
 		pkg.arch = xml.Arch
 		pkg.group = xml.Format.Group
 		pkg.location = xml.Location.Href

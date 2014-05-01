@@ -164,8 +164,8 @@ type Package struct {
 	group      string
 	arch       string
 	location   string
-	requires   []RPM
-	provides   []RPM
+	requires   []*Requires
+	provides   []*Provides
 	repository *Repository
 }
 
@@ -178,8 +178,8 @@ func NewPackage(name, version string, release, epoch int) *Package {
 			release: release,
 			epoch:   epoch,
 		},
-		requires: make([]RPM, 0),
-		provides: make([]RPM, 0),
+		requires: make([]*Requires, 0),
+		provides: make([]*Provides, 0),
 	}
 
 	return &pkg
@@ -225,11 +225,11 @@ func (pkg *Package) Location() string {
 	return pkg.location
 }
 
-func (pkg *Package) Requires() []RPM {
+func (pkg *Package) Requires() []*Requires {
 	return pkg.requires
 }
 
-func (pkg *Package) Provides() []RPM {
+func (pkg *Package) Provides() []*Provides {
 	return pkg.provides
 }
 

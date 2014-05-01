@@ -122,6 +122,62 @@ func (yum *Client) ListPackages(name, version, release string) ([]*Package, erro
 	return pkgs, err
 }
 
+// PackageDeps returns all dependencies for the package (excluding the package itself)
+func (yum *Client) PackageDeps(pkg *Package) ([]*Package, error) {
+	var err error
+	processed := make(map[*Package]struct{})
+	deps, err := yum.pkgDeps(pkg, processed)
+	if err != nil {
+		return nil, err
+	}
+	pkgs := make([]*Package, 0, len(deps))
+	for p := range deps {
+		pkgs = append(pkgs, p)
+	}
+	return pkgs, err
+}
+
+// pkgDeps returns all dependencies for the package (excluding the package itself)
+func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*Package]struct{}, error) {
+	var err error
+	msg := yum.msg
+
+	processed[pkg] = struct{}{}
+	required := make(map[*Package]struct{})
+
+	msg.Debugf(">>> pkg %s.%s-%d\n", pkg.Name(), pkg.Version(), pkg.Release())
+	for _, req := range pkg.Requires() {
+		msg.Debugf("processing deps for %s.%s-%d\n", req.Name(), req.Version(), req.Release())
+		if str_in_slice(req.Name(), g_IGNORED_PACKAGES) {
+			msg.Debugf("processing deps for %s.%s-%d [IGNORE]\n", req.Name(), req.Version(), req.Release())
+			continue
+		}
+		p, err := yum.FindLatestMatchingRequire(req)
+		if err != nil {
+			return nil, err
+		}
+		if _, dup := processed[p]; dup {
+			msg.Warnf("cyclic dependency in repository with package: %v\n", p)
+			continue
+		}
+		if p == nil {
+			msg.Errorf("package %s.%s-%d not found!\n", req.Name(), req.Version(), req.Release())
+			return nil, fmt.Errorf("package %s.%s-%d not found", req.Name(), req.Version(), req.Release())
+		}
+		msg.Debugf("--> adding dep %s.%s-%d\n", p.Name(), p.Version(), p.Release())
+		required[p] = struct{}{}
+		sdeps, err := yum.pkgDeps(p, processed)
+		if err != nil {
+			return nil, err
+		}
+		for sdep := range sdeps {
+			required[sdep] = struct{}{}
+		}
+	}
+
+	return required, err
+}
+
 // loadConfig looks up the location of the yum repository
 func (yum *Client) loadConfig() (map[string]string, error) {
 	fis, err := ioutil.ReadDir(yum.yumreposdir)

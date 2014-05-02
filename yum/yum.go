@@ -70,6 +70,11 @@ func New(siteroot string) (*Client, error) {
 	return newClient(siteroot, backends, checkForUpdates, manualConfig)
 }
 
+// SetLevel sets the verbosity level of Client
+func (yum *Client) SetLevel(lvl logger.Level) {
+	yum.msg.SetLevel(lvl)
+}
+
 // FindLatestMatchingName locates a package by name and returns the latest available version
 func (yum *Client) FindLatestMatchingName(name, version, release string) (*Package, error) {
 	var err error
@@ -157,11 +162,11 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*
 	processed[pkg] = struct{}{}
 	required := make(map[*Package]struct{})
 
-	msg.Debugf(">>> pkg %s.%s-%d\n", pkg.Name(), pkg.Version(), pkg.Release())
+	msg.Verbosef(">>> pkg %s.%s-%d\n", pkg.Name(), pkg.Version(), pkg.Release())
 	for _, req := range pkg.Requires() {
-		msg.Debugf("processing deps for %s.%s-%d\n", req.Name(), req.Version(), req.Release())
+		msg.Verbosef("processing deps for %s.%s-%d\n", req.Name(), req.Version(), req.Release())
 		if str_in_slice(req.Name(), g_IGNORED_PACKAGES) {
-			msg.Debugf("processing deps for %s.%s-%d [IGNORE]\n", req.Name(), req.Version(), req.Release())
+			msg.Verbosef("processing deps for %s.%s-%d [IGNORE]\n", req.Name(), req.Version(), req.Release())
 			continue
 		}
 		p, err := yum.FindLatestMatchingRequire(req)
@@ -176,7 +181,7 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*
 			msg.Errorf("package %s.%s-%d not found!\n", req.Name(), req.Version(), req.Release())
 			return nil, fmt.Errorf("package %s.%s-%d not found", req.Name(), req.Version(), req.Release())
 		}
-		msg.Debugf("--> adding dep %s.%s-%d\n", p.Name(), p.Version(), p.Release())
+		msg.Verbosef("--> adding dep %s.%s-%d\n", p.Name(), p.Version(), p.Release())
 		required[p] = struct{}{}
 		sdeps, err := yum.pkgDeps(p, processed)
 		if err != nil {
@@ -239,8 +244,8 @@ func (yum *Client) parseRepoConfigFile(fname string) (map[string]string, error) 
 		if err != nil {
 			return nil, err
 		}
+		yum.msg.Debugf("adding repo=%q url=%q from file [%s]\n", section, repourl, fname)
 		repos[section] = repourl
-		//fmt.Printf(">>> [%s] repo=%q url=%q\n", fname, section, repourl)
 	}
 	return repos, err
 }
@@ -264,6 +269,7 @@ func (yum *Client) initRepositories(urls map[string]string, checkForUpdates bool
 		if err != nil {
 			return err
 		}
+		r.msg = yum.msg
 		yum.repos[repo] = r
 	}
 

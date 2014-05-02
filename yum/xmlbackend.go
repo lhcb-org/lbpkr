@@ -212,6 +212,13 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 
 		// add package to repository
 		repo.Packages[pkg.Name()] = append(repo.Packages[pkg.Name()], pkg)
+		repo.msg.Debugf(
+			"(repo=%s) added package: %s.%s-%d\n",
+			repo.Primary,
+			pkg.Name(),
+			pkg.Version(),
+			pkg.Release(),
+		)
 	}
 
 	repo.msg.Debugf("start parsing metadata XML file... (%s) [done]\n", repo.Primary)

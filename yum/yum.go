@@ -80,11 +80,13 @@ func (yum *Client) FindLatestMatchingName(name, version, release string) (*Packa
 	var err error
 	var pkg *Package
 	found := make(Packages, 0)
+	errors := make([]error, 0, len(yum.repos))
 
 	for _, repo := range yum.repos {
 		p, err := repo.FindLatestMatchingName(name, version, release)
 		if err != nil {
-			return nil, err
+			errors = append(errors, err)
+			continue
 		}
 		found = append(found, p)
 	}
@@ -92,6 +94,11 @@ func (yum *Client) FindLatestMatchingName(name, version, release string) (*Packa
 	if len(found) > 0 {
 		sort.Sort(found)
 		pkg = found[len(found)-1]
+		return pkg, err
+	}
+
+	if len(errors) == len(yum.repos) && len(errors) > 0 {
+		return nil, errors[0]
 	}
 
 	return pkg, err

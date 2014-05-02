@@ -185,4 +185,17 @@ func TestRequiresWithNoVersion(t *testing.T) {
 	}
 }
 
+func TestRequiresDifferentName(t *testing.T) {
+	const name = "TestPackage"
+	const v1 = "1.0.1"
+	const rel = 2
+
+	// checking simple comparison
+	p1 := NewProvides(name, v1, rel, 0, "EQ", nil)
+	req := NewRequires(name+"XYZ", "", 0, 0, "EQ", "")
+	if req.ProvideMatches(p1) {
+		t.Fatalf("expected %s to NOT provide for %s\n", p1, req)
+	}
+}
+
 // EOF

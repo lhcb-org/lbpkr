@@ -330,32 +330,41 @@ func TestFindReleaseUpdate(t *testing.T) {
 }
 
 func TestLoadConfig(t *testing.T) {
-	for _, siteroot := range []string{
-		"testdata/testconfig-xml",
-		//"testdata/testconfig-sqlite",
+	for _, table := range []struct {
+		siteroot string
+		backends []string
+	}{
+		{
+			siteroot: "testdata/testconfig-xml",
+			backends: []string{"RepositoryXMLBackend"},
+		},
+		// {
+		// 	siteroot: "testdata/testconfig-sqlite",
+		// 	backends: []string{
+		// 		"RepositorySQLiteBackend",
+		// 		"RepositoryXMLBackend",
+		// 	},
+		// },
 	} {
+		siteroot := table.siteroot
 		checkForUpdates := false
 		manualConfig := false
-		backends := []string{
-			//"RepositorySQLiteBackend",
-			"RepositoryXMLBackend",
-		}
-		yum, err := newClient(siteroot, backends, checkForUpdates, manualConfig)
+		yum, err := newClient(siteroot, table.backends, checkForUpdates, manualConfig)
 		if err != nil {
 			t.Fatalf("could not create yum.Client(siteroot=%q): %v\n", siteroot, err)
 		}
 		yum.SetLevel(logger.DEBUG)
 
 		if len(yum.repos) != 3 {
-			t.Fatalf("expected 3 repositories. got=%d\n", len(yum.repos))
+			t.Fatalf("expected 3 repositories. got=%d (siteroot=%q)\n", len(yum.repos), siteroot)
 		}
 
 		brunels, err := yum.ListPackages("BRUNEL", "", "")
 		if err != nil {
-			t.Fatalf("could not list BRUNEL packages: %v\n", err)
+			t.Fatalf("could not list BRUNEL packages: %v (siteroot=%q)\n", err, siteroot)
 		}
 		if len(brunels) != 7 {
-			t.Fatalf("expected 7 BRUNEL packages. got=%d\n", len(brunels))
+			t.Fatalf("expected 7 BRUNEL packages. got=%d (siteroot=%q)\n", len(brunels), siteroot)
 		}
 
 		pkg, err := yum.FindLatestMatchingName("ROOT_5.32.02_x86_64_slc5_gcc46_opt", "1.0.0", 1)
@@ -366,20 +375,20 @@ func TestLoadConfig(t *testing.T) {
 				str += rpmString(pp) + ", "
 			}
 			str += "]"
-			t.Fatalf("could not find match: %v\namong packages: %v", err, str)
+			t.Fatalf("could not find match: %v\namong packages: %v (siteroot=%q)\n", err, str, siteroot)
 		}
 
 		if pkg == nil {
-			t.Fatalf("could not find match: nil package\n")
+			t.Fatalf("could not find match: nil package (siteroot=%q)\n", siteroot)
 		}
 
 		exp := "1.0.0"
 		if pkg.Version() != exp {
-			t.Fatalf("expected ROOT version=%q. got=%q\n", exp, pkg.Version())
+			t.Fatalf("expected ROOT version=%q. got=%q (siteroot=%q)\n", exp, pkg.Version(), siteroot)
 		}
 
 		if pkg.Release() != 1 {
-			t.Fatalf("expected ROOT release=%d. got=%d\n", 1, pkg.Release())
+			t.Fatalf("expected ROOT release=%d. got=%d (siteroot=%q)\n", 1, pkg.Release(), siteroot)
 		}
 
 		req := NewRequires(
@@ -390,20 +399,20 @@ func TestLoadConfig(t *testing.T) {
 		)
 		brunel, err := yum.FindLatestMatchingRequire(req)
 		if err != nil {
-			t.Fatalf("could not find match: %v\n", err)
+			t.Fatalf("could not find match: %v (siteroot=%q)\n", err, siteroot)
 		}
 
 		if brunel == nil {
-			t.Fatalf("could not find match: nil package\n")
+			t.Fatalf("could not find match: nil package (siteroot=%q)\n")
 		}
 
 		exp = "1.0.0"
 		if brunel.Version() != exp {
-			t.Fatalf("expected BRUNEL version=%q. got=%q\n", exp, brunel.Version())
+			t.Fatalf("expected BRUNEL version=%q. got=%q (siteroot=%q)\n", exp, brunel.Version(), siteroot)
 		}
 
 		if brunel.Release() != 1 {
-			t.Fatalf("expected BRUNEL release=%d. got=%d\n", 1, brunel.Release())
+			t.Fatalf("expected BRUNEL release=%d. got=%d (siteroot=%q)\n", 1, brunel.Release(), siteroot)
 		}
 
 		exprequired := []string{
@@ -482,7 +491,7 @@ func TestLoadConfig(t *testing.T) {
 
 		found, err := yum.RequiredPackages(brunel)
 		if err != nil {
-			t.Fatalf("could not retrieve list of required packages for BRUNEL: %v\n", err)
+			t.Fatalf("could not retrieve list of required packages for BRUNEL: %v (siteroot=%q)\n", err, siteroot)
 		}
 
 		required := make([]string, 0, len(found))
@@ -493,12 +502,13 @@ func TestLoadConfig(t *testing.T) {
 		sort.Strings(required)
 
 		if !reflect.DeepEqual(exprequired, required) {
-			t.Fatalf("%s: lists of required packages differ\nexp=%v (len=%d)\ngot=%v (len=%d)\n",
+			t.Fatalf("%s: lists of required packages differ\nexp=%v (len=%d)\ngot=%v (len=%d) (siteroot=%q)\n",
 				siteroot,
 				exprequired,
 				len(exprequired),
 				required,
 				len(required),
+				siteroot,
 			)
 		}
 	}

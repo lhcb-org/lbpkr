@@ -1,27 +1,20 @@
 package yum
 
 import (
-	"path/filepath"
 	"testing"
-
-	"github.com/gonuts/logger"
 )
 
 func getTestClient(t *testing.T) (*Client, error) {
 	const siteroot = "testdata/mysiteroot"
-	client := &Client{
-		msg:         logger.New("yum"),
-		siteroot:    siteroot,
-		etcdir:      filepath.Join(siteroot, "etc"),
-		lbyumcache:  filepath.Join(siteroot, "var", "cache", "lbyum"),
-		yumconf:     filepath.Join(siteroot, "etc", "yum.conf"),
-		yumreposdir: filepath.Join(siteroot, "etc", "yum.repos.d"),
-		configured:  false,
-		repos:       make(map[string]*Repository),
-		repourls:    make(map[string]string),
-	}
-	setupBackend := false
 	checkForUpdates := true
+	manualConfig := true
+	client, err := newClient(
+		siteroot,
+		[]string{"RepositoryXMLBackend"},
+		checkForUpdates,
+		manualConfig,
+	)
+	setupBackend := false
 	repo, err := NewRepository("testrepo", "http://dummy-url.org", "testdata/cachedir.tmp",
 		[]string{"RepositoryXMLBackend"},
 		setupBackend,

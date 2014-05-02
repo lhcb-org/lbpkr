@@ -7,6 +7,10 @@ import (
 	"testing"
 )
 
+func rpmString(rpm RPM) string {
+	return fmt.Sprintf("%s.%s-%d", rpm.Name(), rpm.Version(), rpm.Release())
+}
+
 func TestProvidesComparison(t *testing.T) {
 	const name = "TestPackage"
 
@@ -53,12 +57,12 @@ func TestProvidesComparison(t *testing.T) {
 		if !reflect.DeepEqual(exp, table.input) {
 			exp_str := "["
 			for _, v := range exp {
-				exp_str += fmt.Sprintf("%s.%s-%d, ", v.Name(), v.Version(), v.Release())
+				exp_str += rpmString(v)
 			}
 			exp_str += "]"
 			in_str := "["
 			for _, v := range table.input {
-				in_str += fmt.Sprintf("%s.%s-%d, ", v.Name(), v.Version(), v.Release())
+				in_str += rpmString(v)
 			}
 			in_str += "]"
 

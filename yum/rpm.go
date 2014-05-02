@@ -2,6 +2,7 @@ package yum
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -108,7 +109,25 @@ func RpmLessThan(i, j RPM) bool {
 	}
 
 	if i.Version() != j.Version() {
-		//FIXME: more thorough ?
+		ii := i.StandardVersion()
+		jj := j.StandardVersion()
+		n := len(ii)
+		if n > len(jj) {
+			n = len(jj)
+		}
+		for k := 0; k < n; k++ {
+			iiv, ierr := strconv.Atoi(ii[k])
+			jjv, jerr := strconv.Atoi(jj[k])
+			if ierr == nil && jerr == nil {
+				if iiv != jjv {
+					return iiv < jjv
+				}
+			} else {
+				if ii[k] != jj[k] {
+					return ii[k] < jj[k]
+				}
+			}
+		}
 		return i.Version() < j.Version()
 	}
 

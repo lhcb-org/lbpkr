@@ -74,7 +74,7 @@ func TestPackageByNameWithRelease(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", "1")
+	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", 1)
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -99,7 +99,7 @@ func TestPackageByNameWithoutRelease(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", "")
+	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", 0)
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -124,7 +124,7 @@ func TestPackageByNameWithoutVersion(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TP2", "", "")
+	pkg, err := yum.FindLatestMatchingName("TP2", "", 0)
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -149,7 +149,7 @@ func TestDependencyGreater(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TP2", "", "")
+	pkg, err := yum.FindLatestMatchingName("TP2", "", 0)
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -194,7 +194,7 @@ func TestDependencyEqual(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TP3", "", "")
+	pkg, err := yum.FindLatestMatchingName("TP3", "", 0)
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -240,7 +240,7 @@ func TestCyclicDependency(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TCyclicDep", "", "")
+	pkg, err := yum.FindLatestMatchingName("TCyclicDep", "", 0)
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -275,7 +275,7 @@ func TestFindReleaseUpdate(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TPRel", "4.2.7", "1")
+	pkg, err := yum.FindLatestMatchingName("TPRel", "4.2.7", 1)
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -358,7 +358,7 @@ func TestLoadConfig(t *testing.T) {
 			t.Fatalf("expected 7 BRUNEL packages. got=%d\n", len(brunels))
 		}
 
-		pkg, err := yum.FindLatestMatchingName("ROOT_5.32.02_x86_64_slc5_gcc46_opt", "1.0.0", "1")
+		pkg, err := yum.FindLatestMatchingName("ROOT_5.32.02_x86_64_slc5_gcc46_opt", "1.0.0", 1)
 		if err != nil {
 			allpkgs, _ := yum.ListPackages("ROOT", "", "")
 			str := "["

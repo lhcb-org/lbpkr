@@ -76,7 +76,7 @@ func (yum *Client) SetLevel(lvl logger.Level) {
 }
 
 // FindLatestMatchingName locates a package by name and returns the latest available version
-func (yum *Client) FindLatestMatchingName(name, version, release string) (*Package, error) {
+func (yum *Client) FindLatestMatchingName(name, version string, release int) (*Package, error) {
 	var err error
 	var pkg *Package
 	found := make(Packages, 0)

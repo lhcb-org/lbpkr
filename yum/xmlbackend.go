@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 
 	"github.com/gonuts/logger"
 )
@@ -226,7 +225,7 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 }
 
 // FindLatestMatchingName locats a package by name, returns the latest available version.
-func (repo *RepositoryXMLBackend) FindLatestMatchingName(name, version, release string) (*Package, error) {
+func (repo *RepositoryXMLBackend) FindLatestMatchingName(name, version string, release int) (*Package, error) {
 	var pkg *Package
 	var err error
 
@@ -244,14 +243,7 @@ func (repo *RepositoryXMLBackend) FindLatestMatchingName(name, version, release 
 		pkg = sorted[len(sorted)-1]
 	} else {
 		// trying to match the requirements
-		rel := 0
-		if release != "" {
-			rel, err = strconv.Atoi(release)
-			if err != nil {
-				return nil, err
-			}
-		}
-		req := NewRequires(name, version, rel, 0, "EQ", "")
+		req := NewRequires(name, version, release, 0, "EQ", "")
 		sorted := make(Packages, 0, len(pkgs))
 		for _, p := range pkgs {
 			if req.ProvideMatches(p) {

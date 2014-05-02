@@ -105,4 +105,71 @@ func TestMatchEqual(t *testing.T) {
 
 }
 
+func TestFlags(t *testing.T) {
+	const name = "TestPackage"
+	const v1 = "1.0.1"
+	const v2 = "1.2.0"
+	const v3 = "1.3.5"
+	const rel = 2
+
+	// checking simple comparison
+	ps := RPMSlice{
+		NewProvides(name, v1, rel, 0, "EQ", nil),
+		NewProvides(name, v2, rel, 0, "EQ", nil),
+		NewProvides(name, v3, rel, 0, "EQ", nil),
+	}
+
+	for _, table := range []struct {
+		ctor string
+		vals []bool
+		strs []string
+	}{
+		{
+			ctor: "GT",
+			vals: []bool{false, false, true},
+			strs: []string{
+				"%s not %s %s",
+				"%s not %s %s",
+				"%s %s %s",
+			},
+		},
+		{
+			ctor: "GE",
+			vals: []bool{false, true, true},
+			strs: []string{
+				"%s not %s %s",
+				"%s %s %s",
+				"%s %s %s",
+			},
+		},
+		{
+			ctor: "LT",
+			vals: []bool{true, false, false},
+			strs: []string{
+				"%s %s %s",
+				"%s not %s %s",
+				"%s not %s %s",
+			},
+		},
+		{
+			ctor: "LE",
+			vals: []bool{true, true, false},
+			strs: []string{
+				"%s %s %s",
+				"%s %s %s",
+				"%s not %s %s",
+			},
+		},
+	} {
+		req := NewRequires(name, v2, rel, 0, table.ctor, "")
+		for i := range table.vals {
+			o := req.ProvideMatches(ps[i])
+			if o != table.vals[i] {
+				t.Fatalf(table.strs[i], ps[i], table.ctor, req)
+			}
+		}
+	}
+
+}
+
 // EOF

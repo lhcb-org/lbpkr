@@ -139,6 +139,16 @@ func (yum *Client) ListPackages(name, version, release string) ([]*Package, erro
 	return pkgs, err
 }
 
+// RequiredPackages returns the list of all required packages for pkg (including pkg itself)
+func (yum *Client) RequiredPackages(pkg *Package) ([]*Package, error) {
+	pkgs, err := yum.PackageDeps(pkg)
+	if err != nil {
+		return nil, err
+	}
+	pkgs = append(pkgs, pkg)
+	return pkgs, err
+}
+
 // PackageDeps returns all dependencies for the package (excluding the package itself)
 func (yum *Client) PackageDeps(pkg *Package) ([]*Package, error) {
 	var err error

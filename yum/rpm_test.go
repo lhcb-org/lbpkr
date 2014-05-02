@@ -198,4 +198,17 @@ func TestRequiresDifferentName(t *testing.T) {
 	}
 }
 
+func TestOrderWithDifferentName(t *testing.T) {
+	const name = "TestPackage"
+	const v1 = "1.0.1"
+	const rel = 2
+
+	// checking simple comparison
+	p1 := NewProvides(name, v1, rel, 0, "EQ", nil)
+	p2 := NewProvides(name+"z", v1, rel, 0, "EQ", nil)
+	if !RpmLessThan(p1, p2) {
+		t.Fatalf("expected %s < %s\n", p1, p2)
+	}
+}
+
 // EOF

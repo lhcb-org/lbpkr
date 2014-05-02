@@ -24,7 +24,9 @@ type Client struct {
 	repourls    map[string]string
 }
 
-func New(siteroot string) (*Client, error) {
+// newClient returns a Client from siteroot and backends.
+// manualConfig is just for internal tests
+func newClient(siteroot string, backends []string, checkForUpdates, manualConfig bool) (*Client, error) {
 	client := &Client{
 		msg:         logger.New("yum"),
 		siteroot:    siteroot,
@@ -37,6 +39,10 @@ func New(siteroot string) (*Client, error) {
 		repourls:    make(map[string]string),
 	}
 
+	if manualConfig {
+		return client, nil
+	}
+
 	// load the config and set the URLs accordingly
 	urls, err := client.loadConfig()
 	if err != nil {
@@ -45,17 +51,23 @@ func New(siteroot string) (*Client, error) {
 
 	// At this point we have the repo names and URLs in self.repourls
 	// we know connect to them to get the best method to get the appropriate files
-	checkForUpdates := true
-	backends := []string{
-		//"RepositorySQLiteBackend",
-		"RepositoryXMLBackend",
-	}
 	err = client.initRepositories(urls, checkForUpdates, backends)
 	if err != nil {
 		return nil, err
 	}
 
 	return client, err
+}
+
+// New returns a new YUM Client, rooted at siteroot.
+func New(siteroot string) (*Client, error) {
+	checkForUpdates := true
+	manualConfig := false
+	backends := []string{
+		//"RepositorySQLiteBackend",
+		"RepositoryXMLBackend",
+	}
+	return newClient(siteroot, backends, checkForUpdates, manualConfig)
 }
 
 // FindLatestMatchingName locates a package by name and returns the latest available version

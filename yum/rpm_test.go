@@ -71,4 +71,38 @@ func TestProvidesComparison(t *testing.T) {
 	}
 }
 
+func TestMatchEqual(t *testing.T) {
+	const name = "TestPackage"
+	const v1 = "1.0.1"
+	const v2 = "1.2.0"
+	const rel1 = 2
+	const rel2 = 3
+
+	// checking equality
+	p1 := NewProvides(name, v1, rel1, 0, "EQ", nil)
+	req := NewRequires(name, v1, rel1, 0, "EQ", "")
+	if !req.ProvideMatches(p1) {
+		t.Fatalf("%s should match %s.\n", rpmString(p1), rpmString(req))
+	}
+
+	// checking release mismatch
+	p2 := NewProvides(name, v1, rel2, 0, "EQ", nil)
+	if req.ProvideMatches(p2) {
+		t.Fatalf("%s should NOT match %s.\n", rpmString(p2), rpmString(req))
+	}
+
+	// checking version mismatch
+	p3 := NewProvides(name, v2, rel1, 0, "EQ", nil)
+	if req.ProvideMatches(p3) {
+		t.Fatalf("%s should NOT match %s.\n", rpmString(p3), rpmString(req))
+	}
+
+	// checking name mismatch
+	p4 := NewProvides(name+"XYZ", v1, rel1, 0, "EQ", nil)
+	if req.ProvideMatches(p4) {
+		t.Fatalf("%s should NOT match %s.\n", rpmString(p4), rpmString(req))
+	}
+
+}
+
 // EOF

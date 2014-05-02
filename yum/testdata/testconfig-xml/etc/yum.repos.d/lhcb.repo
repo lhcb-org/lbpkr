@@ -1,0 +1,14 @@
+
+[lhcbold]
+#REPOVERSION 0001
+name=lhcbold
+baseurl=http://test-lbrpm.web.cern.ch/test-lbrpm/rpm
+enabled=1
+
+
+[lhcb]
+#REPOVERSION 0001
+name=lhcb
+baseurl=http://test-lbrpm.web.cern.ch/test-lbrpm/lhcb
+enabled=1
+

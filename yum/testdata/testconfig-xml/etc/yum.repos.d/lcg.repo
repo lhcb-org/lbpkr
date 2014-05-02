@@ -1,0 +1,7 @@
+
+[lcg]
+#REPOVERSION 0001
+name=lcg
+baseurl=http://test-lbrpm.web.cern.ch/test-lbrpm/lcg
+enabled=1
+

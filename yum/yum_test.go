@@ -324,3 +324,25 @@ func TestFindReleaseUpdate(t *testing.T) {
 	}
 
 }
+
+func TestLoadConfig(t *testing.T) {
+	for _, siteroot := range []string{
+		"testdata/testconfig-xml",
+		//"testdata/testconfig-sqlite",
+	} {
+		checkForUpdates := false
+		manualConfig := false
+		backends := []string{
+			//"RepositorySQLiteBackend",
+			"RepositoryXMLBackend",
+		}
+		yum, err := newClient(siteroot, backends, checkForUpdates, manualConfig)
+		if err != nil {
+			t.Fatalf("could not create yum.Client(siteroot=%q): %v\n", siteroot, err)
+		}
+
+		if len(yum.repos) != 3 {
+			t.Fatalf("expected 3 repositories. got=%d\n", len(yum.repos))
+		}
+	}
+}

@@ -187,7 +187,7 @@ func (repo *RepositorySQLiteBackend) FindLatestMatchingRequire(requirement *Requ
 
 // GetPackages returns all the packages known by a YUM repository
 func (repo *RepositorySQLiteBackend) GetPackages() []*Package {
-	query := "select pkgKey, name, version, release, epoch, rpm_group, arch, location_href from packages"
+	query := "select pkgkey, name, version, release, epoch, rpm_group, arch, location_href from packages"
 	stmt, err := repo.db.Prepare(query)
 	if err != nil {
 		repo.msg.Errorf("db-error: %v\n", err)
@@ -306,7 +306,7 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 func (repo *RepositorySQLiteBackend) loadProvides(pkgkey int, pkg *Package) error {
 	var err error
 	stmt, err := repo.db.Prepare(
-		"select name, version, release, epoch, flags from provides where pkgKey=?",
+		"select name, version, release, epoch, flags from provides where pkgkey=?",
 	)
 	if err != nil {
 		return err
@@ -377,7 +377,7 @@ func (repo *RepositorySQLiteBackend) loadProvides(pkgkey int, pkg *Package) erro
 func (repo *RepositorySQLiteBackend) loadRequires(pkgkey int, pkg *Package) error {
 	var err error
 	stmt, err := repo.db.Prepare(
-		"select name, version, release, epoch, flags, pre from requires where pkgKey=?",
+		"select name, version, release, epoch, flags, pre from requires where pkgkey=?",
 	)
 	if err != nil {
 		return err
@@ -458,7 +458,7 @@ func (repo *RepositorySQLiteBackend) loadPackagesByName(name, version string) ([
 	var err error
 	pkgs := make([]*Package, 0)
 	args := []interface{}{name}
-	query := "select pkgKey, name, version, release, epoch, rpm_group, arch, location_href" +
+	query := "select pkgkey, name, version, release, epoch, rpm_group, arch, location_href" +
 		"from packages where name = ?"
 	if version != "" {
 		query += " and version = ?"
@@ -504,7 +504,7 @@ func (repo *RepositorySQLiteBackend) loadPackagesByName(name, version string) ([
 func (repo *RepositorySQLiteBackend) findProvidesByName(name string) ([]*Provides, error) {
 	var err error
 	provides := make([]*Provides, 0)
-	query := "select pkgKey, name, version, release, epoch, flags from provides where name=?"
+	query := "select pkgkey, name, version, release, epoch, flags from provides where name=?"
 	stmt, err := repo.db.Prepare(query)
 	if err != nil {
 		return nil, err
@@ -557,9 +557,9 @@ func (repo *RepositorySQLiteBackend) loadPackagesProviding(prov *Provides) ([]*P
 		prov.Name(),
 		prov.Version(),
 	}
-	query := `select p.pkgKey, p.name, p.version, p.release, p.epoch, p.rpm_group, p.arch, p.location_href
+	query := `select p.pkgkey, p.name, p.version, p.release, p.epoch, p.rpm_group, p.arch, p.location_href
              from packages p, provides r
-             where p.pkgKey = r.pkgKey
+             where p.pkgkey = r.pkgkey
              and r.name = ?
              and r.version = ?`
 	if prov.Release() > 0 {

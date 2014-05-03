@@ -522,14 +522,38 @@ func (repo *RepositorySQLiteBackend) findProvidesByName(name string) ([]*Provide
 
 	for rows.Next() {
 		var p Provides
+		var name []byte
+		var version []byte
+		var release []byte
+		var epoch []byte
+		var flags []byte
 		err = rows.Scan(
-			&p.rpmBase.name, &p.rpmBase.version, &p.rpmBase.release,
-			&p.rpmBase.epoch,
-			&p.rpmBase.flags,
+			&name, &version, &release,
+			&epoch, &flags,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		p.rpmBase.name = string(name)
+		p.rpmBase.version = string(version)
+		if string(release) != "" {
+			rel, err := strconv.Atoi(string(release))
+			if err != nil {
+				return nil, err
+			}
+			p.rpmBase.release = rel
+		}
+
+		if string(epoch) != "" {
+			epo, err := strconv.Atoi(string(epoch))
+			if err != nil {
+				return nil, err
+			}
+			p.rpmBase.epoch = epo
+		}
+
+		p.rpmBase.flags = string(flags)
 		p.Package = nil
 		provides = append(provides, &p)
 	}

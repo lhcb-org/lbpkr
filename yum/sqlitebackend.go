@@ -246,15 +246,18 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 	pkg.provides = make([]*Provides, 0)
 	var rel_str sql.NullString
 	var epoch_str sql.NullString
+	var group sql.NullString
+	var arch sql.NullString
+	var location sql.NullString
 	err := rows.Scan(
 		&pkgkey,
 		&pkg.rpmBase.name,
 		&pkg.rpmBase.version,
 		&rel_str,
 		&epoch_str,
-		&pkg.group,
-		&pkg.arch,
-		&pkg.location,
+		&group,
+		&arch,
+		&location,
 	)
 	if err != nil {
 		return nil, err
@@ -274,6 +277,16 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 			return nil, err
 		}
 		pkg.rpmBase.epoch = epoch
+	}
+
+	if group.Valid {
+		pkg.group = group.String
+	}
+	if arch.Valid {
+		pkg.arch = arch.String
+	}
+	if location.Valid {
+		pkg.location = location.String
 	}
 
 	err = repo.loadRequires(pkgkey, &pkg)

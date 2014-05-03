@@ -459,7 +459,7 @@ func (repo *RepositorySQLiteBackend) loadPackagesByName(name, version string) ([
 	pkgs := make([]*Package, 0)
 	args := []interface{}{name}
 	query := "select pkgkey, name, version, release, epoch, rpm_group, arch, location_href" +
-		"from packages where name = ?"
+		" from packages where name = ?"
 	if version != "" {
 		query += " and version = ?"
 		args = append(args, version)

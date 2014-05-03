@@ -239,11 +239,12 @@ func (repo *RepositorySQLiteBackend) GetPackages() []*Package {
 }
 
 func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Package, error) {
-	pkgkey := 0
 	var pkg Package
 	pkg.repository = repo.Repository
 	pkg.requires = make([]*Requires, 0)
 	pkg.provides = make([]*Provides, 0)
+	var pkgkey sql.NullInt64
+	var version sql.NullString
 	var rel_str sql.NullString
 	var epoch_str sql.NullString
 	var group sql.NullString
@@ -252,7 +253,7 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 	err := rows.Scan(
 		&pkgkey,
 		&pkg.rpmBase.name,
-		&pkg.rpmBase.version,
+		&version,
 		&rel_str,
 		&epoch_str,
 		&group,
@@ -261,6 +262,10 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	if version.Valid {
+		pkg.rpmBase.version = version.String
 	}
 
 	if rel_str.Valid {
@@ -289,12 +294,12 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 		pkg.location = location.String
 	}
 
-	err = repo.loadRequires(pkgkey, &pkg)
+	err = repo.loadRequires(int(pkgkey.Int64), &pkg)
 	if err != nil {
 		return nil, err
 	}
 
-	err = repo.loadProvides(pkgkey, &pkg)
+	err = repo.loadProvides(int(pkgkey.Int64), &pkg)
 	if err != nil {
 		return nil, err
 	}

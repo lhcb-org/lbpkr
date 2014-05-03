@@ -317,14 +317,34 @@ func (repo *RepositorySQLiteBackend) loadProvides(pkgkey int, pkg *Package) erro
 
 	for rows.Next() {
 		var p Provides
+		var name []byte
+		var version []byte
+		var release []byte
+		var epoch []byte
+		var flags []byte
 		err = rows.Scan(
-			&p.rpmBase.name, &p.rpmBase.version, &p.rpmBase.release,
-			&p.rpmBase.epoch,
-			&p.rpmBase.flags,
+			&name, &version, &release,
+			&epoch, &flags,
 		)
 		if err != nil {
 			return err
 		}
+
+		p.rpmBase.name = string(name)
+		p.rpmBase.version = string(version)
+		rel, err := strconv.Atoi(string(release))
+		if err != nil {
+			return err
+		}
+		p.rpmBase.release = rel
+
+		epo, err := strconv.Atoi(string(epoch))
+		if err != nil {
+			return err
+		}
+		p.rpmBase.epoch = epo
+
+		p.rpmBase.flags = string(flags)
 		p.Package = pkg
 		pkg.provides = append(pkg.provides, &p)
 	}
@@ -364,15 +384,42 @@ func (repo *RepositorySQLiteBackend) loadRequires(pkgkey int, pkg *Package) erro
 
 	for rows.Next() {
 		var req Requires
+		var name []byte
+		var version []byte
+		var release []byte
+		var epoch []byte
+		var flags []byte
+		var pre []byte
 		err = rows.Scan(
-			&req.rpmBase.name, &req.rpmBase.version, &req.rpmBase.release,
-			&req.rpmBase.epoch,
-			&req.rpmBase.flags,
-			&req.pre,
+			&name, &version, &release,
+			&epoch, &flags,
+			&pre,
 		)
 		if err != nil {
 			return err
 		}
+
+		req.rpmBase.name = string(name)
+		req.rpmBase.version = string(version)
+		rel, err := strconv.Atoi(string(release))
+		if err != nil {
+			return err
+		}
+		req.rpmBase.release = rel
+
+		epo, err := strconv.Atoi(string(epoch))
+		if err != nil {
+			return err
+		}
+		req.rpmBase.epoch = epo
+
+		req.rpmBase.flags = string(flags)
+		req.pre = string(pre)
+
+		if err != nil {
+			return err
+		}
+
 		if req.rpmBase.flags == "" {
 			req.rpmBase.flags = "EQ"
 		}

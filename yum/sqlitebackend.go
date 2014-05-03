@@ -188,7 +188,6 @@ func (repo *RepositorySQLiteBackend) FindLatestMatchingRequire(requirement *Requ
 // GetPackages returns all the packages known by a YUM repository
 func (repo *RepositorySQLiteBackend) GetPackages() []*Package {
 	query := "select pkgKey, name, version, release, epoch, rpm_group, arch, location_href from packages"
-	//query := "select pkgKey, name, version from packages"
 	stmt, err := repo.db.Prepare(query)
 	if err != nil {
 		repo.msg.Errorf("db-error: %v\n", err)
@@ -244,6 +243,7 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 	pkg.requires = make([]*Requires, 0)
 	pkg.provides = make([]*Provides, 0)
 	var pkgkey sql.NullInt64
+	var name sql.NullString
 	var version sql.NullString
 	var rel_str sql.NullString
 	var epoch_str sql.NullString
@@ -252,7 +252,7 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 	var location sql.NullString
 	err := rows.Scan(
 		&pkgkey,
-		&pkg.rpmBase.name,
+		&name,
 		&version,
 		&rel_str,
 		&epoch_str,
@@ -264,6 +264,11 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 		return nil, err
 	}
 
+	if name.Valid {
+		pkg.rpmBase.name = name.String
+	} else {
+		return nil, fmt.Errorf("'name' field is NULL")
+	}
 	if version.Valid {
 		pkg.rpmBase.version = version.String
 	}

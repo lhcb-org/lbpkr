@@ -268,17 +268,21 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 	pkg.rpmBase.name = string(name)
 	pkg.rpmBase.version = string(version)
 
-	rel, err := strconv.Atoi(string(rel_str))
-	if err != nil {
-		return nil, err
+	if string(rel_str) != "" {
+		rel, err := strconv.Atoi(string(rel_str))
+		if err != nil {
+			return nil, err
+		}
+		pkg.rpmBase.release = rel
 	}
-	pkg.rpmBase.release = rel
 
-	epoch, err := strconv.Atoi(string(epoch_str))
-	if err != nil {
-		return nil, err
+	if string(epoch_str) != "" {
+		epoch, err := strconv.Atoi(string(epoch_str))
+		if err != nil {
+			return nil, err
+		}
+		pkg.rpmBase.epoch = epoch
 	}
-	pkg.rpmBase.epoch = epoch
 
 	pkg.group = string(group)
 	pkg.arch = string(arch)
@@ -332,17 +336,21 @@ func (repo *RepositorySQLiteBackend) loadProvides(pkgkey int, pkg *Package) erro
 
 		p.rpmBase.name = string(name)
 		p.rpmBase.version = string(version)
-		rel, err := strconv.Atoi(string(release))
-		if err != nil {
-			return err
+		if string(release) != "" {
+			rel, err := strconv.Atoi(string(release))
+			if err != nil {
+				return err
+			}
+			p.rpmBase.release = rel
 		}
-		p.rpmBase.release = rel
 
-		epo, err := strconv.Atoi(string(epoch))
-		if err != nil {
-			return err
+		if string(epoch) != "" {
+			epo, err := strconv.Atoi(string(epoch))
+			if err != nil {
+				return err
+			}
+			p.rpmBase.epoch = epo
 		}
-		p.rpmBase.epoch = epo
 
 		p.rpmBase.flags = string(flags)
 		p.Package = pkg
@@ -401,17 +409,21 @@ func (repo *RepositorySQLiteBackend) loadRequires(pkgkey int, pkg *Package) erro
 
 		req.rpmBase.name = string(name)
 		req.rpmBase.version = string(version)
-		rel, err := strconv.Atoi(string(release))
-		if err != nil {
-			return err
+		if string(release) != "" {
+			rel, err := strconv.Atoi(string(release))
+			if err != nil {
+				return err
+			}
+			req.rpmBase.release = rel
 		}
-		req.rpmBase.release = rel
 
-		epo, err := strconv.Atoi(string(epoch))
-		if err != nil {
-			return err
+		if string(epoch) != "" {
+			epo, err := strconv.Atoi(string(epoch))
+			if err != nil {
+				return err
+			}
+			req.rpmBase.epoch = epo
 		}
-		req.rpmBase.epoch = epo
 
 		req.rpmBase.flags = string(flags)
 		req.pre = string(pre)

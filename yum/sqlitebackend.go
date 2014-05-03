@@ -243,13 +243,13 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 	pkg.requires = make([]*Requires, 0)
 	pkg.provides = make([]*Provides, 0)
 	var pkgkey sql.NullInt64
-	var name sql.NullString
-	var version sql.NullString
-	var rel_str sql.NullString
-	var epoch_str sql.NullString
-	var group sql.NullString
-	var arch sql.NullString
-	var location sql.NullString
+	var name []byte
+	var version []byte
+	var rel_str []byte
+	var epoch_str []byte
+	var group []byte
+	var arch []byte
+	var location []byte
 	err := rows.Scan(
 		&pkgkey,
 		&name,
@@ -264,40 +264,24 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 		return nil, err
 	}
 
-	if name.Valid {
-		pkg.rpmBase.name = name.String
-	} else {
-		return nil, fmt.Errorf("'name' field is NULL")
-	}
-	if version.Valid {
-		pkg.rpmBase.version = version.String
-	}
+	pkg.rpmBase.name = string(name)
+	pkg.rpmBase.version = string(version)
 
-	if rel_str.Valid {
-		rel, err := strconv.Atoi(rel_str.String)
-		if err != nil {
-			return nil, err
-		}
-		pkg.rpmBase.release = rel
+	rel, err := strconv.Atoi(string(rel_str))
+	if err != nil {
+		return nil, err
 	}
+	pkg.rpmBase.release = rel
 
-	if epoch_str.Valid {
-		epoch, err := strconv.Atoi(epoch_str.String)
-		if err != nil {
-			return nil, err
-		}
-		pkg.rpmBase.epoch = epoch
+	epoch, err := strconv.Atoi(string(epoch_str))
+	if err != nil {
+		return nil, err
 	}
+	pkg.rpmBase.epoch = epoch
 
-	if group.Valid {
-		pkg.group = group.String
-	}
-	if arch.Valid {
-		pkg.arch = arch.String
-	}
-	if location.Valid {
-		pkg.location = location.String
-	}
+	pkg.group = string(group)
+	pkg.arch = string(arch)
+	pkg.location = string(location)
 
 	err = repo.loadRequires(int(pkgkey.Int64), &pkg)
 	if err != nil {

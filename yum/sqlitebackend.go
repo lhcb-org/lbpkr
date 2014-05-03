@@ -467,18 +467,21 @@ func (repo *RepositorySQLiteBackend) loadPackagesByName(name, version string) ([
 
 	stmt, err := repo.db.Prepare(query)
 	if err != nil {
+		repo.msg.Errorf("loadpkgbyname-prepare error: %v\n", err)
 		return nil, err
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.Query(args...)
 	if err != nil {
+		repo.msg.Errorf("loadpkgbyname-query error: %v\n", err)
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		pkg, err := repo.newPackageFromScan(rows)
 		if err != nil {
+			repo.msg.Errorf("loadpkgbyname-scan error: %v\n", err)
 			return nil, err
 		}
 		pkgs = append(pkgs, pkg)

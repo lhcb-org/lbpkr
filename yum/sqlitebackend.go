@@ -522,12 +522,14 @@ func (repo *RepositorySQLiteBackend) findProvidesByName(name string) ([]*Provide
 
 	for rows.Next() {
 		var p Provides
+		pkgkey := 0
 		var name []byte
 		var version []byte
 		var release []byte
 		var epoch []byte
 		var flags []byte
 		err = rows.Scan(
+			&pkgkey,
 			&name, &version, &release,
 			&epoch, &flags,
 		)

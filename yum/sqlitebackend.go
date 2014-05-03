@@ -187,8 +187,8 @@ func (repo *RepositorySQLiteBackend) FindLatestMatchingRequire(requirement *Requ
 
 // GetPackages returns all the packages known by a YUM repository
 func (repo *RepositorySQLiteBackend) GetPackages() []*Package {
-	//query := "select pkgKey, name, version, release, epoch, rpm_group, arch, location_href from packages"
-	query := "select pkgKey, name, version from packages"
+	query := "select pkgKey, name, version, release, epoch, rpm_group, arch, location_href from packages"
+	//query := "select pkgKey, name, version from packages"
 	stmt, err := repo.db.Prepare(query)
 	if err != nil {
 		repo.msg.Errorf("db-error: %v\n", err)
@@ -244,33 +244,37 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 	pkg.repository = repo.Repository
 	pkg.requires = make([]*Requires, 0)
 	pkg.provides = make([]*Provides, 0)
-	rel_str := "0"
-	epoch_str := "0"
+	var rel_str sql.NullString
+	var epoch_str sql.NullString
 	err := rows.Scan(
 		&pkgkey,
 		&pkg.rpmBase.name,
 		&pkg.rpmBase.version,
 		&rel_str,
-		// &epoch_str,
-		// &pkg.group,
-		// &pkg.arch,
-		// &pkg.location,
+		&epoch_str,
+		&pkg.group,
+		&pkg.arch,
+		&pkg.location,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	rel, err := strconv.Atoi(rel_str)
-	if err != nil {
-		return nil, err
+	if rel_str.Valid {
+		rel, err := strconv.Atoi(rel_str.String)
+		if err != nil {
+			return nil, err
+		}
+		pkg.rpmBase.release = rel
 	}
-	pkg.rpmBase.release = rel
 
-	epoch, err := strconv.Atoi(epoch_str)
-	if err != nil {
-		return nil, err
+	if epoch_str.Valid {
+		epoch, err := strconv.Atoi(epoch_str.String)
+		if err != nil {
+			return nil, err
+		}
+		pkg.rpmBase.epoch = epoch
 	}
-	pkg.rpmBase.epoch = epoch
 
 	err = repo.loadRequires(pkgkey, &pkg)
 	if err != nil {

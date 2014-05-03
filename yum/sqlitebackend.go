@@ -261,6 +261,7 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 		&location,
 	)
 	if err != nil {
+		repo.msg.Errorf("scan error: %v\n", err)
 		return nil, err
 	}
 
@@ -285,11 +286,13 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 
 	err = repo.loadRequires(int(pkgkey.Int64), &pkg)
 	if err != nil {
+		repo.msg.Errorf("load-requires error: %v\n", err)
 		return nil, err
 	}
 
 	err = repo.loadProvides(int(pkgkey.Int64), &pkg)
 	if err != nil {
+		repo.msg.Errorf("load-provides error: %v\n", err)
 		return nil, err
 	}
 

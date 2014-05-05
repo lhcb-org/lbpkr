@@ -133,6 +133,10 @@ func (yum *Client) FindLatestMatchingRequire(requirement *Requires) (*Package, e
 		p, err := repo.FindLatestMatchingRequire(requirement)
 		if err != nil {
 			errors = append(errors, err)
+			yum.msg.Debugf("no match for req=%s.%s-%s (repo=%s)\n",
+				requirement.Name(), requirement.Version(), requirement.Release(),
+				repo.RepoUrl,
+			)
 			continue
 		}
 		found = append(found, p)

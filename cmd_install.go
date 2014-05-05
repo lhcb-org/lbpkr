@@ -6,7 +6,6 @@ import (
 
 	"github.com/gonuts/commander"
 	"github.com/gonuts/flag"
-	"github.com/gonuts/logger"
 )
 
 func pkr_make_cmd_install() *commander.Command {
@@ -77,7 +76,6 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx.SetLevel(logger.VERBOSE)
 
 	ctx.msg.Infof("installing RPM %s %s %s\n", rpmname, version, release)
 

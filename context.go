@@ -123,6 +123,11 @@ func (ctx *Context) Exit(rc int) {
 	os.Exit(rc)
 }
 
+func (ctx *Context) SetLevel(lvl logger.Level) {
+	ctx.msg.SetLevel(lvl)
+	ctx.yum.SetLevel(lvl)
+}
+
 // initRpmDb initializes the RPM database
 func (ctx *Context) initRpmDb() error {
 	var err error

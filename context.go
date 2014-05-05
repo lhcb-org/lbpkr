@@ -391,6 +391,15 @@ func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) 
 		ctx.msg.Errorf("required-packages error: %v\n", err)
 		return err
 	}
+	pkgset := make(map[string]*yum.Package)
+	for _, p := range pkgs {
+		pkgset[p.RpmName()] = p
+	}
+	pkgs = pkgs[:0]
+	for _, p := range pkgset {
+		pkgs = append(pkgs, p)
+	}
+
 	ctx.msg.Infof("found %d RPMs to install:\n", len(pkgs))
 	for _, p := range pkgs {
 		ctx.msg.Infof("\t%s\n", p.RpmName())

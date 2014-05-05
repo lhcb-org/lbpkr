@@ -430,7 +430,7 @@ func (ctx *Context) isRpmInstalled(name, version string) bool {
 	}
 	out, err := ctx.rpm("-q", fullname)
 	if err != nil {
-		ctx.msg.Errorf("rpm command failed: %v\n%v\n", err, string(out))
+		ctx.msg.Debugf("rpm installed? command failed: %v\n%v\n", err, string(out))
 	}
 	installed := err == nil
 	return installed

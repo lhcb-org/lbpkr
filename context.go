@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/gonuts/logger"
@@ -298,6 +302,47 @@ enabled=1
 // checkUpdates checks whether packages could be updated in the repository
 func (ctx *Context) checkUpdates() error {
 	var err error
+	pkgs, err := ctx.listInstalledPackages()
+	if err != nil {
+		return err
+	}
+	pkglist := make(map[string]yum.RPMSlice)
+	// group by key/version to make sure we only try to update the newest installed
+	for _, pkg := range pkgs {
+		prov := yum.NewProvides(pkg[0], pkg[1], pkg[2], "", "EQ", nil)
+		key := pkg[0] + "-" + pkg[1]
+		pkglist[key] = append(pkglist[key], prov)
+	}
+
+	for _, rpms := range pkglist {
+		sort.Sort(rpms)
+		pkg := rpms[len(rpms)-1]
+		// create a RPM requirement and check whether we have a match
+		req := yum.NewRequires(pkg.Name(), pkg.Version(), pkg.Release(), "", "EQ", "")
+		update, err := ctx.yum.FindLatestMatchingRequire(req)
+		if err != nil {
+			return err
+		}
+		if yum.RpmLessThan(pkg, update) {
+			if ctx.cfg.NoAutoUpdate() {
+				ctx.msg.Warnf("%s.%s-%s could be updated to %s but update disabled\n",
+					pkg.Name(), pkg.Version(), pkg.Release(),
+					update.RpmName(),
+				)
+			} else {
+				ctx.msg.Warnf("updating %s.%s-%s to %s\n",
+					pkg.Name(), pkg.Version(), pkg.Release(),
+					update.RpmName(),
+				)
+				forceInstall := false
+				doUpdate := true
+				err = ctx.InstallRPM(update.Name(), update.Version(), update.Release(), forceInstall, doUpdate)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
 	return err
 }
 
@@ -434,6 +479,35 @@ func (ctx *Context) isRpmInstalled(name, version string) bool {
 	}
 	installed := err == nil
 	return installed
+}
+
+// listInstalledPackages checks whether a given RPM package is already installed
+func (ctx *Context) listInstalledPackages() ([][3]string, error) {
+	list := make([][3]string, 0)
+	args := []string{"--dbpath", ctx.dbpath, "-qa", "--queryformat", "%{NAME} %{VERSION} %{RELEASE}\n"}
+	out, err := ctx.rpm(args...)
+	if err != nil {
+		return nil, err
+	}
+
+	scan := bufio.NewScanner(bytes.NewBuffer(out))
+	for scan.Scan() {
+		line := scan.Text()
+		pkg := strings.Split(line, " ")
+		if len(pkg) != 3 {
+			err = fmt.Errorf("pkr: invalid line %q", line)
+			return nil, err
+		}
+		for i, p := range pkg {
+			pkg[i] = strings.Trim(p, " \n\r\t")
+		}
+		list = append(list, [3]string{pkg[0], pkg[1], pkg[2]})
+	}
+	err = scan.Err()
+	if err != nil {
+		return nil, err
+	}
+	return list, err
 }
 
 // downloadFiles downloads a list of packages

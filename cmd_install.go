@@ -76,6 +76,7 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	defer ctx.Close()
 
 	ctx.msg.Infof("installing RPM %s %s %s\n", rpmname, version, release)
 

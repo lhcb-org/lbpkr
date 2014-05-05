@@ -120,7 +120,20 @@ func New(cfg Config, dbg bool) (*Context, error) {
 }
 
 func (ctx *Context) Exit(rc int) {
+	err := ctx.Close()
+	if err != nil {
+		ctx.msg.Errorf("error closing context: %v\n", err)
+	}
 	os.Exit(rc)
+}
+
+// Close cleans up resources used by the Context
+func (ctx *Context) Close() error {
+	if ctx == nil {
+		return nil
+	}
+
+	return ctx.yum.Close()
 }
 
 func (ctx *Context) SetLevel(lvl logger.Level) {

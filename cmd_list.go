@@ -61,6 +61,7 @@ func pkr_run_cmd_list(cmd *commander.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	defer ctx.Close()
 
 	err = ctx.ListPackages(name, vers, release)
 	return err

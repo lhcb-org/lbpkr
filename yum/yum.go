@@ -28,7 +28,7 @@ type Client struct {
 // manualConfig is just for internal tests
 func newClient(siteroot string, backends []string, checkForUpdates, manualConfig bool) (*Client, error) {
 	client := &Client{
-		msg:         logger.New("yum"),
+		msg:         logger.NewLogger("yum", logger.WARNING, os.Stdout),
 		siteroot:    siteroot,
 		etcdir:      filepath.Join(siteroot, "etc"),
 		lbyumcache:  filepath.Join(siteroot, "var", "cache", "lbyum"),

@@ -503,7 +503,7 @@ func (ctx *Context) installFiles(files []string, rpmdir string, forceInstall, up
 
 	out, err := ctx.rpm(args...)
 	if err != nil {
-		ctx.msg.Errorf("rpm command failed: %v\n%v\n", err, string(out))
+		ctx.msg.Errorf("rpm install command failed: %v\n%v\n", err, string(out))
 		return err
 	}
 	return err

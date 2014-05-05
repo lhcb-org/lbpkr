@@ -78,6 +78,7 @@ func (repo *RepositorySQLiteBackend) GetLatestDB(url string) error {
 		return err
 	}
 	defer tmp.Close()
+	defer os.RemoveAll(tmp.Name())
 
 	resp, err := http.Get(url)
 	if err != nil {

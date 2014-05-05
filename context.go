@@ -400,9 +400,10 @@ func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) 
 		pkgs = append(pkgs, p)
 	}
 
-	ctx.msg.Infof("found %d RPMs to install:\n", len(pkgs))
-	for _, p := range pkgs {
-		ctx.msg.Infof("\t%s\n", p.RpmName())
+	npkgs := len(pkgs)
+	ctx.msg.Infof("found %d RPMs to install:\n", npkgs)
+	for i, p := range pkgs {
+		ctx.msg.Infof("\t[%03d/%03d] %s\n", i+1, npkgs, p.RpmName())
 	}
 
 	if len(pkgs) <= 0 {

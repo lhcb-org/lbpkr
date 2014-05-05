@@ -370,6 +370,7 @@ func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) 
 	ctx.msg.Infof("installing %s and dependencies\n", pkg.Name())
 	pkgs, err := ctx.yum.RequiredPackages(pkg)
 	if err != nil {
+		ctx.msg.Errorf("required-packages error: %v\n", err)
 		return err
 	}
 	ctx.msg.Infof("found %d RPMs to install:\n", len(pkgs))

@@ -37,7 +37,7 @@ type Repository struct {
 func NewRepository(name, url, cachedir string, backends []string, setupBackend, checkForUpdates bool) (*Repository, error) {
 
 	repo := Repository{
-		msg:            logger.NewLogger("repo", logger.WARNING, os.Stdout),
+		msg:            logger.NewLogger("repo", logger.INFO, os.Stdout),
 		Name:           name,
 		RepoUrl:        url,
 		RepoMdUrl:      url + "/repodata/repomd.xml",

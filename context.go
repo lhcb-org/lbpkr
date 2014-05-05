@@ -53,7 +53,7 @@ func New(cfg Config, dbg bool) (*Context, error) {
 
 	ctx := Context{
 		cfg:       cfg,
-		msg:       logger.NewLogger("pkr", logger.WARNING, os.Stdout),
+		msg:       logger.NewLogger("pkr", logger.INFO, os.Stdout),
 		siteroot:  siteroot,
 		repourl:   cfg.RepoUrl(),
 		rpmprefix: cfg.Prefix(),

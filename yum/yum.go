@@ -206,11 +206,12 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*
 	processed[pkg] = struct{}{}
 	required := make(map[*Package]struct{})
 
-	msg.Verbosef(">>> pkg %s.%s-%s (req=%d)\n", pkg.Name(), pkg.Version(), pkg.Release(), len(pkg.Requires()))
-	for _, req := range pkg.Requires() {
-		msg.Verbosef("processing deps for %s.%s-%s\n", req.Name(), req.Version(), req.Release())
+	nreqs := len(pkg.Requires())
+	msg.Verbosef(">>> pkg %s.%s-%s (req=%d)\n", pkg.Name(), pkg.Version(), pkg.Release(), nreqs)
+	for ireq, req := range pkg.Requires() {
+		msg.Verbosef("[%03d/%03d] processing deps for %s.%s-%s\n", ireq, nreqs, req.Name(), req.Version(), req.Release())
 		if str_in_slice(req.Name(), g_IGNORED_PACKAGES) {
-			msg.Verbosef("processing deps for %s.%s-%s [IGNORE]\n", req.Name(), req.Version(), req.Release())
+			msg.Verbosef("[%03d/%03d] processing deps for %s.%s-%s [IGNORE]\n", ireq, nreqs, req.Name(), req.Version(), req.Release())
 			continue
 		}
 		p, err := yum.FindLatestMatchingRequire(req)
@@ -223,7 +224,7 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*
 			continue
 		}
 		if p == nil {
-			msg.Errorf("package %s.%s-%d not found!\n", req.Name(), req.Version(), req.Release())
+			msg.Errorf("package %s.%s-%s not found!\n", req.Name(), req.Version(), req.Release())
 			lasterr = fmt.Errorf("package %s.%s-%s not found", req.Name(), req.Version(), req.Release())
 			continue
 			//return nil, fmt.Errorf("package %s.%s-%s not found", req.Name(), req.Version(), req.Release())

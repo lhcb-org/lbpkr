@@ -64,7 +64,7 @@ func New(siteroot string) (*Client, error) {
 	checkForUpdates := true
 	manualConfig := false
 	backends := []string{
-		//"RepositorySQLiteBackend",
+		"RepositorySQLiteBackend",
 		"RepositoryXMLBackend",
 	}
 	return newClient(siteroot, backends, checkForUpdates, manualConfig)

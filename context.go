@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -330,6 +331,30 @@ func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) 
 	for _, p := range pkgs {
 		ctx.msg.Infof("\t%s\n", p.RpmName())
 	}
+
+	if len(pkgs) <= 0 {
+		return fmt.Errorf("no RPM to install")
+	}
+
+	// filtering urls to only keep the ones not already installed
+	filtered, err := ctx.filterURLs(pkgs)
+	if err != nil {
+		return err
+	}
+
+	if len(filtered) <= 0 {
+		ctx.msg.Infof("all packages already installed\n")
+		return nil
+	}
+
+	// download the files
+	files, err := ctx.downloadFiles(filtered, ctx.tmpdir)
+	if err != nil {
+		return err
+	}
+
+	// install these files
+	err = ctx.installFiles(files, ctx.tmpdir, forceInstall, update)
 	return err
 }
 
@@ -351,7 +376,7 @@ func (ctx *Context) ListPackages(name, version, release string) error {
 }
 
 // rpm wraps the invocation of the rpm command
-func (ctx *Context) rpm(args []string) error {
+func (ctx *Context) rpm(args ...string) ([]byte, error) {
 	install_mode := false
 	query_mode := false
 	for _, arg := range args {
@@ -377,7 +402,122 @@ func (ctx *Context) rpm(args []string) error {
 	cmd := exec.Command("rpm", rpmargs...)
 	out, err := cmd.CombinedOutput()
 	ctx.msg.Debugf(string(out))
+	return out, err
+}
+
+// filterURLs filters out RPMs already installed
+func (ctx *Context) filterURLs(pkgs []*yum.Package) ([]*yum.Package, error) {
+	var err error
+	filtered := make([]*yum.Package, 0, len(pkgs))
+	for _, pkg := range pkgs {
+		name := pkg.RpmName()
+		version := ""
+		ctx.msg.Debugf("checking for installation of [%s]...\n", name)
+		if ctx.isRpmInstalled(name, version) {
+			ctx.msg.Debugf("already installed: %s\n", name)
+			continue
+		}
+		filtered = append(filtered, pkg)
+	}
+	return filtered, err
+}
+
+// isRpmInstalled checks whether a given RPM package is already installed
+func (ctx *Context) isRpmInstalled(name, version string) bool {
+	fullname := name
+	if version != "" {
+		fullname += "." + version
+	}
+	out, err := ctx.rpm("-q", fullname)
+	if err != nil {
+		ctx.msg.Errorf("rpm command failed: %v\n%v\n", err, string(out))
+	}
+	installed := err == nil
+	return installed
+}
+
+// downloadFiles downloads a list of packages
+func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, error) {
+	files := make([]string, 0, len(pkgs))
+	var err error
+
+	for _, pkg := range pkgs {
+		fname := pkg.RpmFileName()
+		fpath := filepath.Join(dir, fname)
+		files = append(files, fname)
+
+		needs_dl := true
+		if path_exists(fpath) {
+			if ok := ctx.checkRpmFile(fpath); ok {
+				needs_dl = false
+			}
+		}
+
+		if !needs_dl {
+			ctx.msg.Debugf("%s already downloaded\n", fname)
+			continue
+		}
+
+		ctx.msg.Infof("downloading %s to %s\n", pkg.Url(), fpath)
+		f, err := os.Create(fpath)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+
+		resp, err := http.Get(pkg.Url())
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		_, err = io.Copy(f, resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		err = f.Sync()
+		if err != nil {
+			return nil, err
+		}
+		err = f.Close()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return files, err
+}
+
+// installFiles installs some RPM files given the location of the RPM DB
+func (ctx *Context) installFiles(files []string, rpmdir string, forceInstall, update bool) error {
+	var err error
+	args := []string{"-ivh", "--oldpackage"}
+	if update || ctx.cfg.RpmUpdate() {
+		args = []string{"-Uvh"}
+	}
+	if forceInstall {
+		args = append(args, "--force")
+	}
+	for _, fname := range files {
+		args = append(args, filepath.Join(rpmdir, fname))
+	}
+
+	out, err := ctx.rpm(args...)
+	if err != nil {
+		ctx.msg.Errorf("rpm command failed: %v\n%v\n", err, string(out))
+		return err
+	}
 	return err
+}
+
+// checkRpmFile checks the integrity of a RPM file
+func (ctx *Context) checkRpmFile(fname string) bool {
+	args := []string{"-K", fname}
+	out, err := ctx.rpm(args...)
+	if err != nil {
+		ctx.msg.Errorf("rpm command failed: %v\n%v\n", err, string(out))
+	}
+	ok := err == nil
+	return ok
 }
 
 // EOF

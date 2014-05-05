@@ -32,7 +32,7 @@ type Backend interface {
 	LoadDB() error
 
 	// FindLatestMatchingName locats a package by name, returns the latest available version.
-	FindLatestMatchingName(name, version string, release int) (*Package, error)
+	FindLatestMatchingName(name, version, release string) (*Package, error)
 
 	// FindLatestMatchingRequire locates a package providing a given functionality.
 	FindLatestMatchingRequire(requirement *Requires) (*Package, error)

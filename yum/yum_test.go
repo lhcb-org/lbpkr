@@ -1,6 +1,7 @@
 package yum
 
 import (
+	"fmt"
 	"reflect"
 	"sort"
 	"testing"
@@ -52,7 +53,7 @@ func TestPackageMatching(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	p := NewRequires("TestPackage", "1.0.0", 1, 0, "EQ", "")
+	p := NewRequires("TestPackage", "1.0.0", "1", "", "EQ", "")
 	pkg, err := yum.FindLatestMatchingRequire(p)
 	if err != nil {
 		t.Fatalf("could not find match: %v\n", err)
@@ -74,7 +75,7 @@ func TestPackageByNameWithRelease(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", 1)
+	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", "1")
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -83,12 +84,14 @@ func TestPackageByNameWithRelease(t *testing.T) {
 		t.Fatalf("could not find latest matching name: nil package\n")
 	}
 
-	if pkg.Version() != "1.2.5" {
-		t.Fatalf("expected version=%q. got=%q\n", "1.2.5", pkg.Version())
+	exp := "1.2.5"
+	if pkg.Version() != exp {
+		t.Fatalf("expected version=%q. got=%q\n", exp, pkg.Version())
 	}
 
-	if pkg.Release() != 1 {
-		t.Fatalf("expected release=1. got=%d\n", 1, pkg.Release())
+	exp = "1"
+	if pkg.Release() != exp {
+		t.Fatalf("expected release=%q. got=%q\n", exp, pkg.Release())
 	}
 }
 
@@ -99,7 +102,7 @@ func TestPackageByNameWithoutRelease(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", 0)
+	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", "")
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -108,12 +111,14 @@ func TestPackageByNameWithoutRelease(t *testing.T) {
 		t.Fatalf("could not find latest matching name: nil package\n")
 	}
 
-	if pkg.Version() != "1.2.5" {
-		t.Fatalf("expected version=%q. got=%q\n", "1.2.5", pkg.Version())
+	exp := "1.2.5"
+	if pkg.Version() != exp {
+		t.Fatalf("expected version=%q. got=%q\n", exp, pkg.Version())
 	}
 
-	if pkg.Release() != 2 {
-		t.Fatalf("expected release=1. got=%d\n", 2, pkg.Release())
+	exp = "2"
+	if pkg.Release() != exp {
+		t.Fatalf("expected release=%q. got=%q\n", exp, pkg.Release())
 	}
 }
 
@@ -124,7 +129,7 @@ func TestPackageByNameWithoutVersion(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TP2", "", 0)
+	pkg, err := yum.FindLatestMatchingName("TP2", "", "")
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -133,12 +138,14 @@ func TestPackageByNameWithoutVersion(t *testing.T) {
 		t.Fatalf("could not find latest matching name: nil package\n")
 	}
 
-	if pkg.Version() != "1.2.5" {
-		t.Fatalf("expected version=%q. got=%q\n", "1.2.5", pkg.Version())
+	exp := "1.2.5"
+	if pkg.Version() != exp {
+		t.Fatalf("expected version=%q. got=%q\n", exp, pkg.Version())
 	}
 
-	if pkg.Release() != 2 {
-		t.Fatalf("expected release=1. got=%d\n", 2, pkg.Release())
+	exp = "2"
+	if pkg.Release() != exp {
+		t.Fatalf("expected release=%q. got=%q\n", exp, pkg.Release())
 	}
 }
 
@@ -149,7 +156,7 @@ func TestDependencyGreater(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TP2", "", 0)
+	pkg, err := yum.FindLatestMatchingName("TP2", "", "")
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -158,12 +165,14 @@ func TestDependencyGreater(t *testing.T) {
 		t.Fatalf("could not find latest matching name: nil package\n")
 	}
 
-	if pkg.Version() != "1.2.5" {
-		t.Fatalf("expected version=%q. got=%q\n", "1.2.5", pkg.Version())
+	exp := "1.2.5"
+	if pkg.Version() != exp {
+		t.Fatalf("expected version=%q. got=%q\n", exp, pkg.Version())
 	}
 
-	if pkg.Release() != 2 {
-		t.Fatalf("expected release=1. got=%d\n", 2, pkg.Release())
+	exp = "2"
+	if pkg.Release() != exp {
+		t.Fatalf("expected release=1. got=%q\n", exp, pkg.Release())
 	}
 
 	deps, err := yum.PackageDeps(pkg)
@@ -176,7 +185,7 @@ func TestDependencyGreater(t *testing.T) {
 	}
 
 	dep := deps[0]
-	exp := "TestPackage"
+	exp = "TestPackage"
 	if dep.Name() != exp {
 		t.Fatalf("expected name=%q. got=%q\n", exp, dep.Name())
 	}
@@ -194,7 +203,7 @@ func TestDependencyEqual(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TP3", "", 0)
+	pkg, err := yum.FindLatestMatchingName("TP3", "", "")
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -208,8 +217,9 @@ func TestDependencyEqual(t *testing.T) {
 		t.Fatalf("expected version=%q. got=%q\n", exp, pkg.Version())
 	}
 
-	if pkg.Release() != 2 {
-		t.Fatalf("expected release=1. got=%d\n", 2, pkg.Release())
+	exp = "2"
+	if pkg.Release() != exp {
+		t.Fatalf("expected release=%q. got=%q\n", exp, pkg.Release())
 	}
 
 	deps, err := yum.PackageDeps(pkg)
@@ -240,7 +250,7 @@ func TestCyclicDependency(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TCyclicDep", "", 0)
+	pkg, err := yum.FindLatestMatchingName("TCyclicDep", "", "")
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -254,8 +264,9 @@ func TestCyclicDependency(t *testing.T) {
 		t.Fatalf("expected version=%q. got=%q\n", exp, pkg.Version())
 	}
 
-	if pkg.Release() != 1 {
-		t.Fatalf("expected release=1. got=%d\n", 1, pkg.Release())
+	exp = "1"
+	if pkg.Release() != exp {
+		t.Fatalf("expected release=%q. got=%q\n", exp, pkg.Release())
 	}
 
 	deps, err := yum.PackageDeps(pkg)
@@ -275,7 +286,7 @@ func TestFindReleaseUpdate(t *testing.T) {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
 
-	pkg, err := yum.FindLatestMatchingName("TPRel", "4.2.7", 1)
+	pkg, err := yum.FindLatestMatchingName("TPRel", "4.2.7", "1")
 	if err != nil {
 		t.Fatalf("could not find latest matching name: %v\n", err)
 	}
@@ -289,24 +300,25 @@ func TestFindReleaseUpdate(t *testing.T) {
 		t.Fatalf("expected version=%q. got=%q\n", exp, pkg.Version())
 	}
 
-	if pkg.Release() != 1 {
-		t.Fatalf("expected release=1. got=%d\n", 1, pkg.Release())
+	exp = "1"
+	if pkg.Release() != exp {
+		t.Fatalf("expected release=%q. got=%q\n", exp, pkg.Release())
 	}
 
 	for _, table := range []struct {
 		req *Requires
 		ver string
-		rel int
+		rel string
 	}{
 		{
-			req: NewRequires(pkg.Name(), "", 0, 0, "EQ", ""),
+			req: NewRequires(pkg.Name(), "", "", "", "EQ", ""),
 			ver: "4.2.8",
-			rel: 1,
+			rel: "1",
 		},
 		{
-			req: NewRequires(pkg.Name(), pkg.Version(), 0, 0, "EQ", ""),
+			req: NewRequires(pkg.Name(), pkg.Version(), "", "", "EQ", ""),
 			ver: "4.2.7",
-			rel: 2,
+			rel: "2",
 		},
 	} {
 		n, err := yum.FindLatestMatchingRequire(table.req)
@@ -323,7 +335,7 @@ func TestFindReleaseUpdate(t *testing.T) {
 		}
 
 		if n.Release() != table.rel {
-			t.Fatalf("expected release=%d. got=%d\n", table.rel, n.Release())
+			t.Fatalf("expected release=%q. got=%q\n", table.rel, n.Release())
 		}
 	}
 
@@ -367,7 +379,7 @@ func TestLoadConfig(t *testing.T) {
 			t.Fatalf("expected 7 BRUNEL packages. got=%d (siteroot=%q)\n", len(brunels), siteroot)
 		}
 
-		pkg, err := yum.FindLatestMatchingName("ROOT_5.32.02_x86_64_slc5_gcc46_opt", "1.0.0", 1)
+		pkg, err := yum.FindLatestMatchingName("ROOT_5.32.02_x86_64_slc5_gcc46_opt", "1.0.0", "1")
 		if err != nil {
 			allpkgs, _ := yum.ListPackages("ROOT", "", "")
 			str := "["
@@ -387,15 +399,16 @@ func TestLoadConfig(t *testing.T) {
 			t.Fatalf("expected ROOT version=%q. got=%q (siteroot=%q)\n", exp, pkg.Version(), siteroot)
 		}
 
-		if pkg.Release() != 1 {
-			t.Fatalf("expected ROOT release=%d. got=%d (siteroot=%q)\n", 1, pkg.Release(), siteroot)
+		exp = "1"
+		if pkg.Release() != exp {
+			t.Fatalf("expected ROOT release=%q. got=%q (siteroot=%q)\n", exp, pkg.Release(), siteroot)
 		}
 
 		req := NewRequires(
 			"BRUNEL_v43r1p1_x86_64_slc5_gcc43_opt",
 			"1.0.0",
-			1,
-			0, "EQ", "",
+			"1",
+			"", "EQ", "",
 		)
 		brunel, err := yum.FindLatestMatchingRequire(req)
 		if err != nil {
@@ -411,8 +424,9 @@ func TestLoadConfig(t *testing.T) {
 			t.Fatalf("expected BRUNEL version=%q. got=%q (siteroot=%q)\n", exp, brunel.Version(), siteroot)
 		}
 
-		if brunel.Release() != 1 {
-			t.Fatalf("expected BRUNEL release=%d. got=%d (siteroot=%q)\n", 1, brunel.Release(), siteroot)
+		exp = "1"
+		if brunel.Release() != exp {
+			t.Fatalf("expected BRUNEL release=%q. got=%q (siteroot=%q)\n", exp, brunel.Release(), siteroot)
 		}
 
 		exprequired := []string{

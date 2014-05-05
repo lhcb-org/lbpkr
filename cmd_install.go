@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 
 	"github.com/gonuts/commander"
 	"github.com/gonuts/flag"
@@ -35,7 +34,7 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 
 	rpmname := ""
 	version := ""
-	release := 0
+	release := ""
 	switch len(args) {
 	case 0:
 		cmd.Usage()
@@ -48,10 +47,7 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	case 3:
 		rpmname = args[0]
 		version = args[1]
-		release, err = strconv.Atoi(args[2])
-		if err != nil {
-			return fmt.Errorf("pkr: invalid release number %q: %v", args[2], err)
-		}
+		release = args[2]
 	default:
 		return fmt.Errorf("pkr: invalid number of arguments. expected n=1|2|3. got=%d (%v)",
 			len(args),
@@ -71,10 +67,7 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 		case 4:
 			rpmname = m[1]
 			version = m[2]
-			release, err = strconv.Atoi(m[3])
-			if err != nil {
-				return fmt.Errorf("pkr: invalid release number %q: %v", m[3], err)
-			}
+			release = m[3]
 		}
 	}
 

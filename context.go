@@ -305,7 +305,7 @@ func (ctx *Context) install(project, version, cmtconfig string) error {
 }
 
 // InstallRPM installs a RPM by name
-func (ctx *Context) InstallRPM(name, version string, release int, forceInstall, update bool) error {
+func (ctx *Context) InstallRPM(name, version, release string, forceInstall, update bool) error {
 	var err error
 	pkg, err := ctx.yum.FindLatestMatchingName(name, version, release)
 	if err != nil {

@@ -9,8 +9,8 @@ import (
 type RPM interface {
 	Name() string
 	Version() string
-	Release() int
-	Epoch() int
+	Release() string
+	Epoch() string
 	Flags() string
 	StandardVersion() []string
 
@@ -22,8 +22,8 @@ type RPM interface {
 type rpmBase struct {
 	name    string
 	version string
-	release int
-	epoch   int
+	release string
+	epoch   string
 	flags   string
 }
 
@@ -35,11 +35,11 @@ func (rpm *rpmBase) Version() string {
 	return rpm.version
 }
 
-func (rpm *rpmBase) Release() int {
+func (rpm *rpmBase) Release() string {
 	return rpm.release
 }
 
-func (rpm *rpmBase) Epoch() int {
+func (rpm *rpmBase) Epoch() string {
 	return rpm.epoch
 }
 
@@ -52,11 +52,11 @@ func (rpm *rpmBase) StandardVersion() []string {
 }
 
 func (rpm *rpmBase) RpmName() string {
-	return fmt.Sprintf("%s-%s-%d", rpm.name, rpm.version, rpm.release)
+	return fmt.Sprintf("%s-%s-%s", rpm.name, rpm.version, rpm.release)
 }
 
 func (rpm *rpmBase) RpmFileName() string {
-	return fmt.Sprintf("%s-%s-%d.rpm", rpm.name, rpm.version, rpm.release)
+	return fmt.Sprintf("%s-%s-%s.rpm", rpm.name, rpm.version, rpm.release)
 }
 
 func (rpm *rpmBase) ProvideMatches(p RPM) bool {
@@ -96,7 +96,7 @@ func RpmEqual(i, j RPM) bool {
 	}
 
 	// if i or j misses a releases number, ignore release number
-	if i.Release() == 0 || j.Release() == 0 {
+	if i.Release() == "" || j.Release() == "" {
 		return true
 	}
 
@@ -132,7 +132,7 @@ func RpmLessThan(i, j RPM) bool {
 	}
 
 	// if i or j misses a releases number, ignore release number
-	if i.Release() == 0 || j.Release() == 0 {
+	if i.Release() == "" || j.Release() == "" {
 		return i.Version() < j.Version()
 	}
 	return i.Release() < j.Release()
@@ -144,7 +144,7 @@ type Provides struct {
 	Package *Package // pkg is the package Provides provides for.
 }
 
-func NewProvides(name, version string, release, epoch int, flags string, pkg *Package) *Provides {
+func NewProvides(name, version, release, epoch, flags string, pkg *Package) *Provides {
 	return &Provides{
 		rpmBase: rpmBase{
 			name:    name,
@@ -163,7 +163,7 @@ type Requires struct {
 	pre string // pre is the prequisite required by a RPM package
 }
 
-func NewRequires(name, version string, release, epoch int, flags string, pre string) *Requires {
+func NewRequires(name, version, release, epoch, flags string, pre string) *Requires {
 	return &Requires{
 		rpmBase: rpmBase{
 			name:    name,
@@ -189,7 +189,7 @@ type Package struct {
 }
 
 // NewPackage creates a new RPM package
-func NewPackage(name, version string, release, epoch int) *Package {
+func NewPackage(name, version, release, epoch string) *Package {
 	pkg := Package{
 		rpmBase: rpmBase{
 			name:    name,
@@ -207,7 +207,7 @@ func NewPackage(name, version string, release, epoch int) *Package {
 func (pkg *Package) String() string {
 	str := []string{
 		fmt.Sprintf(
-			"Package: %s-%s-%d\t%s",
+			"Package: %s-%s-%s\t%s",
 			pkg.Name(),
 			pkg.Version(),
 			pkg.Release(),
@@ -218,14 +218,14 @@ func (pkg *Package) String() string {
 	if len(pkg.provides) > 0 {
 		str = append(str, "Provides:")
 		for _, p := range pkg.provides {
-			str = append(str, fmt.Sprintf("\t%s-%s-%d", p.Name(), p.Version(), p.Release()))
+			str = append(str, fmt.Sprintf("\t%s-%s-%s", p.Name(), p.Version(), p.Release()))
 		}
 	}
 
 	if len(pkg.requires) > 0 {
 		str = append(str, "Requires:")
 		for _, p := range pkg.requires {
-			str = append(str, fmt.Sprintf("\t%s-%s-%d\t%s", p.Name(), p.Version(), p.Release(), p.Flags()))
+			str = append(str, fmt.Sprintf("\t%s-%s-%s\t%s", p.Name(), p.Version(), p.Release(), p.Flags()))
 		}
 	}
 

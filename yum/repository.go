@@ -70,7 +70,7 @@ func NewRepository(name, url, cachedir string, backends []string, setupBackend, 
 }
 
 // FindLatestMatchingName locats a package by name, returns the latest available version.
-func (repo *Repository) FindLatestMatchingName(name, version string, release int) (*Package, error) {
+func (repo *Repository) FindLatestMatchingName(name, version, release string) (*Package, error) {
 	return repo.Backend.FindLatestMatchingName(name, version, release)
 }
 

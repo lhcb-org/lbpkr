@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 
 	"github.com/gonuts/logger"
 	_ "github.com/mattn/go-sqlite3"
@@ -18,8 +17,6 @@ import (
 // RepositorySQLiteBackend is Backend querying YUM SQLite repositories
 type RepositorySQLiteBackend struct {
 	Name         string
-	Packages     map[string][]*Package
-	Provides     map[string][]*Provides
 	DBNameCompr  string
 	DBName       string
 	PrimaryCompr string
@@ -113,7 +110,7 @@ func (repo *RepositorySQLiteBackend) LoadDB() error {
 }
 
 // FindLatestMatchingName locats a package by name, returns the latest available version.
-func (repo *RepositorySQLiteBackend) FindLatestMatchingName(name, version string, release int) (*Package, error) {
+func (repo *RepositorySQLiteBackend) FindLatestMatchingName(name, version, release string) (*Package, error) {
 	var pkg *Package
 	var err error
 
@@ -122,7 +119,7 @@ func (repo *RepositorySQLiteBackend) FindLatestMatchingName(name, version string
 		return nil, err
 	}
 	matching := make(RPMSlice, 0, len(pkgs))
-	req := NewRequires(name, version, release, 0, "EQ", "")
+	req := NewRequires(name, version, release, "", "EQ", "")
 	for _, pkg := range pkgs {
 		if req.ProvideMatches(pkg) {
 			matching = append(matching, pkg)
@@ -240,13 +237,11 @@ func (repo *RepositorySQLiteBackend) GetPackages() []*Package {
 func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Package, error) {
 	var pkg Package
 	pkg.repository = repo.Repository
-	pkg.requires = make([]*Requires, 0)
-	pkg.provides = make([]*Provides, 0)
-	var pkgkey sql.NullInt64
+	var pkgkey int
 	var name []byte
 	var version []byte
-	var rel_str []byte
-	var epoch_str []byte
+	var rel []byte
+	var epoch []byte
 	var group []byte
 	var arch []byte
 	var location []byte
@@ -254,8 +249,8 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 		&pkgkey,
 		&name,
 		&version,
-		&rel_str,
-		&epoch_str,
+		&rel,
+		&epoch,
 		&group,
 		&arch,
 		&location,
@@ -267,34 +262,19 @@ func (repo *RepositorySQLiteBackend) newPackageFromScan(rows *sql.Rows) (*Packag
 
 	pkg.rpmBase.name = string(name)
 	pkg.rpmBase.version = string(version)
-
-	if string(rel_str) != "" {
-		rel, err := strconv.Atoi(string(rel_str))
-		if err != nil {
-			return nil, err
-		}
-		pkg.rpmBase.release = rel
-	}
-
-	if string(epoch_str) != "" {
-		epoch, err := strconv.Atoi(string(epoch_str))
-		if err != nil {
-			return nil, err
-		}
-		pkg.rpmBase.epoch = epoch
-	}
-
+	pkg.rpmBase.release = string(rel)
+	pkg.rpmBase.epoch = string(epoch)
 	pkg.group = string(group)
 	pkg.arch = string(arch)
 	pkg.location = string(location)
 
-	err = repo.loadRequires(int(pkgkey.Int64), &pkg)
+	err = repo.loadRequires(pkgkey, &pkg)
 	if err != nil {
 		repo.msg.Errorf("load-requires error: %v\n", err)
 		return nil, err
 	}
 
-	err = repo.loadProvides(int(pkgkey.Int64), &pkg)
+	err = repo.loadProvides(pkgkey, &pkg)
 	if err != nil {
 		repo.msg.Errorf("load-provides error: %v\n", err)
 		return nil, err
@@ -336,22 +316,8 @@ func (repo *RepositorySQLiteBackend) loadProvides(pkgkey int, pkg *Package) erro
 
 		p.rpmBase.name = string(name)
 		p.rpmBase.version = string(version)
-		if string(release) != "" {
-			rel, err := strconv.Atoi(string(release))
-			if err != nil {
-				return err
-			}
-			p.rpmBase.release = rel
-		}
-
-		if string(epoch) != "" {
-			epo, err := strconv.Atoi(string(epoch))
-			if err != nil {
-				return err
-			}
-			p.rpmBase.epoch = epo
-		}
-
+		p.rpmBase.release = string(release)
+		p.rpmBase.epoch = string(epoch)
 		p.rpmBase.flags = string(flags)
 		p.Package = pkg
 		pkg.provides = append(pkg.provides, &p)
@@ -409,22 +375,8 @@ func (repo *RepositorySQLiteBackend) loadRequires(pkgkey int, pkg *Package) erro
 
 		req.rpmBase.name = string(name)
 		req.rpmBase.version = string(version)
-		if string(release) != "" {
-			rel, err := strconv.Atoi(string(release))
-			if err != nil {
-				return err
-			}
-			req.rpmBase.release = rel
-		}
-
-		if string(epoch) != "" {
-			epo, err := strconv.Atoi(string(epoch))
-			if err != nil {
-				return err
-			}
-			req.rpmBase.epoch = epo
-		}
-
+		req.rpmBase.release = string(release)
+		req.rpmBase.epoch = string(epoch)
 		req.rpmBase.flags = string(flags)
 		req.pre = string(pre)
 
@@ -539,22 +491,8 @@ func (repo *RepositorySQLiteBackend) findProvidesByName(name string) ([]*Provide
 
 		p.rpmBase.name = string(name)
 		p.rpmBase.version = string(version)
-		if string(release) != "" {
-			rel, err := strconv.Atoi(string(release))
-			if err != nil {
-				return nil, err
-			}
-			p.rpmBase.release = rel
-		}
-
-		if string(epoch) != "" {
-			epo, err := strconv.Atoi(string(epoch))
-			if err != nil {
-				return nil, err
-			}
-			p.rpmBase.epoch = epo
-		}
-
+		p.rpmBase.release = string(release)
+		p.rpmBase.epoch = string(epoch)
 		p.rpmBase.flags = string(flags)
 		p.Package = nil
 		provides = append(provides, &p)
@@ -591,7 +529,7 @@ func (repo *RepositorySQLiteBackend) loadPackagesProviding(prov *Provides) ([]*P
              where p.pkgkey = r.pkgkey
              and r.name = ?
              and r.version = ?`
-	if prov.Release() > 0 {
+	if prov.Release() != "" {
 		query += " and r.release = ?"
 		args = append(args, prov.Release())
 	}

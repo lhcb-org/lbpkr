@@ -70,13 +70,28 @@ func New(siteroot string) (*Client, error) {
 	return newClient(siteroot, backends, checkForUpdates, manualConfig)
 }
 
+// Close cleans up after use
+func (yum *Client) Close() error {
+	var err error
+	for name, repo := range yum.repos {
+		e := repo.Close()
+		if e != nil {
+			yum.msg.Errorf("error closing repo [%s]: %v\n", name, e)
+			e = err
+		} else {
+			yum.msg.Debugf("closed repo [%s]\n", name)
+		}
+	}
+	return err
+}
+
 // SetLevel sets the verbosity level of Client
 func (yum *Client) SetLevel(lvl logger.Level) {
 	yum.msg.SetLevel(lvl)
 }
 
 // FindLatestMatchingName locates a package by name and returns the latest available version
-func (yum *Client) FindLatestMatchingName(name, version string, release int) (*Package, error) {
+func (yum *Client) FindLatestMatchingName(name, version, release string) (*Package, error) {
 	var err error
 	var pkg *Package
 	found := make(Packages, 0)

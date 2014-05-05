@@ -78,9 +78,9 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 			Arch string `xml:"arch"`
 
 			Version struct {
-				Epoch   int    `xml:"epoch,attr"`
+				Epoch   string `xml:"epoch,attr"`
 				Version string `xml:"ver,attr"`
-				Release int    `xml:"rel,attr"`
+				Release string `xml:"rel,attr"`
 			} `xml:"version"`
 
 			Checksum struct {
@@ -124,17 +124,17 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 				Provides []struct {
 					Name    string `xml:"name,attr"`
 					Flags   string `xml:"flags,attr"`
-					Epoch   int    `xml:"epoch,attr"`
+					Epoch   string `xml:"epoch,attr"`
 					Version string `xml:"ver,attr"`
-					Release int    `xml:"rel,attr"`
+					Release string `xml:"rel,attr"`
 				} `xml:"provides>entry"`
 
 				Requires []struct {
 					Name    string `xml:"name,attr"`
 					Flags   string `xml:"flags,attr"`
-					Epoch   int    `xml:"epoch,attr"`
+					Epoch   string `xml:"epoch,attr"`
 					Version string `xml:"ver,attr"`
-					Release int    `xml:"rel,attr"`
+					Release string `xml:"rel,attr"`
 					Pre     string `xml:"pre,attr"`
 				} `xml:"requires>entry"`
 
@@ -212,7 +212,7 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 		// add package to repository
 		repo.Packages[pkg.Name()] = append(repo.Packages[pkg.Name()], pkg)
 		repo.msg.Debugf(
-			"(repo=%s) added package: %s.%s-%d\n",
+			"(repo=%s) added package: %s.%s-%s\n",
 			repo.Primary,
 			pkg.Name(),
 			pkg.Version(),
@@ -225,7 +225,7 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 }
 
 // FindLatestMatchingName locats a package by name, returns the latest available version.
-func (repo *RepositoryXMLBackend) FindLatestMatchingName(name, version string, release int) (*Package, error) {
+func (repo *RepositoryXMLBackend) FindLatestMatchingName(name, version, release string) (*Package, error) {
 	var pkg *Package
 	var err error
 
@@ -243,7 +243,7 @@ func (repo *RepositoryXMLBackend) FindLatestMatchingName(name, version string, r
 		pkg = sorted[len(sorted)-1]
 	} else {
 		// trying to match the requirements
-		req := NewRequires(name, version, release, 0, "EQ", "")
+		req := NewRequires(name, version, release, "", "EQ", "")
 		sorted := make(Packages, 0, len(pkgs))
 		for _, p := range pkgs {
 			if req.ProvideMatches(p) {

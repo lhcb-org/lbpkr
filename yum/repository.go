@@ -69,6 +69,11 @@ func NewRepository(name, url, cachedir string, backends []string, setupBackend, 
 	return &repo, err
 }
 
+// Close cleans up after use
+func (repo *Repository) Close() error {
+	return repo.Backend.Close()
+}
+
 // FindLatestMatchingName locats a package by name, returns the latest available version.
 func (repo *Repository) FindLatestMatchingName(name, version, release string) (*Package, error) {
 	return repo.Backend.FindLatestMatchingName(name, version, release)
@@ -115,6 +120,7 @@ func (repo *Repository) setupBackendFromRemote() error {
 		repo.msg.Infof("checking availability of backend [%s]\n", bname)
 		ba, err := NewBackend(bname, repo)
 		if err != nil {
+			ba.Close()
 			continue
 		}
 

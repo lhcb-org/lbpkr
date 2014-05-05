@@ -19,6 +19,9 @@ func NewBackend(backend string, repo *Repository) (Backend, error) {
 // Backend queries a YUM DB repository
 type Backend interface {
 
+	// Close cleans up a backend after use
+	Close() error
+
 	// YumDataType returns the ID for the data type as used in the repomd.xml file
 	YumDataType() string
 

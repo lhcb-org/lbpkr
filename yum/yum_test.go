@@ -52,6 +52,7 @@ func TestPackageMatching(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
+	defer yum.Close()
 
 	p := NewRequires("TestPackage", "1.0.0", "1", "", "EQ", "")
 	pkg, err := yum.FindLatestMatchingRequire(p)
@@ -74,6 +75,7 @@ func TestPackageByNameWithRelease(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
+	defer yum.Close()
 
 	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", "1")
 	if err != nil {
@@ -101,6 +103,7 @@ func TestPackageByNameWithoutRelease(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
+	defer yum.Close()
 
 	pkg, err := yum.FindLatestMatchingName("TP2", "1.2.5", "")
 	if err != nil {
@@ -128,6 +131,7 @@ func TestPackageByNameWithoutVersion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
+	defer yum.Close()
 
 	pkg, err := yum.FindLatestMatchingName("TP2", "", "")
 	if err != nil {
@@ -155,6 +159,7 @@ func TestDependencyGreater(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
+	defer yum.Close()
 
 	pkg, err := yum.FindLatestMatchingName("TP2", "", "")
 	if err != nil {
@@ -202,6 +207,7 @@ func TestDependencyEqual(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
+	defer yum.Close()
 
 	pkg, err := yum.FindLatestMatchingName("TP3", "", "")
 	if err != nil {
@@ -249,6 +255,7 @@ func TestCyclicDependency(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
+	defer yum.Close()
 
 	pkg, err := yum.FindLatestMatchingName("TCyclicDep", "", "")
 	if err != nil {
@@ -285,6 +292,7 @@ func TestFindReleaseUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not create test repo: %v\n", err)
 	}
+	defer yum.Close()
 
 	pkg, err := yum.FindLatestMatchingName("TPRel", "4.2.7", "1")
 	if err != nil {
@@ -358,6 +366,7 @@ func TestLoadConfig(t *testing.T) {
 		// 	},
 		// },
 	} {
+		fmt.Printf(">>>>>>>>>>>>>>>>>>>> siteroot=%q\n", table.siteroot)
 		siteroot := table.siteroot
 		checkForUpdates := false
 		manualConfig := false
@@ -365,6 +374,7 @@ func TestLoadConfig(t *testing.T) {
 		if err != nil {
 			t.Fatalf("could not create yum.Client(siteroot=%q): %v\n", siteroot, err)
 		}
+		defer yum.Close()
 		yum.SetLevel(logger.DEBUG)
 
 		if len(yum.repos) != 3 {
@@ -374,6 +384,9 @@ func TestLoadConfig(t *testing.T) {
 		brunels, err := yum.ListPackages("BRUNEL", "", "")
 		if err != nil {
 			t.Fatalf("could not list BRUNEL packages: %v (siteroot=%q)\n", err, siteroot)
+		}
+		for _, p := range brunels {
+			fmt.Printf(">>> pkg: %s.%s-%d\n", p.Name(), p.Version(), p.Release())
 		}
 		if len(brunels) != 7 {
 			t.Fatalf("expected 7 BRUNEL packages. got=%d (siteroot=%q)\n", len(brunels), siteroot)
@@ -506,6 +519,10 @@ func TestLoadConfig(t *testing.T) {
 		found, err := yum.RequiredPackages(brunel)
 		if err != nil {
 			t.Fatalf("could not retrieve list of required packages for BRUNEL: %v (siteroot=%q)\n", err, siteroot)
+		}
+
+		for _, pkg := range found {
+			fmt.Printf("found: %s.%s-%s (%s)\n", pkg.Name(), pkg.Version(), pkg.Release(), pkg.Repository().RepoUrl)
 		}
 
 		required := make([]string, 0, len(found))

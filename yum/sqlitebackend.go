@@ -29,17 +29,41 @@ type RepositorySQLiteBackend struct {
 func NewRepositorySQLiteBackend(repo *Repository) (*RepositorySQLiteBackend, error) {
 	const comprdbname = "primary.sqlite.bz2"
 	const dbname = "primary.sqlite"
+	primarycompr := filepath.Join(repo.CacheDir, comprdbname)
+	primary := filepath.Join(repo.CacheDir, dbname)
+	if !path_exists(primarycompr) && !path_exists(primary) {
+		return nil, os.ErrNotExist
+	}
 	return &RepositorySQLiteBackend{
 		Name:         "RepositorySQLiteBackend",
-		Packages:     make(map[string][]*Package),
-		Provides:     make(map[string][]*Provides),
 		DBNameCompr:  comprdbname,
 		DBName:       dbname,
-		PrimaryCompr: filepath.Join(repo.CacheDir, comprdbname),
-		Primary:      filepath.Join(repo.CacheDir, dbname),
+		PrimaryCompr: primarycompr,
+		Primary:      primary,
 		Repository:   repo,
 		msg:          repo.msg,
 	}, nil
+}
+
+// Close cleans up a backend after use
+func (repo *RepositorySQLiteBackend) Close() error {
+	var err error
+	if repo == nil {
+		return nil
+	}
+	repo.msg.Infof("disconnecting db...\n")
+	if repo.db != nil {
+		err = repo.db.Close()
+		if err != nil {
+			repo.msg.Errorf("problem disconnecting db: %v\n", err)
+		}
+	}
+	repo.msg.Infof("removing [%s]...\n", repo.Primary)
+	if path_exists(repo.Primary) {
+		err = os.RemoveAll(repo.Primary)
+	}
+	repo.msg.Infof("removing [%s]... [done]\n", repo.Primary)
+	return err
 }
 
 // YumDataType returns the ID for the data type as used in the repomd.xml file

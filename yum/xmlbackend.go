@@ -37,6 +37,11 @@ func NewRepositoryXMLBackend(repo *Repository) (*RepositoryXMLBackend, error) {
 	}, nil
 }
 
+// Close cleans up a backend after use
+func (repo *RepositoryXMLBackend) Close() error {
+	return nil
+}
+
 // YumDataType returns the ID for the data type as used in the repomd.xml file
 func (repo *RepositoryXMLBackend) YumDataType() string {
 	return "primary"

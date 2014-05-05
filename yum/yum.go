@@ -186,6 +186,7 @@ func (yum *Client) PackageDeps(pkg *Package) ([]*Package, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	pkgs := make([]*Package, 0, len(deps))
 	for p := range deps {
 		pkgs = append(pkgs, p)
@@ -196,41 +197,50 @@ func (yum *Client) PackageDeps(pkg *Package) ([]*Package, error) {
 // pkgDeps returns all dependencies for the package (excluding the package itself)
 func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*Package]struct{}, error) {
 	var err error
+	var lasterr error
 	msg := yum.msg
 
 	processed[pkg] = struct{}{}
 	required := make(map[*Package]struct{})
 
-	msg.Verbosef(">>> pkg %s.%s-%d\n", pkg.Name(), pkg.Version(), pkg.Release())
+	msg.Verbosef(">>> pkg %s.%s-%s (req=%d)\n", pkg.Name(), pkg.Version(), pkg.Release(), len(pkg.Requires()))
 	for _, req := range pkg.Requires() {
-		msg.Verbosef("processing deps for %s.%s-%d\n", req.Name(), req.Version(), req.Release())
+		msg.Verbosef("processing deps for %s.%s-%s\n", req.Name(), req.Version(), req.Release())
 		if str_in_slice(req.Name(), g_IGNORED_PACKAGES) {
-			msg.Verbosef("processing deps for %s.%s-%d [IGNORE]\n", req.Name(), req.Version(), req.Release())
+			msg.Verbosef("processing deps for %s.%s-%s [IGNORE]\n", req.Name(), req.Version(), req.Release())
 			continue
 		}
 		p, err := yum.FindLatestMatchingRequire(req)
 		if err != nil {
-			return nil, err
+			lasterr = err
+			continue
 		}
 		if _, dup := processed[p]; dup {
-			msg.Warnf("cyclic dependency in repository with package: %s.%s-%d\n", p.Name(), p.Version(), p.Release())
+			msg.Warnf("cyclic dependency in repository with package: %s.%s-%s\n", p.Name(), p.Version(), p.Release())
 			continue
 		}
 		if p == nil {
 			msg.Errorf("package %s.%s-%d not found!\n", req.Name(), req.Version(), req.Release())
-			return nil, fmt.Errorf("package %s.%s-%d not found", req.Name(), req.Version(), req.Release())
+			lasterr = fmt.Errorf("package %s.%s-%s not found", req.Name(), req.Version(), req.Release())
+			continue
+			//return nil, fmt.Errorf("package %s.%s-%s not found", req.Name(), req.Version(), req.Release())
 		}
-		msg.Verbosef("--> adding dep %s.%s-%d\n", p.Name(), p.Version(), p.Release())
+		msg.Verbosef("--> adding dep %s.%s-%s\n", p.Name(), p.Version(), p.Release())
 		required[p] = struct{}{}
 		sdeps, err := yum.pkgDeps(p, processed)
 		if err != nil {
-			return nil, err
+			lasterr = err
+			continue
+			//return nil, err
 		}
 		for sdep := range sdeps {
 			required[sdep] = struct{}{}
 		}
 	}
 
+	if lasterr != nil {
+		err = lasterr
+	}
 	return required, err
 }
 

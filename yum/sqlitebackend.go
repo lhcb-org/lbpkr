@@ -165,6 +165,8 @@ func (repo *RepositorySQLiteBackend) FindLatestMatchingRequire(requirement *Requ
 	var pkg *Package
 	var err error
 
+	repo.msg.Debugf("looking for match for %v\n", requirement)
+
 	// list of all Provides with the same name
 	provides, err := repo.findProvidesByName(requirement.Name())
 	if err != nil {
@@ -203,6 +205,8 @@ func (repo *RepositorySQLiteBackend) FindLatestMatchingRequire(requirement *Requ
 
 	sort.Sort(matching)
 	pkg = matching[len(matching)-1].(*Package)
+
+	repo.msg.Debugf("found %d version matching - returning latest: %s.%s-%s\n", len(matching), pkg.Name(), pkg.Version(), pkg.Release())
 	return pkg, err
 }
 

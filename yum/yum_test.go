@@ -1,12 +1,9 @@
 package yum
 
 import (
-	"fmt"
 	"reflect"
 	"sort"
 	"testing"
-
-	"github.com/gonuts/logger"
 )
 
 func getTestClient(t *testing.T) (*Client, error) {
@@ -366,7 +363,6 @@ func TestLoadConfig(t *testing.T) {
 		// 	},
 		// },
 	} {
-		fmt.Printf(">>>>>>>>>>>>>>>>>>>> siteroot=%q\n", table.siteroot)
 		siteroot := table.siteroot
 		checkForUpdates := false
 		manualConfig := false
@@ -375,7 +371,6 @@ func TestLoadConfig(t *testing.T) {
 			t.Fatalf("could not create yum.Client(siteroot=%q): %v\n", siteroot, err)
 		}
 		defer yum.Close()
-		yum.SetLevel(logger.DEBUG)
 
 		if len(yum.repos) != 3 {
 			t.Fatalf("expected 3 repositories. got=%d (siteroot=%q)\n", len(yum.repos), siteroot)
@@ -384,9 +379,6 @@ func TestLoadConfig(t *testing.T) {
 		brunels, err := yum.ListPackages("BRUNEL", "", "")
 		if err != nil {
 			t.Fatalf("could not list BRUNEL packages: %v (siteroot=%q)\n", err, siteroot)
-		}
-		for _, p := range brunels {
-			fmt.Printf(">>> pkg: %s.%s-%d\n", p.Name(), p.Version(), p.Release())
 		}
 		if len(brunels) != 7 {
 			t.Fatalf("expected 7 BRUNEL packages. got=%d (siteroot=%q)\n", len(brunels), siteroot)
@@ -519,10 +511,6 @@ func TestLoadConfig(t *testing.T) {
 		found, err := yum.RequiredPackages(brunel)
 		if err != nil {
 			t.Fatalf("could not retrieve list of required packages for BRUNEL: %v (siteroot=%q)\n", err, siteroot)
-		}
-
-		for _, pkg := range found {
-			fmt.Printf("found: %s.%s-%s (%s)\n", pkg.Name(), pkg.Version(), pkg.Release(), pkg.Repository().RepoUrl)
 		}
 
 		required := make([]string, 0, len(found))

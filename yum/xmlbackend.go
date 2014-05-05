@@ -269,6 +269,8 @@ func (repo *RepositoryXMLBackend) FindLatestMatchingRequire(requirement *Require
 	var pkg *Package
 	var err error
 
+	repo.msg.Debugf("looking for match for %v\n", requirement)
+
 	pkgs, ok := repo.Provides[requirement.Name()]
 	if !ok {
 		repo.msg.Debugf("could not find package providing %s-%s\n", requirement.Name(), requirement.Version())
@@ -294,6 +296,7 @@ func (repo *RepositoryXMLBackend) FindLatestMatchingRequire(requirement *Require
 		if len(sorted) > 0 {
 			sort.Sort(sorted)
 			pkg = sorted[len(sorted)-1].(*Provides).Package
+			repo.msg.Debugf("found %d version matching - returning latest: %s.%s-%s\n", len(sorted), pkg.Name(), pkg.Version(), pkg.Release())
 		}
 	}
 

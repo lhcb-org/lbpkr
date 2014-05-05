@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -31,9 +32,6 @@ func NewRepositorySQLiteBackend(repo *Repository) (*RepositorySQLiteBackend, err
 	const dbname = "primary.sqlite"
 	primarycompr := filepath.Join(repo.CacheDir, comprdbname)
 	primary := filepath.Join(repo.CacheDir, dbname)
-	if !path_exists(primarycompr) && !path_exists(primary) {
-		return nil, os.ErrNotExist
-	}
 	return &RepositorySQLiteBackend{
 		Name:         "RepositorySQLiteBackend",
 		DBNameCompr:  comprdbname,
@@ -75,18 +73,18 @@ func (repo *RepositorySQLiteBackend) YumDataType() string {
 func (repo *RepositorySQLiteBackend) GetLatestDB(url string) error {
 	var err error
 	repo.msg.Debugf("downloading latest version of SQLite DB\n")
-	out, err := os.Create(repo.PrimaryCompr)
+	tmp, err := ioutil.TempFile("", "pkr-sqlite-")
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer tmp.Close()
 
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	_, err = io.Copy(out, resp.Body)
+	_, err = io.Copy(tmp, resp.Body)
 	if err != nil {
 		return err
 	}
@@ -98,16 +96,30 @@ func (repo *RepositorySQLiteBackend) GetLatestDB(url string) error {
 	}
 	defer dbfile.Close()
 
-	err = out.Sync()
+	err = tmp.Sync()
 	if err != nil {
 		return err
 	}
-	_, err = out.Seek(0, 0)
+	_, err = tmp.Seek(0, 0)
 	if err != nil {
 		return err
 	}
 
-	return repo.decompress(dbfile, out)
+	err = repo.decompress(dbfile, tmp)
+	if err != nil {
+		return err
+	}
+
+	// copy tmp file content to repo.PrimaryCompr
+	_, err = tmp.Seek(0, 0)
+	out, err := os.Create(repo.PrimaryCompr)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, tmp)
+	return err
 }
 
 // Check whether the DB is there
@@ -121,6 +133,7 @@ func (repo *RepositorySQLiteBackend) LoadDB() error {
 	if !path_exists(repo.Primary) {
 		err = repo.decompress2(repo.Primary, repo.PrimaryCompr)
 		if err != nil {
+			os.RemoveAll(repo.Primary)
 			return err
 		}
 	}

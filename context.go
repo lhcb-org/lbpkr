@@ -321,6 +321,15 @@ func (ctx *Context) InstallRPM(name, version, release string, forceInstall, upda
 // InstallPackage installs a specific RPM, checking if not already installed
 func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) error {
 	var err error
+	ctx.msg.Infof("installing %s and dependencies\n", pkg.Name())
+	pkgs, err := ctx.yum.RequiredPackages(pkg)
+	if err != nil {
+		return err
+	}
+	ctx.msg.Infof("found %d RPMs to install:\n", len(pkgs))
+	for _, p := range pkgs {
+		ctx.msg.Infof("\t%s\n", p.RpmName())
+	}
 	return err
 }
 

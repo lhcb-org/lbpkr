@@ -49,18 +49,18 @@ func (repo *RepositorySQLiteBackend) Close() error {
 	if repo == nil {
 		return nil
 	}
-	repo.msg.Infof("disconnecting db...\n")
+	repo.msg.Debugf("disconnecting db...\n")
 	if repo.db != nil {
 		err = repo.db.Close()
 		if err != nil {
 			repo.msg.Errorf("problem disconnecting db: %v\n", err)
 		}
 	}
-	repo.msg.Infof("removing [%s]...\n", repo.Primary)
+	repo.msg.Debugf("removing [%s]...\n", repo.Primary)
 	if path_exists(repo.Primary) {
 		err = os.RemoveAll(repo.Primary)
 	}
-	repo.msg.Infof("removing [%s]... [done]\n", repo.Primary)
+	repo.msg.Debugf("removing [%s]... [done]\n", repo.Primary)
 	return err
 }
 

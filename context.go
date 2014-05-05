@@ -534,7 +534,14 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 	files := make([]string, 0, len(pkgs))
 	var err error
 
+	pkgset := make(map[string]*yum.Package)
+
 	for _, pkg := range pkgs {
+		fname := pkg.RpmFileName()
+		pkgset[fname] = pkg
+	}
+
+	for _, pkg := range pkgset {
 		fname := pkg.RpmFileName()
 		fpath := filepath.Join(dir, fname)
 		files = append(files, fname)

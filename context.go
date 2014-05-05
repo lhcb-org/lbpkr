@@ -449,7 +449,7 @@ func (ctx *Context) rpm(args ...string) ([]byte, error) {
 	}
 	rpmargs = append(rpmargs, args...)
 
-	ctx.msg.Infof("RPM command: rpm %v\n", rpmargs)
+	ctx.msg.Debugf("RPM command: rpm %v\n", rpmargs)
 	cmd := exec.Command("rpm", rpmargs...)
 	out, err := cmd.CombinedOutput()
 	ctx.msg.Debugf(string(out))

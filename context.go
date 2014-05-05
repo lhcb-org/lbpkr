@@ -341,4 +341,34 @@ func (ctx *Context) ListPackages(name, version, release string) error {
 	return err
 }
 
+// rpm wraps the invocation of the rpm command
+func (ctx *Context) rpm(args []string) error {
+	install_mode := false
+	query_mode := false
+	for _, arg := range args {
+		if len(arg) < 2 {
+			continue
+		}
+		if arg[:2] == "-i" || arg[:2] == "-U" {
+			install_mode = true
+			continue
+		}
+		if arg[:2] == "-q" {
+			query_mode = true
+		}
+	}
+
+	rpmargs := []string{"--dbpath", ctx.dbpath}
+	if !query_mode && install_mode {
+		rpmargs = append(rpmargs, "--prefix", ctx.siteroot)
+	}
+	rpmargs = append(rpmargs, args...)
+
+	ctx.msg.Infof("RPM command: rpm %v\n", rpmargs)
+	cmd := exec.Command("rpm", rpmargs...)
+	out, err := cmd.CombinedOutput()
+	ctx.msg.Debugf(string(out))
+	return err
+}
+
 // EOF

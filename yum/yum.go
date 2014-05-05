@@ -248,7 +248,7 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*
 	}
 
 	if lasterr != nil {
-		//err = lasterr
+		err = lasterr
 	}
 	return required, err
 }

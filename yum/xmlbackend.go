@@ -274,7 +274,9 @@ func (repo *RepositoryXMLBackend) FindLatestMatchingRequire(requirement *Require
 	pkgs, ok := repo.Provides[requirement.Name()]
 	if !ok {
 		repo.msg.Debugf("could not find package providing %s-%s\n", requirement.Name(), requirement.Version())
-		return nil, fmt.Errorf("no package providing %s-%s", requirement.Name(), requirement.Version())
+		return nil, fmt.Errorf("no package providing name=%q version=%q release=%q",
+			requirement.Name(), requirement.Version(), requirement.Release(),
+		)
 	}
 
 	if requirement.Version() == "" && len(pkgs) > 0 {

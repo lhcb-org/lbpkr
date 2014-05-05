@@ -181,8 +181,9 @@ func (repo *RepositorySQLiteBackend) FindLatestMatchingRequire(requirement *Requ
 	}
 
 	if len(matching) <= 0 {
-		err = fmt.Errorf("no Provides for %q", requirement.Name())
-		return nil, err
+		return nil, fmt.Errorf("no package providing name=%q version=%q release=%q",
+			requirement.Name(), requirement.Version(), requirement.Release(),
+		)
 	}
 
 	// now look-up the matching package

@@ -88,6 +88,9 @@ func (yum *Client) Close() error {
 // SetLevel sets the verbosity level of Client
 func (yum *Client) SetLevel(lvl logger.Level) {
 	yum.msg.SetLevel(lvl)
+	for _, repo := range yum.repos {
+		repo.msg.SetLevel(lvl)
+	}
 }
 
 // FindLatestMatchingName locates a package by name and returns the latest available version

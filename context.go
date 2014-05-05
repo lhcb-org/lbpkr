@@ -93,6 +93,9 @@ func New(cfg Config, dbg bool) (*Context, error) {
 	if err != nil {
 		return nil, err
 	}
+	if dbg {
+		ctx.yum.SetLevel(logger.DEBUG)
+	}
 
 	// defining structures and checking if all needed tools are available
 	ctx.extstatus = make(map[string]External)

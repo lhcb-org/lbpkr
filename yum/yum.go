@@ -217,6 +217,7 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*
 		p, err := yum.FindLatestMatchingRequire(req)
 		if err != nil {
 			lasterr = err
+			msg.Debugf("could not find match for %s.%s-%s\n", req.Name(), req.Version(), req.Release())
 			continue
 		}
 		if _, dup := processed[p]; dup {

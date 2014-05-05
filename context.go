@@ -514,7 +514,7 @@ func (ctx *Context) checkRpmFile(fname string) bool {
 	args := []string{"-K", fname}
 	out, err := ctx.rpm(args...)
 	if err != nil {
-		ctx.msg.Errorf("rpm command failed: %v\n%v\n", err, string(out))
+		ctx.msg.Debugf("rpm command failed: %v\n%v\n", err, string(out))
 	}
 	ok := err == nil
 	return ok

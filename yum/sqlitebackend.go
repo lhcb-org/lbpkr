@@ -415,6 +415,8 @@ func (repo *RepositorySQLiteBackend) loadRequires(pkgkey int, pkg *Package) erro
 		if req.rpmBase.flags == "" {
 			req.rpmBase.flags = "EQ"
 		}
+		pkg.requires = append(pkg.requires, &req)
+
 	}
 	err = rows.Err()
 	if err != nil {

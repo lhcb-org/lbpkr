@@ -355,13 +355,13 @@ func TestLoadConfig(t *testing.T) {
 			siteroot: "testdata/testconfig-xml",
 			backends: []string{"RepositoryXMLBackend"},
 		},
-		// {
-		// 	siteroot: "testdata/testconfig-sqlite",
-		// 	backends: []string{
-		// 		"RepositorySQLiteBackend",
-		// 		"RepositoryXMLBackend",
-		// 	},
-		// },
+		{
+			siteroot: "testdata/testconfig-sqlite",
+			backends: []string{
+				"RepositorySQLiteBackend",
+				"RepositoryXMLBackend",
+			},
+		},
 	} {
 		siteroot := table.siteroot
 		checkForUpdates := false

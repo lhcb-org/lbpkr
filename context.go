@@ -407,8 +407,13 @@ func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) 
 
 	npkgs := len(pkgs)
 	ctx.msg.Infof("found %d RPMs to install:\n", npkgs)
-	for i, p := range pkgs {
-		ctx.msg.Infof("\t[%03d/%03d] %s\n", i+1, npkgs, p.RpmName())
+	pkgnames := make([]string, 0, npkgs)
+	for _, p := range pkgs {
+		pkgnames = append(pkgnames, p.RpmName())
+	}
+	sort.Strings(pkgnames)
+	for i, rpm := range pkgnames {
+		ctx.msg.Infof("\t[%03d/%03d] %s\n", i+1, npkgs, rpm)
 	}
 
 	if len(pkgs) <= 0 {

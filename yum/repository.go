@@ -18,7 +18,7 @@ import (
 // List of packages to ignore for our case
 var g_IGNORED_PACKAGES = []string{
 	"rpmlib(CompressedFileNames)", "/bin/sh", "rpmlib(PayloadFilesHavePrefix)",
-	"rpmlib(PartialHardlinkSets)", "DBASE_Gen_DecFiles",
+	"rpmlib(PartialHardlinkSets)",
 }
 
 // Repository represents a YUM repository with all associated metadata.

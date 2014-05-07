@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gonuts/logger"
@@ -595,6 +596,9 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 	errch := make(chan error, ctx.ndls)
 	quit := make(chan struct{})
 
+	var mux sync.RWMutex
+	done := 0
+
 	for _, pkg := range pkgset {
 		ipkg += 1
 		fname := pkg.RpmFileName()
@@ -615,10 +619,12 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 
 		todl += 1
 		go func(ipkg int, pkg *yum.Package) {
-			fpath := filepath.Join(dir, pkg.RpmFileName())
 			select {
 			case errch <- ctx.downloadFile(pkg, dir):
-				ctx.msg.Infof("[%03d/%03d] downloaded %s to %s\n", ipkg, npkgs, pkg.Url(), fpath)
+				mux.Lock()
+				done += 1
+				mux.Unlock()
+				ctx.msg.Infof("[%03d/%03d] downloaded %s\n", done, npkgs, pkg.Url())
 				return
 			case <-quit:
 				return

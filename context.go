@@ -591,11 +591,10 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 
 	ipkg := 0
 	npkgs := len(pkgset)
-	errch := make(chan error)
+	todl := 0
+	errch := make(chan error, ctx.ndls)
 	quit := make(chan struct{})
 
-	// buffered so throttled
-	tokens := make(chan int, ctx.ndls)
 	for _, pkg := range pkgset {
 		ipkg += 1
 		fname := pkg.RpmFileName()
@@ -613,31 +612,22 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 			ctx.msg.Debugf("%s already downloaded\n", fname)
 			continue
 		}
-		go func(i int) {
-			tokens <- i
-		}(ipkg)
 
-		go func(pkg *yum.Package) {
+		todl += 1
+		go func(ipkg int, pkg *yum.Package) {
 			fpath := filepath.Join(dir, pkg.RpmFileName())
+			ctx.msg.Infof("[%03d/%03d] downloading %s to %s\n", ipkg, npkgs, pkg.Url(), fpath)
 			select {
-			case ipkg := <-tokens:
-				ctx.msg.Infof("[%03d/%03d] downloading %s to %s\n", ipkg, npkgs, pkg.Url(), fpath)
-				err := ctx.downloadFile(pkg, dir)
-				status := "OK"
-				if err != nil {
-					status = "ERR"
-				}
-				ctx.msg.Infof("[%03d/%03d] downloading %s to %s [%s]\n", ipkg, npkgs, pkg.Url(), fpath, status)
-				errch <- err
+			case errch <- ctx.downloadFile(pkg, dir):
 				return
 			case <-quit:
 				return
 			}
-		}(pkg)
+		}(ipkg, pkg)
 	}
-	close(errch)
 
-	for err := range errch {
+	for i := 0; i < todl; i++ {
+		err = <-errch
 		if err != nil {
 			quit <- struct{}{}
 		}

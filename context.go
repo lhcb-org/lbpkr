@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -41,6 +42,8 @@ type Context struct {
 	extstatus map[string]External
 	reqext    []string
 	extfix    map[string]FixFct
+
+	ndls int // number of concurrent downloads
 }
 
 func New(cfg Config, dbg bool) (*Context, error) {
@@ -63,6 +66,7 @@ func New(cfg Config, dbg bool) (*Context, error) {
 		bindir:    filepath.Join(siteroot, "usr", "bin"),
 		libdir:    filepath.Join(siteroot, "lib"),
 		initfile:  filepath.Join(siteroot, "etc", "repoinit"),
+		ndls:      runtime.NumCPU(),
 	}
 	if dbg {
 		ctx.msg.SetLevel(logger.DEBUG)
@@ -587,6 +591,9 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 
 	ipkg := 0
 	npkgs := len(pkgset)
+	todl := 0
+	errch := make(chan error, ctx.ndls)
+	quit := make(chan struct{})
 	for _, pkg := range pkgset {
 		ipkg += 1
 		fname := pkg.RpmFileName()
@@ -605,11 +612,25 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 			continue
 		}
 
-		ctx.msg.Infof("[%03d/%03d] downloading %s to %s\n", ipkg, npkgs, pkg.Url(), fpath)
-		err = ctx.downloadFile(pkg, dir)
+		todl += 1
+		go func(ipkg int, pkg *yum.Package) {
+			fpath := filepath.Join(dir, pkg.RpmFileName())
+			ctx.msg.Infof("[%03d/%03d] downloading %s to %s\n", ipkg, npkgs, pkg.Url(), fpath)
+			select {
+			case errch <- ctx.downloadFile(pkg, dir):
+				return
+			case <-quit:
+				return
+			}
+		}(ipkg, pkg)
+	}
+
+	for i := 0; i < todl; i++ {
+		err = <-errch
 		if err != nil {
-			return nil, err
+			quit <- struct{}{}
 		}
+		return nil, err
 	}
 	return files, err
 }

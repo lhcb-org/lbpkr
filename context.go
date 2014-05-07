@@ -633,6 +633,9 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 
 		if !needs_dl {
 			ctx.msg.Debugf("%s already downloaded\n", fname)
+			mux.Lock()
+			done += 1
+			mux.Unlock()
 			continue
 		}
 

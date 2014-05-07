@@ -713,6 +713,7 @@ func (ctx *Context) installFiles(files []string, rpmdir string, forceInstall, up
 		args = append(args, filepath.Join(rpmdir, fname))
 	}
 
+	ctx.msg.Infof("installing [%d] RPMs...\n", len(files))
 	out, err := ctx.rpm(args...)
 	if err != nil {
 		ctx.msg.Errorf("rpm install command failed: %v\n%v\n", err, string(out))

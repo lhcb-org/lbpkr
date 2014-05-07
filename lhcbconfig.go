@@ -10,13 +10,31 @@ var (
 		ConfigBase: ConfigBase{
 			siteroot: os.Getenv("MYSITEROOT"),
 			repourl:  "http://test-lbrpm.web.cern.ch/test-lbrpm",
-			prefix:   "/opt/lhcb",
 		},
 	}
 )
 
 type lhcbConfig struct {
 	ConfigBase
+}
+
+func (cfg *lhcbConfig) Prefix(group string) string {
+	const prefix = "/opt/LHCbSoft/lhcb"
+	switch group {
+	default:
+		return prefix
+	case "", "lhcb":
+		return prefix
+
+	case "lcg":
+		return "/opt/lcg"
+	}
+
+	return prefix
+}
+
+func (cfg *lhcbConfig) Name() string {
+	return "lhcb"
 }
 
 func (cfg *lhcbConfig) InitYum(ctx *Context) error {

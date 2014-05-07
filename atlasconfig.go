@@ -10,13 +10,20 @@ var (
 		ConfigBase: ConfigBase{
 			siteroot: os.Getenv("MYSITEROOT"),
 			repourl:  "http://atlas-computing.web.cern.ch/atlas-computing/links/reposDirectory/lcg/slc6/yum/",
-			prefix:   "/opt/atlas",
 		},
 	}
 )
 
 type atlasConfig struct {
 	ConfigBase
+}
+
+func (cfg *atlasConfig) Prefix(group string) string {
+	return "/opt/atlas"
+}
+
+func (cfg *atlasConfig) Name() string {
+	return "atlas"
 }
 
 func (cfg *atlasConfig) InitYum(ctx *Context) error {

@@ -5,7 +5,8 @@ const Version = "20140428"
 type Config interface {
 	Siteroot() string
 	RepoUrl() string
-	Prefix() string
+	Prefix(group string) string
+	Name() string
 	Debug() bool
 	RpmUpdate() bool
 
@@ -16,7 +17,6 @@ type Config interface {
 type ConfigBase struct {
 	siteroot  string // where to install software, binaries, ...
 	repourl   string
-	prefix    string // prefix path for RPMs
 	debug     bool
 	rpmupdate bool // install/update switch
 }
@@ -27,10 +27,6 @@ func (cfg *ConfigBase) Siteroot() string {
 
 func (cfg *ConfigBase) RepoUrl() string {
 	return cfg.repourl
-}
-
-func (cfg *ConfigBase) Prefix() string {
-	return cfg.prefix
 }
 
 func (cfg *ConfigBase) Debug() bool {

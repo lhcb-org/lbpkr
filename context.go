@@ -630,8 +630,9 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 		err = <-errch
 		if err != nil {
 			quit <- struct{}{}
+			ctx.msg.Errorf("error downloading a RPM: %v\n", err)
+			return nil, err
 		}
-		return nil, err
 	}
 	return files, err
 }

@@ -20,9 +20,8 @@ type lhcbConfig struct {
 
 func (cfg *lhcbConfig) Prefix(group string) string {
 	const prefix = "/opt/LHCbSoft"
+
 	switch group {
-	default:
-		return prefix
 	case "", "lhcb":
 		return prefix
 

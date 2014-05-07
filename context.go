@@ -478,8 +478,8 @@ func (ctx *Context) rpm(args ...string) ([]byte, error) {
 
 	rpmargs := []string{"--dbpath", ctx.dbpath}
 	if !query_mode && install_mode {
-		//rpmargs = append(rpmargs, "--prefix", ctx.siteroot)
 		rpmargs = append(rpmargs,
+			//"--prefix", ctx.siteroot,
 			"--relocate",
 			// FIXME: LHCb-isms...
 			fmt.Sprintf("%s=%s", "/opt/lcg", filepath.Join(ctx.siteroot, "lcg", "releases")),
@@ -487,6 +487,8 @@ func (ctx *Context) rpm(args ...string) ([]byte, error) {
 			"--relocate",
 			// FIXME: LHCb-isms...
 			fmt.Sprintf("%s=%s", "/opt/LHCbSoft", ctx.siteroot),
+
+			"--badreloc",
 		)
 	}
 	rpmargs = append(rpmargs, args...)

@@ -28,7 +28,6 @@ type Context struct {
 	cfg       Config
 	siteroot  string // where to install software, binaries, ...
 	repourl   string
-	rpmprefix string
 	dbpath    string
 	etcdir    string
 	yumconf   string
@@ -56,7 +55,6 @@ func New(cfg Config, dbg bool) (*Context, error) {
 		msg:       logger.NewLogger("pkr", logger.INFO, os.Stdout),
 		siteroot:  siteroot,
 		repourl:   cfg.RepoUrl(),
-		rpmprefix: cfg.Prefix(),
 		dbpath:    filepath.Join(siteroot, "var", "lib", "rpm"),
 		etcdir:    filepath.Join(siteroot, "etc"),
 		yumconf:   filepath.Join(siteroot, "etc", "yum.conf"),
@@ -274,7 +272,6 @@ func (ctx *Context) checkRepository() error {
 		}
 		return fini.Close()
 	}
-	err = ctx.checkUpdates()
 	return err
 }
 

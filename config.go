@@ -7,7 +7,6 @@ type Config interface {
 	RepoUrl() string
 	Prefix() string
 	Debug() bool
-	NoAutoUpdate() bool
 	RpmUpdate() bool
 
 	InitYum(*Context) error
@@ -15,12 +14,11 @@ type Config interface {
 
 // ConfigBase holds the options and defaults for the installer
 type ConfigBase struct {
-	siteroot     string // where to install software, binaries, ...
-	repourl      string
-	prefix       string // prefix path for RPMs
-	debug        bool
-	noautoupdate bool
-	rpmupdate    bool // install/update switch
+	siteroot  string // where to install software, binaries, ...
+	repourl   string
+	prefix    string // prefix path for RPMs
+	debug     bool
+	rpmupdate bool // install/update switch
 }
 
 func (cfg *ConfigBase) Siteroot() string {
@@ -37,10 +35,6 @@ func (cfg *ConfigBase) Prefix() string {
 
 func (cfg *ConfigBase) Debug() bool {
 	return cfg.debug
-}
-
-func (cfg *ConfigBase) NoAutoUpdate() bool {
-	return cfg.noautoupdate
 }
 
 func (cfg *ConfigBase) RpmUpdate() bool {

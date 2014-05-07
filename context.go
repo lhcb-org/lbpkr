@@ -506,9 +506,6 @@ func (ctx *Context) rpm(args ...string) ([]byte, error) {
 
 	ctx.msg.Debugf("RPM command: rpm %v\n", rpmargs)
 	cmd := exec.Command("rpm", rpmargs...)
-	var out bytes.Buffer
-	cmd.Stderr = &out
-	cmd.Stdout = &out
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -522,8 +519,11 @@ func (ctx *Context) rpm(args ...string) ([]byte, error) {
 	}
 	defer stderr.Close()
 
-	go io.Copy(os.Stdout, stdout)
-	go io.Copy(os.Stderr, stderr)
+	var out bytes.Buffer
+	tee := io.MultiWriter(os.Stdout, &out)
+
+	go io.Copy(tee, stdout)
+	go io.Copy(tee, stderr)
 	err = cmd.Run()
 
 	ctx.msg.Debugf(string(out.Bytes()))

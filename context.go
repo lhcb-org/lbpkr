@@ -506,9 +506,14 @@ func (ctx *Context) rpm(args ...string) ([]byte, error) {
 
 	ctx.msg.Debugf("RPM command: rpm %v\n", rpmargs)
 	cmd := exec.Command("rpm", rpmargs...)
-	out, err := cmd.CombinedOutput()
-	ctx.msg.Debugf(string(out))
-	return out, err
+	var out bytes.Buffer
+	cmd.Stderr = &out
+	cmd.Stdout = &out
+	go io.Copy(os.Stdout, &out)
+	err := cmd.Run()
+
+	ctx.msg.Debugf(string(out.Bytes()))
+	return out.Bytes(), err
 }
 
 // filterURLs filters out RPMs already installed

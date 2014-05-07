@@ -362,9 +362,9 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 	}
 
 	if checkOnly {
-		ctx.msg.Warnf("packages to update: %d\n", nupdates)
+		ctx.msg.Infof("packages to update: %d\n", nupdates)
 	} else {
-		ctx.msg.Warnf("packages updated: %d\n", nupdates)
+		ctx.msg.Infof("packages updated: %d\n", nupdates)
 	}
 	return err
 }

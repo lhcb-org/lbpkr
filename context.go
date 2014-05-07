@@ -616,9 +616,9 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 		todl += 1
 		go func(ipkg int, pkg *yum.Package) {
 			fpath := filepath.Join(dir, pkg.RpmFileName())
-			ctx.msg.Infof("[%03d/%03d] downloading %s to %s\n", ipkg, npkgs, pkg.Url(), fpath)
 			select {
 			case errch <- ctx.downloadFile(pkg, dir):
+				ctx.msg.Infof("[%03d/%03d] downloaded %s to %s\n", ipkg, npkgs, pkg.Url(), fpath)
 				return
 			case <-quit:
 				return

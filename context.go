@@ -578,7 +578,10 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 		pkgset[fname] = pkg
 	}
 
+	ipkg := 0
+	npkgs := len(pkgset)
 	for _, pkg := range pkgset {
+		ipkg += 1
 		fname := pkg.RpmFileName()
 		fpath := filepath.Join(dir, fname)
 		files = append(files, fname)
@@ -595,7 +598,7 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 			continue
 		}
 
-		ctx.msg.Infof("downloading %s to %s\n", pkg.Url(), fpath)
+		ctx.msg.Infof("[%03d/%03d] downloading %s to %s\n", ipkg, npkgs, pkg.Url(), fpath)
 		f, err := os.Create(fpath)
 		if err != nil {
 			return nil, err

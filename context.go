@@ -315,7 +315,7 @@ enabled=1
 }
 
 // checkUpdates checks whether packages could be updated in the repository
-func (ctx *Context) checkUpdates() error {
+func (ctx *Context) checkUpdates(checkOnly bool) error {
 	var err error
 	pkgs, err := ctx.listInstalledPackages()
 	if err != nil {
@@ -329,6 +329,7 @@ func (ctx *Context) checkUpdates() error {
 		pkglist[key] = append(pkglist[key], prov)
 	}
 
+	nupdates := 0
 	for _, rpms := range pkglist {
 		sort.Sort(rpms)
 		pkg := rpms[len(rpms)-1]
@@ -339,8 +340,9 @@ func (ctx *Context) checkUpdates() error {
 			return err
 		}
 		if yum.RpmLessThan(pkg, update) {
-			if ctx.cfg.NoAutoUpdate() {
-				ctx.msg.Warnf("%s.%s-%s could be updated to %s but update disabled\n",
+			nupdates += 1
+			if checkOnly {
+				ctx.msg.Warnf("%s.%s-%s could be updated to %s\n",
 					pkg.Name(), pkg.Version(), pkg.Release(),
 					update.RpmName(),
 				)
@@ -357,6 +359,12 @@ func (ctx *Context) checkUpdates() error {
 				}
 			}
 		}
+	}
+
+	if checkOnly {
+		ctx.msg.Warnf("packages to update: %d\n", nupdates)
+	} else {
+		ctx.msg.Warnf("packages updated: %d\n", nupdates)
 	}
 	return err
 }
@@ -444,6 +452,11 @@ func (ctx *Context) ListPackages(name, version, release string) error {
 	}
 	ctx.msg.Infof("Total matching: %d\n", total)
 	return err
+}
+
+// Update checks whether updates are available and installs them if requested
+func (ctx *Context) Update(checkOnly bool) error {
+	return ctx.checkUpdates(checkOnly)
 }
 
 // rpm wraps the invocation of the rpm command

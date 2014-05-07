@@ -7,25 +7,25 @@ import (
 	"github.com/gonuts/flag"
 )
 
-func pkr_make_cmd_update() *commander.Command {
+func pkr_make_cmd_check() *commander.Command {
 	cmd := &commander.Command{
-		Run:       pkr_run_cmd_update,
-		UsageLine: "update [options]",
-		Short:     "update RPMs from the yum repository",
+		Run:       pkr_run_cmd_check,
+		UsageLine: "check [options]",
+		Short:     "check for RPM updates from the yum repository",
 		Long: `
-update updates RPMs from the yum repository.
+check checks for RPM updates from the yum repository.
 
 ex:
- $ pkr update
+ $ pkr check
 `,
-		Flag: *flag.NewFlagSet("pkr-update", flag.ExitOnError),
+		Flag: *flag.NewFlagSet("pkr-check", flag.ExitOnError),
 	}
 	cmd.Flag.Bool("v", false, "enable verbose mode")
 	cmd.Flag.String("type", "lhcb", "config type (lhcb|atlas)")
 	return cmd
 }
 
-func pkr_run_cmd_update(cmd *commander.Command, args []string) error {
+func pkr_run_cmd_check(cmd *commander.Command, args []string) error {
 	var err error
 
 	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
@@ -48,8 +48,8 @@ func pkr_run_cmd_update(cmd *commander.Command, args []string) error {
 	}
 	defer ctx.Close()
 
-	ctx.msg.Infof("updating RPMs\n")
-	checkOnly := false
+	ctx.msg.Infof("checking for RPMs updates\n")
+	checkOnly := true
 	err = ctx.Update(checkOnly)
 	return err
 }

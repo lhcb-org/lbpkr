@@ -511,16 +511,23 @@ func (ctx *Context) filterURLs(pkgs []*yum.Package) ([]*yum.Package, error) {
 	var err error
 	filtered := make([]*yum.Package, 0, len(pkgs))
 	for _, pkg := range pkgs {
-		name := pkg.RpmName()
-		version := ""
-		ctx.msg.Debugf("checking for installation of [%s]...\n", name)
-		if ctx.isRpmInstalled(name, version) {
-			ctx.msg.Debugf("already installed: %s\n", name)
+		installed, err2 := ctx.filterURL(pkg)
+		err = err2
+		if installed {
+			ctx.msg.Debugf("already installed: %s\n", pkg.RpmName())
 			continue
 		}
 		filtered = append(filtered, pkg)
 	}
 	return filtered, err
+}
+
+// filterURL returns true if a RPM was already installed
+func (ctx *Context) filterURL(pkg *yum.Package) (bool, error) {
+	name := pkg.RpmName()
+	version := ""
+	ctx.msg.Debugf("checking for installation of [%s]...\n", name)
+	return ctx.isRpmInstalled(name, version), nil
 }
 
 // isRpmInstalled checks whether a given RPM package is already installed
@@ -599,32 +606,46 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 		}
 
 		ctx.msg.Infof("[%03d/%03d] downloading %s to %s\n", ipkg, npkgs, pkg.Url(), fpath)
-		f, err := os.Create(fpath)
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
-
-		resp, err := http.Get(pkg.Url())
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-
-		_, err = io.Copy(f, resp.Body)
-		if err != nil {
-			return nil, err
-		}
-		err = f.Sync()
-		if err != nil {
-			return nil, err
-		}
-		err = f.Close()
+		err = ctx.downloadFile(pkg, dir)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return files, err
+}
+
+// downloadFile downloads a given RPM package under dir
+func (ctx *Context) downloadFile(pkg *yum.Package, dir string) error {
+	var err error
+	fname := pkg.RpmFileName()
+	fpath := filepath.Join(dir, fname)
+
+	f, err := os.Create(fpath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	resp, err := http.Get(pkg.Url())
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(f, resp.Body)
+	if err != nil {
+		return err
+	}
+	err = f.Sync()
+	if err != nil {
+		return err
+	}
+	err = f.Close()
+	if err != nil {
+		return err
+	}
+
+	return err
 }
 
 // installFiles installs some RPM files given the location of the RPM DB

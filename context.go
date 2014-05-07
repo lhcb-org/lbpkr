@@ -509,8 +509,22 @@ func (ctx *Context) rpm(args ...string) ([]byte, error) {
 	var out bytes.Buffer
 	cmd.Stderr = &out
 	cmd.Stdout = &out
-	go io.Copy(os.Stdout, &out)
-	err := cmd.Run()
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	defer stdout.Close()
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
+	defer stderr.Close()
+
+	go io.Copy(os.Stdout, stdout)
+	go io.Copy(os.Stderr, stderr)
+	err = cmd.Run()
 
 	ctx.msg.Debugf(string(out.Bytes()))
 	return out.Bytes(), err

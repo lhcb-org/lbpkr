@@ -470,7 +470,7 @@ func (ctx *Context) Update(checkOnly bool) error {
 }
 
 // rpm wraps the invocation of the rpm command
-func (ctx *Context) rpm(args ...string) ([]byte, error) {
+func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 	install_mode := false
 	query_mode := false
 	for _, arg := range args {
@@ -508,10 +508,15 @@ func (ctx *Context) rpm(args ...string) ([]byte, error) {
 	defer stderr.Close()
 
 	var out bytes.Buffer
-	tee := io.MultiWriter(os.Stdout, &out)
+	if display {
+		tee := io.MultiWriter(os.Stdout, &out)
 
-	go io.Copy(tee, stdout)
-	go io.Copy(tee, stderr)
+		go io.Copy(tee, stdout)
+		go io.Copy(tee, stderr)
+	} else {
+		go io.Copy(&out, stdout)
+		go io.Copy(&out, stderr)
+	}
 	err = cmd.Run()
 
 	ctx.msg.Debugf(string(out.Bytes()))
@@ -548,7 +553,7 @@ func (ctx *Context) isRpmInstalled(name, version string) bool {
 	if version != "" {
 		fullname += "." + version
 	}
-	out, err := ctx.rpm("-q", fullname)
+	out, err := ctx.rpm(false, "-q", fullname)
 	if err != nil {
 		ctx.msg.Debugf("rpm installed? command failed: %v\n%v\n", err, string(out))
 	}
@@ -560,7 +565,7 @@ func (ctx *Context) isRpmInstalled(name, version string) bool {
 func (ctx *Context) listInstalledPackages() ([][3]string, error) {
 	list := make([][3]string, 0)
 	args := []string{"--dbpath", ctx.dbpath, "-qa", "--queryformat", "%{NAME} %{VERSION} %{RELEASE}\n"}
-	out, err := ctx.rpm(args...)
+	out, err := ctx.rpm(false, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -702,7 +707,7 @@ func (ctx *Context) installFiles(files []string, rpmdir string, forceInstall, up
 	}
 
 	ctx.msg.Infof("installing [%d] RPMs...\n", len(files))
-	out, err := ctx.rpm(args...)
+	out, err := ctx.rpm(true, args...)
 	if err != nil {
 		ctx.msg.Errorf("rpm install command failed: %v\n%v\n", err, string(out))
 		return err
@@ -713,7 +718,7 @@ func (ctx *Context) installFiles(files []string, rpmdir string, forceInstall, up
 // checkRpmFile checks the integrity of a RPM file
 func (ctx *Context) checkRpmFile(fname string) bool {
 	args := []string{"-K", fname}
-	out, err := ctx.rpm(args...)
+	out, err := ctx.rpm(false, args...)
 	if err != nil {
 		ctx.msg.Debugf("rpm command failed: %v\n%v\n", err, string(out))
 	}

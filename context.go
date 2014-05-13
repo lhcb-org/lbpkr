@@ -47,6 +47,7 @@ type Context struct {
 
 	ndls int // number of concurrent downloads
 
+	sigch   chan os.Signal
 	subcmds []*exec.Cmd // list of subcommands launched by pkr
 	atexit  []func()    // functions to run at-exit
 }
@@ -159,11 +160,11 @@ func (ctx *Context) SetLevel(lvl logger.Level) {
 func (ctx *Context) initSignalHandler() {
 	// initialize signal handler
 	go func() {
-		ch := make(chan os.Signal)
-		signal.Notify(ch, os.Interrupt, os.Kill)
+		ctx.sigch = make(chan os.Signal)
+		signal.Notify(ctx.sigch, os.Interrupt, os.Kill)
 		for {
 			select {
-			case sig := <-ch:
+			case sig := <-ctx.sigch:
 				fmt.Fprintf(os.Stderr, "\n>>>>>>>>>\ncaught %#v\n", sig)
 				fmt.Fprintf(os.Stderr, "subcmds: %d %#v\n", len(ctx.subcmds), ctx.subcmds)
 				for icmd, cmd := range ctx.subcmds {
@@ -611,7 +612,15 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = cmd.Wait()
+
+	errch := make(chan error)
+	select {
+	case sig := <-ctx.sigch:
+		ctx.sigch <- sig
+		return nil, fmt.Errorf("pkr: subcommand killed by [%v]", sig)
+	case errch <- cmd.Wait():
+		err = <-errch
+	}
 
 	ctx.msg.Debugf(string(out.Bytes()))
 	return out.Bytes(), err

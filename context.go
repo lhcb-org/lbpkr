@@ -168,7 +168,7 @@ func (ctx *Context) initSignalHandler() {
 				fmt.Fprintf(os.Stderr, "\n>>>>>>>>>\ncaught %#v\n", sig)
 				fmt.Fprintf(os.Stderr, "subcmds: %d %#v\n", len(ctx.subcmds), ctx.subcmds)
 				for icmd, cmd := range ctx.subcmds {
-					fmt.Fprintf(os.Stderr, ">>> icmd %d...\n", icmd)
+					fmt.Fprintf(os.Stderr, ">>> icmd %d... (%v)\n", icmd, cmd.Args)
 					if cmd == nil {
 						fmt.Fprintf(os.Stderr, ">>> cmd nil\n")
 						continue
@@ -199,7 +199,7 @@ func (ctx *Context) initSignalHandler() {
 					fmt.Fprintf(os.Stderr, ">>> signaling... [done]\n")
 					ps, pserr := proc.Wait()
 					if pserr != nil {
-						fmt.Fprintf(os.Stderr, "waited and got: %#v\n", pserr)
+						fmt.Fprintf(os.Stderr, "waited and got: %#v (%v)\n", pserr, pserr.Error())
 					} else {
 						if !ps.Exited() {
 							fmt.Fprintf(os.Stderr, ">>> killing...\n")

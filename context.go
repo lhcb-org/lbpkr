@@ -14,7 +14,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/gonuts/logger"
@@ -582,9 +581,9 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 	ctx.msg.Debugf("RPM command: rpm %v\n", rpmargs)
 	cmd := exec.Command("rpm", rpmargs...)
 	ctx.subcmds = append(ctx.subcmds, cmd)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGINT,
-	}
+	// cmd.SysProcAttr = &syscall.SysProcAttr{
+	// 	Pdeathsig: syscall.SIGINT,
+	// }
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

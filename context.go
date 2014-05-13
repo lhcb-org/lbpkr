@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -46,6 +47,9 @@ type Context struct {
 	extfix    map[string]FixFct
 
 	ndls int // number of concurrent downloads
+
+	subcmds []*exec.Cmd // list of subcommands launched by pkr
+	atexit  []func()    // functions to run at-exit
 }
 
 func New(cfg Config, dbg bool) (*Context, error) {
@@ -69,6 +73,8 @@ func New(cfg Config, dbg bool) (*Context, error) {
 		libdir:    filepath.Join(siteroot, "lib"),
 		initfile:  filepath.Join(siteroot, "etc", "repoinit"),
 		ndls:      runtime.NumCPU(),
+		subcmds:   make([]*exec.Cmd, 0),
+		atexit:    make([]func(), 0),
 	}
 	if dbg {
 		ctx.msg.SetLevel(logger.DEBUG)
@@ -85,6 +91,8 @@ func New(cfg Config, dbg bool) (*Context, error) {
 		}
 	}
 	os.Setenv("PATH", os.Getenv("PATH")+string(os.PathListSeparator)+ctx.bindir)
+
+	ctx.initSignalHandler()
 
 	// make sure the db is initialized
 	err = ctx.initRpmDb()
@@ -128,6 +136,9 @@ func (ctx *Context) Exit(rc int) {
 	if err != nil {
 		ctx.msg.Errorf("error closing context: %v\n", err)
 	}
+	for _, fct := range ctx.atexit {
+		fct()
+	}
 	os.Exit(rc)
 }
 
@@ -143,6 +154,74 @@ func (ctx *Context) Close() error {
 func (ctx *Context) SetLevel(lvl logger.Level) {
 	ctx.msg.SetLevel(lvl)
 	ctx.yum.SetLevel(lvl)
+}
+
+// initSignalHandler initalizes the signal handler
+func (ctx *Context) initSignalHandler() {
+	// initialize signal handler
+	go func() {
+		ch := make(chan os.Signal)
+		signal.Notify(ch, os.Interrupt, os.Kill)
+		for {
+			select {
+			case sig := <-ch:
+				// fmt.Fprintf(os.Stderr, "\n>>>>>>>>>\ncaught %#v\n", sig)
+				// fmt.Fprintf(os.Stderr, "subcmds: %d %#v\n", len(ctx.subcmds), ctx.subcmds)
+				for _, cmd := range ctx.subcmds {
+					// fmt.Fprintf(os.Stderr, ">>> icmd %d...\n", icmd)
+					if cmd == nil {
+						// fmt.Fprintf(os.Stderr, ">>> cmd nil\n")
+						continue
+					}
+					// fmt.Fprintf(os.Stderr, ">>> sync-ing\n")
+					if stdout, ok := cmd.Stdout.(interface {
+						Sync() error
+					}); ok {
+						stdout.Sync()
+					}
+					if stderr, ok := cmd.Stderr.(interface {
+						Sync() error
+					}); ok {
+						stderr.Sync()
+					}
+					proc := cmd.Process
+					if proc == nil {
+						continue
+					}
+					// fmt.Fprintf(os.Stderr, ">>> signaling...\n")
+					_ = proc.Signal(sig)
+					// fmt.Fprintf(os.Stderr, ">>> signaling... [done]\n")
+					ps, pserr := proc.Wait()
+					if pserr != nil {
+						// fmt.Fprintf(os.Stderr, "waited and got: %#v\n", pserr)
+					} else {
+						if !ps.Exited() {
+							// fmt.Fprintf(os.Stderr, ">>> killing...\n")
+							proc.Kill()
+							// fmt.Fprintf(os.Stderr, ">>> killing... [done]\n")
+						}
+					}
+					if stdout, ok := cmd.Stdout.(interface {
+						Sync() error
+					}); ok {
+						stdout.Sync()
+					}
+					if stderr, ok := cmd.Stderr.(interface {
+						Sync() error
+					}); ok {
+						stderr.Sync()
+					}
+					// fmt.Fprintf(os.Stderr, ">>> re-sync-ing... [done]\n")
+				}
+				// fmt.Fprintf(os.Stderr, "flushing\n")
+				_ = os.Stderr.Sync()
+				_ = os.Stdout.Sync()
+				// fmt.Fprintf(os.Stderr, "flushed\n")
+				ctx.Exit(1)
+				return
+			}
+		}
+	}()
 }
 
 // initRpmDb initializes the RPM database
@@ -168,6 +247,7 @@ func (ctx *Context) initRpmDb() error {
 			"--dbpath", ctx.dbpath,
 			"--initdb",
 		)
+		ctx.subcmds = append(ctx.subcmds, cmd)
 		out, err := cmd.CombinedOutput()
 		msg.Debugf(string(out))
 		if err != nil {
@@ -495,6 +575,7 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 
 	ctx.msg.Debugf("RPM command: rpm %v\n", rpmargs)
 	cmd := exec.Command("rpm", rpmargs...)
+	ctx.subcmds = append(ctx.subcmds, cmd)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Pdeathsig: syscall.SIGINT,
 	}

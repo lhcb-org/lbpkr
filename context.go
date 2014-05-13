@@ -614,12 +614,15 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 	}
 
 	errch := make(chan error)
+	go func() {
+		errch <- cmd.Wait()
+	}()
+
 	select {
 	case sig := <-ctx.sigch:
 		ctx.sigch <- sig
 		return nil, fmt.Errorf("pkr: subcommand killed by [%v]", sig)
-	case errch <- cmd.Wait():
-		err = <-errch
+	case err = <-errch:
 	}
 
 	ctx.msg.Debugf(string(out.Bytes()))

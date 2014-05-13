@@ -608,7 +608,11 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 		go io.Copy(&out, stdout)
 		go io.Copy(&out, stderr)
 	}
-	err = cmd.Run()
+	err = cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+	err = cmd.Wait()
 
 	ctx.msg.Debugf(string(out.Bytes()))
 	return out.Bytes(), err

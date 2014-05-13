@@ -160,12 +160,13 @@ func (ctx *Context) SetLevel(lvl logger.Level) {
 func (ctx *Context) initSignalHandler() {
 	// initialize signal handler
 	go func() {
-		ctx.sigch = make(chan os.Signal)
-		signal.Notify(ctx.sigch, os.Interrupt, os.Kill)
+		ch := make(chan os.Signal)
+		signal.Notify(ch, os.Interrupt, os.Kill)
 		for {
 			select {
-			case sig := <-ctx.sigch:
+			case sig := <-ch:
 				fmt.Fprintf(os.Stderr, "\n>>>>>>>>>\ncaught %#v\n", sig)
+				ctx.sigch <- sig
 				fmt.Fprintf(os.Stderr, "subcmds: %d %#v\n", len(ctx.subcmds), ctx.subcmds)
 				for icmd, cmd := range ctx.subcmds {
 					fmt.Fprintf(os.Stderr, ">>> icmd %d... (%v)\n", icmd, cmd.Args)
@@ -620,6 +621,7 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 
 	select {
 	case sig := <-ctx.sigch:
+		ctx.msg.Errorf("caught signal [%v]...\n", sig)
 		ctx.sigch <- sig
 		return nil, fmt.Errorf("pkr: subcommand killed by [%v]", sig)
 	case err = <-errch:

@@ -165,15 +165,15 @@ func (ctx *Context) initSignalHandler() {
 		for {
 			select {
 			case sig := <-ch:
-				// fmt.Fprintf(os.Stderr, "\n>>>>>>>>>\ncaught %#v\n", sig)
-				// fmt.Fprintf(os.Stderr, "subcmds: %d %#v\n", len(ctx.subcmds), ctx.subcmds)
-				for _, cmd := range ctx.subcmds {
-					// fmt.Fprintf(os.Stderr, ">>> icmd %d...\n", icmd)
+				fmt.Fprintf(os.Stderr, "\n>>>>>>>>>\ncaught %#v\n", sig)
+				fmt.Fprintf(os.Stderr, "subcmds: %d %#v\n", len(ctx.subcmds), ctx.subcmds)
+				for icmd, cmd := range ctx.subcmds {
+					fmt.Fprintf(os.Stderr, ">>> icmd %d...\n", icmd)
 					if cmd == nil {
-						// fmt.Fprintf(os.Stderr, ">>> cmd nil\n")
+						fmt.Fprintf(os.Stderr, ">>> cmd nil\n")
 						continue
 					}
-					// fmt.Fprintf(os.Stderr, ">>> sync-ing\n")
+					fmt.Fprintf(os.Stderr, ">>> sync-ing\n")
 					if stdout, ok := cmd.Stdout.(interface {
 						Sync() error
 					}); ok {
@@ -188,17 +188,17 @@ func (ctx *Context) initSignalHandler() {
 					if proc == nil {
 						continue
 					}
-					// fmt.Fprintf(os.Stderr, ">>> signaling...\n")
+					fmt.Fprintf(os.Stderr, ">>> signaling...\n")
 					_ = proc.Signal(sig)
-					// fmt.Fprintf(os.Stderr, ">>> signaling... [done]\n")
+					fmt.Fprintf(os.Stderr, ">>> signaling... [done]\n")
 					ps, pserr := proc.Wait()
 					if pserr != nil {
-						// fmt.Fprintf(os.Stderr, "waited and got: %#v\n", pserr)
+						fmt.Fprintf(os.Stderr, "waited and got: %#v\n", pserr)
 					} else {
 						if !ps.Exited() {
-							// fmt.Fprintf(os.Stderr, ">>> killing...\n")
+							fmt.Fprintf(os.Stderr, ">>> killing...\n")
 							proc.Kill()
-							// fmt.Fprintf(os.Stderr, ">>> killing... [done]\n")
+							fmt.Fprintf(os.Stderr, ">>> killing... [done]\n")
 						}
 					}
 					if stdout, ok := cmd.Stdout.(interface {
@@ -211,12 +211,12 @@ func (ctx *Context) initSignalHandler() {
 					}); ok {
 						stderr.Sync()
 					}
-					// fmt.Fprintf(os.Stderr, ">>> re-sync-ing... [done]\n")
+					fmt.Fprintf(os.Stderr, ">>> re-sync-ing... [done]\n")
 				}
-				// fmt.Fprintf(os.Stderr, "flushing\n")
+				fmt.Fprintf(os.Stderr, "flushing\n")
 				_ = os.Stderr.Sync()
 				_ = os.Stdout.Sync()
-				// fmt.Fprintf(os.Stderr, "flushed\n")
+				fmt.Fprintf(os.Stderr, "flushed\n")
 				ctx.Exit(1)
 				return
 			}

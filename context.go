@@ -186,6 +186,12 @@ func (ctx *Context) initSignalHandler() {
 					}
 					proc := cmd.Process
 					if proc == nil {
+						fmt.Fprintf(os.Stderr, ">>> nil Process\n")
+						continue
+					}
+					pstate := cmd.ProcessState
+					if pstate != nil && pstate.Exited() {
+						fmt.Fprintf(os.Stderr, ">>> process already exited\n")
 						continue
 					}
 					fmt.Fprintf(os.Stderr, ">>> signaling...\n")

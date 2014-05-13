@@ -495,7 +495,9 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 
 	ctx.msg.Debugf("RPM command: rpm %v\n", rpmargs)
 	cmd := exec.Command("rpm", rpmargs...)
-	cmd.SysProcAttr.Pdeathsig = syscall.SIGINT
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGINT,
+	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

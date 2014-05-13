@@ -5,10 +5,12 @@ const Version = "20140428"
 type Config interface {
 	Siteroot() string
 	RepoUrl() string
-	Prefix(group string) string
 	Name() string
 	Debug() bool
 	RpmUpdate() bool
+
+	// RelocateArgs returns the arguments to be passed to RPM for the repositories
+	RelocateArgs(siteroot string) []string
 
 	InitYum(*Context) error
 }

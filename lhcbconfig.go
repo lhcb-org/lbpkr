@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -18,22 +19,17 @@ type lhcbConfig struct {
 	ConfigBase
 }
 
-func (cfg *lhcbConfig) Prefix(group string) string {
-	const prefix = "/opt/LHCbSoft"
-
-	switch group {
-	case "", "lhcb":
-		return prefix
-
-	case "lcg":
-		return "/opt/lcg"
-	}
-
-	return prefix
-}
-
 func (cfg *lhcbConfig) Name() string {
 	return "lhcb"
+}
+
+// RelocateArgs returns the arguments to be passed to RPM for the repositories
+func (cfg *lhcbConfig) RelocateArgs(siteroot string) []string {
+	return []string{
+		"--relocate", fmt.Sprintf("%s=%s", "/opt/lcg", filepath.Join(siteroot, "lcg", "releases")),
+		"--relocate", fmt.Sprintf("%s=%s", "/opt/LHCbSoft", siteroot),
+		"--badreloc",
+	}
 }
 
 func (cfg *lhcbConfig) InitYum(ctx *Context) error {

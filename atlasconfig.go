@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -18,12 +19,17 @@ type atlasConfig struct {
 	ConfigBase
 }
 
-func (cfg *atlasConfig) Prefix(group string) string {
-	return "/opt/atlas"
-}
-
 func (cfg *atlasConfig) Name() string {
 	return "atlas"
+}
+
+// RelocateArgs returns the arguments to be passed to RPM for the repositories
+func (cfg *atlasConfig) RelocateArgs(siteroot string) []string {
+	return []string{
+		"--relocate", fmt.Sprintf("%s=%s", "/opt/lcg", filepath.Join(siteroot, "lcg", "releases")),
+		"--relocate", fmt.Sprintf("%s=%s", "/opt/atlas", siteroot),
+		"--badreloc",
+	}
 }
 
 func (cfg *atlasConfig) InitYum(ctx *Context) error {

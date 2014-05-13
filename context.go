@@ -488,19 +488,7 @@ func (ctx *Context) rpm(args ...string) ([]byte, error) {
 
 	rpmargs := []string{"--dbpath", ctx.dbpath}
 	if !query_mode && install_mode {
-		rpmargs = append(rpmargs,
-			"--relocate",
-			fmt.Sprintf(
-				"%s=%s",
-				ctx.cfg.Prefix("lcg"),
-				filepath.Join(ctx.siteroot, "lcg", "releases"),
-			),
-
-			"--relocate",
-			fmt.Sprintf("%s=%s", ctx.cfg.Prefix(""), ctx.siteroot),
-
-			"--badreloc",
-		)
+		rpmargs = append(rpmargs, ctx.cfg.RelocateArgs(ctx.siteroot)...)
 	}
 	rpmargs = append(rpmargs, args...)
 

@@ -48,8 +48,9 @@ type Context struct {
 	ndls int // number of concurrent downloads
 
 	sigch   chan os.Signal
-	subcmds []*exec.Cmd // list of subcommands launched by pkr
-	atexit  []func()    // functions to run at-exit
+	submux  sync.RWMutex // mutex on subcommands
+	subcmds []*exec.Cmd  // list of subcommands launched by pkr
+	atexit  []func()     // functions to run at-exit
 }
 
 func New(cfg Config, dbg bool) (*Context, error) {
@@ -168,6 +169,7 @@ func (ctx *Context) initSignalHandler() {
 				fmt.Fprintf(os.Stderr, "\n>>>>>>>>>\ncaught %#v\n", sig)
 				ctx.sigch <- sig
 				fmt.Fprintf(os.Stderr, "subcmds: %d %#v\n", len(ctx.subcmds), ctx.subcmds)
+				ctx.submux.RLock()
 				for icmd, cmd := range ctx.subcmds {
 					fmt.Fprintf(os.Stderr, ">>> icmd %d... (%v)\n", icmd, cmd.Args)
 					if cmd == nil {
@@ -220,6 +222,7 @@ func (ctx *Context) initSignalHandler() {
 					}
 					fmt.Fprintf(os.Stderr, ">>> re-sync-ing... [done]\n")
 				}
+				ctx.submux.RUnlock()
 				fmt.Fprintf(os.Stderr, "flushing\n")
 				_ = os.Stderr.Sync()
 				_ = os.Stdout.Sync()
@@ -254,8 +257,11 @@ func (ctx *Context) initRpmDb() error {
 			"--dbpath", ctx.dbpath,
 			"--initdb",
 		)
+		ctx.submux.Lock()
+		defer ctx.submux.Unlock()
 		ctx.subcmds = append(ctx.subcmds, cmd)
 		out, err := cmd.CombinedOutput()
+		ctx.subcmds = ctx.subcmds[:len(ctx.subcmds)-1]
 		msg.Debugf(string(out))
 		if err != nil {
 			return fmt.Errorf("error initializing RPM DB: %v", err)
@@ -582,6 +588,8 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 
 	ctx.msg.Debugf("RPM command: rpm %v\n", rpmargs)
 	cmd := exec.Command("rpm", rpmargs...)
+	ctx.submux.Lock()
+	defer ctx.submux.Unlock()
 	ctx.subcmds = append(ctx.subcmds, cmd)
 	// cmd.SysProcAttr = &syscall.SysProcAttr{
 	// 	Pdeathsig: syscall.SIGINT,
@@ -622,11 +630,11 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 	select {
 	case sig := <-ctx.sigch:
 		ctx.msg.Errorf("caught signal [%v]...\n", sig)
-		ctx.sigch <- sig
 		return nil, fmt.Errorf("pkr: subcommand killed by [%v]", sig)
 	case err = <-errch:
 	}
 
+	ctx.subcmds = ctx.subcmds[:len(ctx.subcmds)-1]
 	ctx.msg.Debugf(string(out.Bytes()))
 	return out.Bytes(), err
 }

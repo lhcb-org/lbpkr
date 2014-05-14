@@ -167,17 +167,17 @@ func (ctx *Context) initSignalHandler() {
 		for {
 			select {
 			case sig := <-ch:
-				fmt.Fprintf(os.Stderr, "\n>>>>>>>>>\ncaught %#v\n", sig)
+				// fmt.Fprintf(os.Stderr, "\n>>>>>>>>>\ncaught %#v\n", sig)
 				ctx.sigch <- sig
-				fmt.Fprintf(os.Stderr, "subcmds: %d %#v\n", len(ctx.subcmds), ctx.subcmds)
+				// fmt.Fprintf(os.Stderr, "subcmds: %d %#v\n", len(ctx.subcmds), ctx.subcmds)
 				ctx.submux.RLock()
-				for icmd, cmd := range ctx.subcmds {
-					fmt.Fprintf(os.Stderr, ">>> icmd %d... (%v)\n", icmd, cmd.Args)
+				for _, cmd := range ctx.subcmds {
+					// fmt.Fprintf(os.Stderr, ">>> icmd %d... (%v)\n", icmd, cmd.Args)
 					if cmd == nil {
-						fmt.Fprintf(os.Stderr, ">>> cmd nil\n")
+						// fmt.Fprintf(os.Stderr, ">>> cmd nil\n")
 						continue
 					}
-					fmt.Fprintf(os.Stderr, ">>> sync-ing\n")
+					// fmt.Fprintf(os.Stderr, ">>> sync-ing\n")
 					if stdout, ok := cmd.Stdout.(interface {
 						Sync() error
 					}); ok {
@@ -190,25 +190,25 @@ func (ctx *Context) initSignalHandler() {
 					}
 					proc := cmd.Process
 					if proc == nil {
-						fmt.Fprintf(os.Stderr, ">>> nil Process\n")
+						// fmt.Fprintf(os.Stderr, ">>> nil Process\n")
 						continue
 					}
 					pstate := cmd.ProcessState
 					if pstate != nil && pstate.Exited() {
-						fmt.Fprintf(os.Stderr, ">>> process already exited\n")
+						// fmt.Fprintf(os.Stderr, ">>> process already exited\n")
 						continue
 					}
-					fmt.Fprintf(os.Stderr, ">>> signaling...\n")
+					// fmt.Fprintf(os.Stderr, ">>> signaling...\n")
 					_ = proc.Signal(sig)
-					fmt.Fprintf(os.Stderr, ">>> signaling... [done]\n")
+					// fmt.Fprintf(os.Stderr, ">>> signaling... [done]\n")
 					ps, pserr := proc.Wait()
 					if pserr != nil {
-						fmt.Fprintf(os.Stderr, "waited and got: %#v (%v)\n", pserr, pserr.Error())
+						ctx.msg.Errorf("waited and got: %#v (%v)\n", pserr, pserr.Error())
 					} else {
 						if !ps.Exited() {
-							fmt.Fprintf(os.Stderr, ">>> killing...\n")
+							// fmt.Fprintf(os.Stderr, ">>> killing...\n")
 							proc.Kill()
-							fmt.Fprintf(os.Stderr, ">>> killing... [done]\n")
+							// fmt.Fprintf(os.Stderr, ">>> killing... [done]\n")
 						}
 					}
 					if stdout, ok := cmd.Stdout.(interface {
@@ -221,13 +221,13 @@ func (ctx *Context) initSignalHandler() {
 					}); ok {
 						stderr.Sync()
 					}
-					fmt.Fprintf(os.Stderr, ">>> re-sync-ing... [done]\n")
+					// fmt.Fprintf(os.Stderr, ">>> re-sync-ing... [done]\n")
 				}
 				ctx.submux.RUnlock()
-				fmt.Fprintf(os.Stderr, "flushing\n")
+				// fmt.Fprintf(os.Stderr, "flushing\n")
 				_ = os.Stderr.Sync()
 				_ = os.Stdout.Sync()
-				fmt.Fprintf(os.Stderr, "flushed\n")
+				// fmt.Fprintf(os.Stderr, "flushed\n")
 				ctx.Exit(1)
 				return
 			}

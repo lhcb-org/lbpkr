@@ -1,7 +1,5 @@
 package main
 
-const Version = "20140428"
-
 type Config interface {
 	Siteroot() string
 	RepoUrl() string

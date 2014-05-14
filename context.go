@@ -589,8 +589,8 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 	ctx.msg.Debugf("RPM command: rpm %v\n", rpmargs)
 	cmd := exec.Command("rpm", rpmargs...)
 	ctx.submux.Lock()
-	defer ctx.submux.Unlock()
 	ctx.subcmds = append(ctx.subcmds, cmd)
+	ctx.submux.Unlock()
 	// cmd.SysProcAttr = &syscall.SysProcAttr{
 	// 	Pdeathsig: syscall.SIGINT,
 	// }
@@ -634,7 +634,9 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 	case err = <-errch:
 	}
 
+	ctx.submux.Lock()
 	ctx.subcmds = ctx.subcmds[:len(ctx.subcmds)-1]
+	ctx.submux.Unlock()
 	ctx.msg.Debugf(string(out.Bytes()))
 	return out.Bytes(), err
 }

@@ -74,6 +74,7 @@ func New(cfg Config, dbg bool) (*Context, error) {
 		libdir:    filepath.Join(siteroot, "lib"),
 		initfile:  filepath.Join(siteroot, "etc", "repoinit"),
 		ndls:      runtime.NumCPU(),
+		sigch:     make(chan os.Signal),
 		subcmds:   make([]*exec.Cmd, 0),
 		atexit:    make([]func(), 0),
 	}

@@ -10,13 +10,13 @@ import (
 func pkr_make_cmd_rpm() *commander.Command {
 	cmd := &commander.Command{
 		Run:       pkr_run_cmd_rpm,
-		UsageLine: "rpm [options] <rpm-command-args>",
+		UsageLine: "rpm [options] -- <rpm-command-args>",
 		Short:     "rpm passes through command-args to the RPM binary",
 		Long: `
 rpm passes through command-args to the RPM binary.
 
 ex:
- $ pkr rpm --version
+ $ pkr rpm -- --version
 `,
 		Flag: *flag.NewFlagSet("pkr-rpm", flag.ExitOnError),
 	}

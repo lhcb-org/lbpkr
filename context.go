@@ -564,6 +564,12 @@ func (ctx *Context) Update(checkOnly bool) error {
 	return ctx.checkUpdates(checkOnly)
 }
 
+// Rpm runs the rpm command.
+func (ctx *Context) Rpm(args ...string) error {
+	_, err := ctx.rpm(true, args...)
+	return err
+}
+
 // rpm wraps the invocation of the rpm command
 func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 	install_mode := false

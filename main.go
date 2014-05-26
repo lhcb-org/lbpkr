@@ -18,7 +18,7 @@ func init() {
 			pkr_make_cmd_check(),
 			pkr_make_cmd_install(),
 			pkr_make_cmd_list(),
-			//pkr_make_cmd_rpm(),
+			pkr_make_cmd_rpm(),
 			pkr_make_cmd_update(),
 			pkr_make_cmd_version(),
 		},

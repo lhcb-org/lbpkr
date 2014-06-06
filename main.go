@@ -12,17 +12,17 @@ var g_ctx *Context
 
 func init() {
 	g_cmd = &commander.Command{
-		UsageLine: "pkr",
+		UsageLine: "lbpkr",
 		Short:     "installs software in MYSITEROOT directory.",
 		Subcommands: []*commander.Command{
-			pkr_make_cmd_check(),
-			pkr_make_cmd_install(),
-			pkr_make_cmd_list(),
-			pkr_make_cmd_rpm(),
-			pkr_make_cmd_update(),
-			pkr_make_cmd_version(),
+			lbpkr_make_cmd_check(),
+			lbpkr_make_cmd_install(),
+			lbpkr_make_cmd_list(),
+			lbpkr_make_cmd_rpm(),
+			lbpkr_make_cmd_update(),
+			lbpkr_make_cmd_version(),
 		},
-		Flag: *flag.NewFlagSet("pkr", flag.ExitOnError),
+		Flag: *flag.NewFlagSet("lbpkr", flag.ExitOnError),
 	}
 }
 

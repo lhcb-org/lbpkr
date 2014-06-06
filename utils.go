@@ -33,7 +33,7 @@ func PrintHeader(ctx *Context) {
 	now := time.Now()
 	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
 	ctx.msg.Infof(
-		"<<< %s - start of pkr-%s installation >>>\n",
+		"<<< %s - start of lbpkr-%s installation >>>\n",
 		now, Version,
 	)
 	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
@@ -44,7 +44,7 @@ func PrintTrailer(ctx *Context) {
 	now := time.Now()
 	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
 	ctx.msg.Infof(
-		"<<< %s - end of pkr-%s installation >>>\n",
+		"<<< %s - end of lbpkr-%s installation >>>\n",
 		now, Version,
 	)
 	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))

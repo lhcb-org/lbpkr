@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/gonuts/logger"
-	"github.com/lhcb-org/pkr/yum"
+	"github.com/lhcb-org/lbpkr/yum"
 )
 
 type External struct {
@@ -49,7 +49,7 @@ type Context struct {
 
 	sigch   chan os.Signal
 	submux  sync.RWMutex // mutex on subcommands
-	subcmds []*exec.Cmd  // list of subcommands launched by pkr
+	subcmds []*exec.Cmd  // list of subcommands launched by lbpkr
 	atexit  []func()     // functions to run at-exit
 }
 
@@ -62,7 +62,7 @@ func New(cfg Config, dbg bool) (*Context, error) {
 
 	ctx := Context{
 		cfg:       cfg,
-		msg:       logger.NewLogger("pkr", logger.INFO, os.Stdout),
+		msg:       logger.NewLogger("lbpkr", logger.INFO, os.Stdout),
 		siteroot:  siteroot,
 		repourl:   cfg.RepoUrl(),
 		dbpath:    filepath.Join(siteroot, "var", "lib", "rpm"),
@@ -637,7 +637,7 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 	select {
 	case sig := <-ctx.sigch:
 		ctx.msg.Errorf("caught signal [%v]...\n", sig)
-		return nil, fmt.Errorf("pkr: subcommand killed by [%v]", sig)
+		return nil, fmt.Errorf("lbpkr: subcommand killed by [%v]", sig)
 	case err = <-errch:
 	}
 
@@ -700,7 +700,7 @@ func (ctx *Context) listInstalledPackages() ([][3]string, error) {
 		line := scan.Text()
 		pkg := strings.Split(line, " ")
 		if len(pkg) != 3 {
-			err = fmt.Errorf("pkr: invalid line %q", line)
+			err = fmt.Errorf("lbpkr: invalid line %q", line)
 			return nil, err
 		}
 		for i, p := range pkg {

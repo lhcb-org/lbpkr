@@ -7,25 +7,25 @@ import (
 	"github.com/gonuts/flag"
 )
 
-func pkr_make_cmd_update() *commander.Command {
+func lbpkr_make_cmd_update() *commander.Command {
 	cmd := &commander.Command{
-		Run:       pkr_run_cmd_update,
+		Run:       lbpkr_run_cmd_update,
 		UsageLine: "update [options]",
 		Short:     "update RPMs from the yum repository",
 		Long: `
 update updates RPMs from the yum repository.
 
 ex:
- $ pkr update
+ $ lbpkr update
 `,
-		Flag: *flag.NewFlagSet("pkr-update", flag.ExitOnError),
+		Flag: *flag.NewFlagSet("lbpkr-update", flag.ExitOnError),
 	}
 	cmd.Flag.Bool("v", false, "enable verbose mode")
 	cmd.Flag.String("type", "lhcb", "config type (lhcb|atlas)")
 	return cmd
 }
 
-func pkr_run_cmd_update(cmd *commander.Command, args []string) error {
+func lbpkr_run_cmd_update(cmd *commander.Command, args []string) error {
 	var err error
 
 	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
@@ -35,7 +35,7 @@ func pkr_run_cmd_update(cmd *commander.Command, args []string) error {
 	case 0:
 		// no-op
 	default:
-		return fmt.Errorf("pkr: invalid number of arguments. expected none. got=%d (%v)",
+		return fmt.Errorf("lbpkr: invalid number of arguments. expected none. got=%d (%v)",
 			len(args),
 			args,
 		)

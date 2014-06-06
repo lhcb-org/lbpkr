@@ -7,25 +7,25 @@ import (
 	"github.com/gonuts/flag"
 )
 
-func pkr_make_cmd_version() *commander.Command {
+func lbpkr_make_cmd_version() *commander.Command {
 	cmd := &commander.Command{
-		Run:       pkr_run_cmd_version,
+		Run:       lbpkr_run_cmd_version,
 		UsageLine: "version",
 		Short:     "print out script version",
 		Long: `
 version prints out the script version.
 
 ex:
- $ pkr version
+ $ lbpkr version
  20140428
 `,
-		Flag: *flag.NewFlagSet("pkr-version", flag.ExitOnError),
+		Flag: *flag.NewFlagSet("lbpkr-version", flag.ExitOnError),
 	}
 	cmd.Flag.Bool("v", false, "enable verbose mode")
 	return cmd
 }
 
-func pkr_run_cmd_version(cmd *commander.Command, args []string) error {
+func lbpkr_run_cmd_version(cmd *commander.Command, args []string) error {
 	var err error
 	fmt.Printf("%s\n", Version)
 	return err

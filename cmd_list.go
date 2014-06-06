@@ -7,26 +7,26 @@ import (
 	"github.com/gonuts/flag"
 )
 
-func pkr_make_cmd_list() *commander.Command {
+func lbpkr_make_cmd_list() *commander.Command {
 	cmd := &commander.Command{
-		Run:       pkr_run_cmd_list,
+		Run:       lbpkr_run_cmd_list,
 		UsageLine: "list [options] <name-pattern> [<version-pattern> [<release-pattern>]]",
 		Short:     "list all RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]",
 		Long: `
 list lists all RPM packages satisfying <name-pattern>.
 
 ex:
- $ pkr list GAUDI
- $ pkr list GAUDI v23r2
+ $ lbpkr list GAUDI
+ $ lbpkr list GAUDI v23r2
 `,
-		Flag: *flag.NewFlagSet("pkr-list", flag.ExitOnError),
+		Flag: *flag.NewFlagSet("lbpkr-list", flag.ExitOnError),
 	}
 	cmd.Flag.Bool("v", false, "enable verbose mode")
 	cmd.Flag.String("type", "lhcb", "config type (lhcb|atlas)")
 	return cmd
 }
 
-func pkr_run_cmd_list(cmd *commander.Command, args []string) error {
+func lbpkr_run_cmd_list(cmd *commander.Command, args []string) error {
 	var err error
 
 	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
@@ -50,7 +50,7 @@ func pkr_run_cmd_list(cmd *commander.Command, args []string) error {
 		release = args[2]
 	default:
 		cmd.Usage()
-		return fmt.Errorf("pkr: invalid number of arguments. expected n=0|1|2|3. got=%d (%v)",
+		return fmt.Errorf("lbpkr: invalid number of arguments. expected n=0|1|2|3. got=%d (%v)",
 			len(args),
 			args,
 		)

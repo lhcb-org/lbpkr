@@ -7,25 +7,25 @@ import (
 	"github.com/gonuts/flag"
 )
 
-func pkr_make_cmd_rpm() *commander.Command {
+func lbpkr_make_cmd_rpm() *commander.Command {
 	cmd := &commander.Command{
-		Run:       pkr_run_cmd_rpm,
+		Run:       lbpkr_run_cmd_rpm,
 		UsageLine: "rpm [options] -- <rpm-command-args>",
 		Short:     "rpm passes through command-args to the RPM binary",
 		Long: `
 rpm passes through command-args to the RPM binary.
 
 ex:
- $ pkr rpm -- --version
+ $ lbpkr rpm -- --version
 `,
-		Flag: *flag.NewFlagSet("pkr-rpm", flag.ExitOnError),
+		Flag: *flag.NewFlagSet("lbpkr-rpm", flag.ExitOnError),
 	}
 	cmd.Flag.Bool("v", false, "enable verbose mode")
 	cmd.Flag.String("type", "lhcb", "config type (lhcb|atlas)")
 	return cmd
 }
 
-func pkr_run_cmd_rpm(cmd *commander.Command, args []string) error {
+func lbpkr_run_cmd_rpm(cmd *commander.Command, args []string) error {
 	var err error
 
 	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
@@ -34,7 +34,7 @@ func pkr_run_cmd_rpm(cmd *commander.Command, args []string) error {
 	switch len(args) {
 	case 0:
 		cmd.Usage()
-		return fmt.Errorf("pkr: invalid number of arguments. expected at least one argument. got=%d (%v)",
+		return fmt.Errorf("lbpkr: invalid number of arguments. expected at least one argument. got=%d (%v)",
 			len(args),
 			args,
 		)

@@ -73,7 +73,7 @@ func (repo *RepositorySQLiteBackend) YumDataType() string {
 func (repo *RepositorySQLiteBackend) GetLatestDB(url string) error {
 	var err error
 	repo.msg.Debugf("downloading latest version of SQLite DB\n")
-	tmp, err := ioutil.TempFile("", "pkr-sqlite-")
+	tmp, err := ioutil.TempFile("", "lbpkr-sqlite-")
 	if err != nil {
 		return err
 	}

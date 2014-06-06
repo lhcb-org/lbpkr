@@ -45,7 +45,7 @@ func NewConfig(cfgtype string) Config {
 	case "lhcb":
 		return LHCbConfig
 	default:
-		panic("pkr: unknown config [" + cfgtype + "]")
+		panic("lbpkr: unknown config [" + cfgtype + "]")
 	}
 	panic("unreachable")
 }

@@ -8,25 +8,25 @@ import (
 	"github.com/gonuts/flag"
 )
 
-func pkr_make_cmd_install() *commander.Command {
+func lbpkr_make_cmd_install() *commander.Command {
 	cmd := &commander.Command{
-		Run:       pkr_run_cmd_install,
+		Run:       lbpkr_run_cmd_install,
 		UsageLine: "install [options] <rpmname> [<version> [<release>]]",
 		Short:     "install a RPM from the yum repository",
 		Long: `
 install installs a RPM from the yum repository.
 
 ex:
- $ pkr install LHCb
+ $ lbpkr install LHCb
 `,
-		Flag: *flag.NewFlagSet("pkr-install", flag.ExitOnError),
+		Flag: *flag.NewFlagSet("lbpkr-install", flag.ExitOnError),
 	}
 	cmd.Flag.Bool("v", false, "enable verbose mode")
 	cmd.Flag.String("type", "lhcb", "config type (lhcb|atlas)")
 	return cmd
 }
 
-func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
+func lbpkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	var err error
 
 	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
@@ -38,7 +38,7 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	switch len(args) {
 	case 0:
 		cmd.Usage()
-		return fmt.Errorf("pkr: invalid number of arguments (got=%d)", len(args))
+		return fmt.Errorf("lbpkr: invalid number of arguments (got=%d)", len(args))
 	case 1:
 		rpmname = args[0]
 	case 2:
@@ -49,7 +49,7 @@ func pkr_run_cmd_install(cmd *commander.Command, args []string) error {
 		version = args[1]
 		release = args[2]
 	default:
-		return fmt.Errorf("pkr: invalid number of arguments. expected n=1|2|3. got=%d (%v)",
+		return fmt.Errorf("lbpkr: invalid number of arguments. expected n=1|2|3. got=%d (%v)",
 			len(args),
 			args,
 		)

@@ -316,7 +316,7 @@ func (yum *Client) initRepositories(urls map[string]string, checkForUpdates bool
 	// setup the repositories
 	for repo, repourl := range urls {
 		cachedir := filepath.Join(yum.lbyumcache, repo)
-		err = os.MkdirAll(cachedir, 0644)
+		err = os.MkdirAll(cachedir, 0755)
 		if err != nil {
 			return err
 		}

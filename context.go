@@ -82,11 +82,15 @@ func New(cfg Config, dbg bool) (*Context, error) {
 		ctx.msg.SetLevel(logger.DEBUG)
 	}
 	for _, dir := range []string{
+		siteroot,
+		ctx.dbpath,
+		ctx.etcdir,
+		ctx.yumreposd,
 		ctx.tmpdir,
 		ctx.bindir,
 		ctx.libdir,
 	} {
-		err = os.MkdirAll(dir, 0644)
+		err = os.MkdirAll(dir, 0755)
 		if err != nil {
 			ctx.msg.Errorf("could not create directory %q: %v\n", dir, err)
 			return nil, err
@@ -240,7 +244,7 @@ func (ctx *Context) initRpmDb() error {
 	var err error
 	msg := ctx.msg
 	msg.Infof("RPM DB in %q\n", ctx.dbpath)
-	err = os.MkdirAll(ctx.dbpath, 0644)
+	err = os.MkdirAll(ctx.dbpath, 0755)
 	if err != nil {
 		msg.Errorf(
 			"could not create directory %q for RPM DB: %v\n",
@@ -273,7 +277,7 @@ func (ctx *Context) initRpmDb() error {
 
 func (ctx *Context) initYum() error {
 	var err error
-	err = os.MkdirAll(ctx.etcdir, 0644)
+	err = os.MkdirAll(ctx.etcdir, 0755)
 	if err != nil {
 		return fmt.Errorf("could not create dir %q: %v", ctx.etcdir, err)
 	}

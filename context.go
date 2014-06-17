@@ -645,7 +645,7 @@ func (ctx *Context) Provides(filename string) error {
 
 	list := make([]*yum.Package, 0)
 	for _, rpm := range pkgs {
-		out, err := ctx.rpm(true, "-qlp", rpm.RpmFileName())
+		out, err := ctx.rpm(true, "-qlp", filepath.Join(ctx.tmpdir, rpm.RpmFileName()))
 		if err != nil {
 			panic(err)
 			return err

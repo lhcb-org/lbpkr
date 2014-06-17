@@ -632,7 +632,7 @@ func (ctx *Context) Provides(filename string) error {
 	if err != nil {
 		return err
 	}
-	pkgs := make([]*yum.Package, 0, len(installed))
+	rpms := make([]*yum.Package, 0, len(installed))
 	for i := range installed {
 		ipkg := installed[i]
 		pkg, err := ctx.yum.FindLatestMatchingName(ipkg[0], ipkg[1], ipkg[2])
@@ -640,7 +640,7 @@ func (ctx *Context) Provides(filename string) error {
 			panic(err)
 			return err
 		}
-		pkgs = append(pkgs, pkg)
+		rpms = append(rpms, pkg)
 	}
 
 	type pair struct {
@@ -676,8 +676,16 @@ func (ctx *Context) Provides(filename string) error {
 		return err
 	}
 
+	pkgs := make([]string, 0, len(list))
 	for _, p := range list {
-		fmt.Printf("%s-%s-%s (%s)\n", p.pkg.Name(), p.pkg.Version(), p.pkg.Release(), p.file)
+		pkgs = append(pkgs,
+			fmt.Sprintf("%s-%s-%s (%s)", p.pkg.Name(), p.pkg.Version(), p.pkg.Release(), p.file),
+		)
+	}
+
+	sort.Strings(pkgs)
+	for _, p := range pkgs {
+		fmt.Printf("%s\n", p)
 	}
 	return err
 }

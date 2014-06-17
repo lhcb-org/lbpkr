@@ -643,9 +643,13 @@ func (ctx *Context) Provides(filename string) error {
 		pkgs = append(pkgs, pkg)
 	}
 
-	list := make([]*yum.Package, 0)
+	type pair struct {
+		pkg  *yum.Package
+		file string
+	}
+	list := make([]pair, 0)
 	for _, rpm := range pkgs {
-		out, err := ctx.rpm(true, "-qlp", filepath.Join(ctx.tmpdir, rpm.RpmFileName()))
+		out, err := ctx.rpm(false, "-qlp", filepath.Join(ctx.tmpdir, rpm.RpmFileName()))
 		if err != nil {
 			panic(err)
 			return err
@@ -654,7 +658,10 @@ func (ctx *Context) Provides(filename string) error {
 		for scan.Scan() {
 			file := scan.Text()
 			if re_file.MatchString(file) {
-				list = append(list, rpm)
+				list = append(list, pair{
+					pkg:  rpm,
+					file: file,
+				})
 				break
 			}
 		}
@@ -669,8 +676,8 @@ func (ctx *Context) Provides(filename string) error {
 		return err
 	}
 
-	for _, pkg := range list {
-		fmt.Printf("%s-%s-%s\n", pkg.Name(), pkg.Version(), pkg.Release())
+	for _, p := range list {
+		fmt.Printf("%s-%s-%s (%s)\n", p.pkg.Name(), p.pkg.Version(), p.pkg.Release(), p.file)
 	}
 	return err
 }

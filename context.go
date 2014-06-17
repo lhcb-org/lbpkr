@@ -572,7 +572,7 @@ func (ctx *Context) Update(checkOnly bool) error {
 // ListInstalledPackages lists all installed packages satisfying the name/vers/release patterns
 func (ctx *Context) ListInstalledPackages(name, version, release string) error {
 	var err error
-	pkgs, err := ctx.listInstalledPackages()
+	installed, err := ctx.listInstalledPackages()
 	if err != nil {
 		return err
 	}
@@ -601,11 +601,20 @@ func (ctx *Context) ListInstalledPackages(name, version, release string) error {
 		}
 	}
 
-	for _, pkg := range pkgs {
+	pkgs := make([]string, 0, len(installed))
+	for _, pkg := range installed {
 		if !filter(pkg) {
 			continue
 		}
-		fmt.Printf("%s-%s-%s\n", pkg[0], pkg[1], pkg[2])
+		pkgs = append(pkgs, fmt.Sprintf("%s-%s-%s\n", pkg[0], pkg[1], pkg[2]))
+	}
+	if len(pkgs) <= 0 {
+		fmt.Printf("** No Match found **\n")
+		return err
+	}
+	sort.Strings(pkgs)
+	for _, pkg := range pkgs {
+		fmt.Printf("%s\n", pkg)
 	}
 	return err
 }

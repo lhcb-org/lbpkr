@@ -606,7 +606,7 @@ func (ctx *Context) ListInstalledPackages(name, version, release string) error {
 		if !filter(pkg) {
 			continue
 		}
-		pkgs = append(pkgs, fmt.Sprintf("%s-%s-%s\n", pkg[0], pkg[1], pkg[2]))
+		pkgs = append(pkgs, fmt.Sprintf("%s-%s-%s", pkg[0], pkg[1], pkg[2]))
 	}
 	if len(pkgs) <= 0 {
 		fmt.Printf("** No Match found **\n")

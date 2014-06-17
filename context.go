@@ -649,8 +649,8 @@ func (ctx *Context) Provides(filename string) error {
 	}
 	list := make([]pair, 0)
 	for _, rpm := range rpms {
-		rpmargs := []string{"-qlp", filepath.Join(ctx.tmpdir, rpm.RpmFileName())}
-		rpmargs = append(rpmargs, ctx.cfg.RelocateArgs(ctx.siteroot)...)
+		rpmargs := ctx.cfg.RelocateArgs(ctx.siteroot)
+		rpmargs = append(rpmargs, "-qlp", filepath.Join(ctx.tmpdir, rpm.RpmFileName()))
 		out, err := ctx.rpm(false, rpmargs...)
 		if err != nil {
 			panic(err)

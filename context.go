@@ -624,6 +624,7 @@ func (ctx *Context) Provides(filename string) error {
 	var err error
 	re_file, err := regexp.Compile(filename)
 	if err != nil {
+		panic(err)
 		return err
 	}
 
@@ -636,6 +637,7 @@ func (ctx *Context) Provides(filename string) error {
 		ipkg := installed[i]
 		pkg, err := ctx.yum.FindLatestMatchingName(ipkg[0], ipkg[1], ipkg[2])
 		if err != nil {
+			panic(err)
 			return err
 		}
 		pkgs = append(pkgs, pkg)
@@ -643,8 +645,9 @@ func (ctx *Context) Provides(filename string) error {
 
 	list := make([]*yum.Package, 0)
 	for _, rpm := range pkgs {
-		out, err := ctx.rpm(false, "-qlp", rpm.RpmFileName())
+		out, err := ctx.rpm(true, "-qlp", rpm.RpmFileName())
 		if err != nil {
+			panic(err)
 			return err
 		}
 		scan := bufio.NewScanner(bytes.NewBuffer(out))
@@ -657,6 +660,7 @@ func (ctx *Context) Provides(filename string) error {
 		}
 		err = scan.Err()
 		if err != nil {
+			panic(err)
 			return err
 		}
 	}

@@ -660,7 +660,7 @@ func (ctx *Context) Provides(filename string) error {
 			if re_file.MatchString(file) {
 				list = append(list, pair{
 					pkg:  rpm,
-					file: file,
+					file: ctx.cfg.RelocateFile(file, ctx.siteroot),
 				})
 				break
 			}

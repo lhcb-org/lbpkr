@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var (
@@ -30,6 +31,13 @@ func (cfg *atlasConfig) RelocateArgs(siteroot string) []string {
 		"--relocate", fmt.Sprintf("%s=%s", "/opt/atlas", siteroot),
 		"--badreloc",
 	}
+}
+
+// RelocateFile returns the relocated file path
+func (cfg *atlasConfig) RelocateFile(fname, siteroot string) string {
+	fname = strings.Replace(fname, "/opt/lcg", filepath.Join(siteroot, "lcg", "releases"), 1)
+	fname = strings.Replace(fname, "/opt/atlas", siteroot, 1)
+	return fname
 }
 
 func (cfg *atlasConfig) InitYum(ctx *Context) error {

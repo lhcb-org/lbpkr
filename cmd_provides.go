@@ -17,6 +17,7 @@ provides lists all installed RPM packages providing the given file.
 
 ex:
  $ lbpkr provides gaudirun.py
+ GAUDI_v25r1_x86_64_slc6_gcc48_opt-1.0.0-1 (/opt/cern-sw/lhcb/GAUDI/GAUDI_v25r1/InstallArea/x86_64-slc6-gcc48-opt/scripts/gaudirun.py)
 `,
 		Flag: *flag.NewFlagSet("lbpkr-provides", flag.ExitOnError),
 	}

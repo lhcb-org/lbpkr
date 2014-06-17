@@ -568,6 +568,12 @@ func (ctx *Context) Update(checkOnly bool) error {
 	return ctx.checkUpdates(checkOnly)
 }
 
+// ListInstalledPackages lists all installed packages satisfying the name/vers/release patterns
+func (ctx *Context) ListInstalledPackages(name, version, release string) error {
+	var err error
+	return err
+}
+
 // Rpm runs the rpm command.
 func (ctx *Context) Rpm(args ...string) error {
 	_, err := ctx.rpm(true, args...)

@@ -619,6 +619,58 @@ func (ctx *Context) ListInstalledPackages(name, version, release string) error {
 	return err
 }
 
+// Provides lists all installed packages providing filename
+func (ctx *Context) Provides(filename string) error {
+	var err error
+	re_file, err := regexp.Compile(filename)
+	if err != nil {
+		return err
+	}
+
+	installed, err := ctx.listInstalledPackages()
+	if err != nil {
+		return err
+	}
+	pkgs := make([]*yum.Package, 0, len(installed))
+	for i := range installed {
+		ipkg := installed[i]
+		pkg, err := ctx.yum.FindLatestMatchingName(ipkg[0], ipkg[1], ipkg[2])
+		if err != nil {
+			return err
+		}
+		pkgs = append(pkgs, pkg)
+	}
+
+	list := make([]*yum.Package, 0)
+	for _, rpm := range pkgs {
+		out, err := ctx.rpm(false, "-qlp", rpm.RpmFileName())
+		if err != nil {
+			return err
+		}
+		scan := bufio.NewScanner(bytes.NewBuffer(out))
+		for scan.Scan() {
+			file := scan.Text()
+			if re_file.MatchString(file) {
+				list = append(list, rpm)
+				break
+			}
+		}
+		err = scan.Err()
+		if err != nil {
+			return err
+		}
+	}
+	if len(list) <= 0 {
+		fmt.Printf("** No Match found **\n")
+		return err
+	}
+
+	for _, pkg := range list {
+		fmt.Printf("%s-%s-%s\n", pkg.Name(), pkg.Version(), pkg.Release())
+	}
+	return err
+}
+
 // Rpm runs the rpm command.
 func (ctx *Context) Rpm(args ...string) error {
 	_, err := ctx.rpm(true, args...)

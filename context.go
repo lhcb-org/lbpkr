@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -571,6 +572,41 @@ func (ctx *Context) Update(checkOnly bool) error {
 // ListInstalledPackages lists all installed packages satisfying the name/vers/release patterns
 func (ctx *Context) ListInstalledPackages(name, version, release string) error {
 	var err error
+	pkgs, err := ctx.listInstalledPackages()
+	if err != nil {
+		return err
+	}
+	filter := func(pkg [3]string) bool { return true }
+	if release != "" && version != "" && name != "" {
+		re_name := regexp.MustCompile(name)
+		re_vers := regexp.MustCompile(version)
+		re_release := regexp.MustCompile(release)
+		filter = func(pkg [3]string) bool {
+			return re_name.MatchString(pkg[0]) &&
+				re_vers.MatchString(pkg[1]) &&
+				re_release.MatchString(pkg[2])
+		}
+	} else if version != "" && name != "" {
+		re_name := regexp.MustCompile(name)
+		re_vers := regexp.MustCompile(version)
+		filter = func(pkg [3]string) bool {
+			return re_name.MatchString(pkg[0]) &&
+				re_vers.MatchString(pkg[1])
+		}
+
+	} else if name != "" {
+		re_name := regexp.MustCompile(name)
+		filter = func(pkg [3]string) bool {
+			return re_name.MatchString(pkg[0])
+		}
+	}
+
+	for _, pkg := range pkgs {
+		if !filter(pkg) {
+			continue
+		}
+		fmt.Printf("%s-%s-%s\n", pkg[0], pkg[1], pkg[2])
+	}
 	return err
 }
 

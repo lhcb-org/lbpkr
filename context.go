@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -566,6 +567,56 @@ func (ctx *Context) ListPackages(name, version, release string) error {
 // Update checks whether updates are available and installs them if requested
 func (ctx *Context) Update(checkOnly bool) error {
 	return ctx.checkUpdates(checkOnly)
+}
+
+// ListInstalledPackages lists all installed packages satisfying the name/vers/release patterns
+func (ctx *Context) ListInstalledPackages(name, version, release string) error {
+	var err error
+	installed, err := ctx.listInstalledPackages()
+	if err != nil {
+		return err
+	}
+	filter := func(pkg [3]string) bool { return true }
+	if release != "" && version != "" && name != "" {
+		re_name := regexp.MustCompile(name)
+		re_vers := regexp.MustCompile(version)
+		re_release := regexp.MustCompile(release)
+		filter = func(pkg [3]string) bool {
+			return re_name.MatchString(pkg[0]) &&
+				re_vers.MatchString(pkg[1]) &&
+				re_release.MatchString(pkg[2])
+		}
+	} else if version != "" && name != "" {
+		re_name := regexp.MustCompile(name)
+		re_vers := regexp.MustCompile(version)
+		filter = func(pkg [3]string) bool {
+			return re_name.MatchString(pkg[0]) &&
+				re_vers.MatchString(pkg[1])
+		}
+
+	} else if name != "" {
+		re_name := regexp.MustCompile(name)
+		filter = func(pkg [3]string) bool {
+			return re_name.MatchString(pkg[0])
+		}
+	}
+
+	pkgs := make([]string, 0, len(installed))
+	for _, pkg := range installed {
+		if !filter(pkg) {
+			continue
+		}
+		pkgs = append(pkgs, fmt.Sprintf("%s-%s-%s", pkg[0], pkg[1], pkg[2]))
+	}
+	if len(pkgs) <= 0 {
+		fmt.Printf("** No Match found **\n")
+		return err
+	}
+	sort.Strings(pkgs)
+	for _, pkg := range pkgs {
+		fmt.Printf("%s\n", pkg)
+	}
+	return err
 }
 
 // Rpm runs the rpm command.

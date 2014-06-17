@@ -17,6 +17,7 @@ func init() {
 		Subcommands: []*commander.Command{
 			lbpkr_make_cmd_check(),
 			lbpkr_make_cmd_install(),
+			lbpkr_make_cmd_installed(),
 			lbpkr_make_cmd_list(),
 			lbpkr_make_cmd_rpm(),
 			lbpkr_make_cmd_update(),

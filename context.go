@@ -693,7 +693,7 @@ func (ctx *Context) isRpmInstalled(name, version string) bool {
 // listInstalledPackages checks whether a given RPM package is already installed
 func (ctx *Context) listInstalledPackages() ([][3]string, error) {
 	list := make([][3]string, 0)
-	args := []string{"--dbpath", ctx.dbpath, "-qa", "--queryformat", "%{NAME} %{VERSION} %{RELEASE}\n"}
+	args := []string{"-qa", "--queryformat", "%{NAME} %{VERSION} %{RELEASE}\n"}
 	out, err := ctx.rpm(false, args...)
 	if err != nil {
 		return nil, err

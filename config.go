@@ -10,6 +10,9 @@ type Config interface {
 	// RelocateArgs returns the arguments to be passed to RPM for the repositories
 	RelocateArgs(siteroot string) []string
 
+	// RelocateFile returns the relocated file path
+	RelocateFile(fname, siteroot string) string
+
 	InitYum(*Context) error
 }
 

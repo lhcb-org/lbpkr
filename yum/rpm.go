@@ -17,6 +17,9 @@ type RPM interface {
 	RpmName() string
 	RpmFileName() string
 	//Url() string
+
+	// ID returns the unique identifier of this RPM
+	ID() string
 }
 
 type rpmBase struct {
@@ -57,6 +60,18 @@ func (rpm *rpmBase) RpmName() string {
 
 func (rpm *rpmBase) RpmFileName() string {
 	return fmt.Sprintf("%s-%s-%s.rpm", rpm.name, rpm.version, rpm.release)
+}
+
+func (rpm *rpmBase) ID() string {
+	str := func(s string) string {
+		switch s {
+		case "":
+			return "*"
+		default:
+			return s
+		}
+	}
+	return fmt.Sprintf("%s-%s-%s-%s", str(rpm.name), str(rpm.version), str(rpm.release), str(rpm.epoch))
 }
 
 func (rpm *rpmBase) ProvideMatches(p RPM) bool {

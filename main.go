@@ -16,6 +16,7 @@ func init() {
 		Short:     "installs software in MYSITEROOT directory.",
 		Subcommands: []*commander.Command{
 			lbpkr_make_cmd_check(),
+			lbpkr_make_cmd_deps(),
 			lbpkr_make_cmd_install(),
 			lbpkr_make_cmd_installed(),
 			lbpkr_make_cmd_list(),

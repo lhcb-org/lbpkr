@@ -690,6 +690,26 @@ func (ctx *Context) Provides(filename string) error {
 	return err
 }
 
+// ListPackageDeps lists all the dependencies of the given RPM package
+func (ctx *Context) ListPackageDeps(name, version, release string) error {
+	var err error
+	pkg, err := ctx.yum.FindLatestMatchingName(name, version, release)
+	if err != nil {
+		return fmt.Errorf("lbpkr: no such package name=%q version=%q release=%q (%v)", name, version, release, err)
+	}
+
+	deps, err := ctx.yum.PackageDeps(pkg)
+	if err != nil {
+		return fmt.Errorf("lbpkr: could not find dependencies for package=%q (%v)", pkg.ID(), err)
+	}
+
+	sort.Sort(yum.Packages(deps))
+	for _, pkg := range deps {
+		fmt.Printf("%s\n", pkg.ID())
+	}
+	return err
+}
+
 // Rpm runs the rpm command.
 func (ctx *Context) Rpm(args ...string) error {
 	_, err := ctx.rpm(true, args...)

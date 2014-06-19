@@ -188,31 +188,27 @@ func (yum *Client) RequiredPackages(pkg *Package) ([]*Package, error) {
 // PackageDeps returns all dependencies for the package (excluding the package itself)
 func (yum *Client) PackageDeps(pkg *Package) ([]*Package, error) {
 	var err error
-	processed := make(map[*Package]struct{})
+	processed := make(map[string]*Package)
 	deps, err := yum.pkgDeps(pkg, processed)
 	if err != nil {
 		return nil, err
 	}
 
-	set := make(map[string]struct{})
 	pkgs := make([]*Package, 0, len(deps))
-	for p := range deps {
-		if _, dup := set[p.RpmName()]; !dup {
-			set[p.RpmName()] = struct{}{}
-			pkgs = append(pkgs, p)
-		}
+	for _, p := range deps {
+		pkgs = append(pkgs, p)
 	}
 	return pkgs, err
 }
 
 // pkgDeps returns all dependencies for the package (excluding the package itself)
-func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*Package]struct{}, error) {
+func (yum *Client) pkgDeps(pkg *Package, processed map[string]*Package) (map[string]*Package, error) {
 	var err error
 	var lasterr error
 	msg := yum.msg
 
-	processed[pkg] = struct{}{}
-	required := make(map[*Package]struct{})
+	processed[pkg.RpmName()] = pkg
+	required := make(map[string]*Package)
 
 	nreqs := len(pkg.Requires())
 	msg.Verbosef(">>> pkg %s.%s-%s (req=%d)\n", pkg.Name(), pkg.Version(), pkg.Release(), nreqs)
@@ -228,7 +224,7 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*
 			msg.Debugf("could not find match for %s.%s-%s\n", req.Name(), req.Version(), req.Release())
 			continue
 		}
-		if _, dup := processed[p]; dup {
+		if _, dup := processed[p.RpmName()]; dup {
 			msg.Warnf("cyclic dependency in repository with package: %s.%s-%s\n", p.Name(), p.Version(), p.Release())
 			continue
 		}
@@ -239,15 +235,15 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[*Package]struct{}) (map[*
 			//return nil, fmt.Errorf("package %s.%s-%s not found", req.Name(), req.Version(), req.Release())
 		}
 		msg.Verbosef("--> adding dep %s.%s-%s\n", p.Name(), p.Version(), p.Release())
-		required[p] = struct{}{}
+		required[p.RpmName()] = p
 		sdeps, err := yum.pkgDeps(p, processed)
 		if err != nil {
 			lasterr = err
 			continue
 			//return nil, err
 		}
-		for sdep := range sdeps {
-			required[sdep] = struct{}{}
+		for _, sdep := range sdeps {
+			required[sdep.RpmName()] = sdep
 		}
 	}
 

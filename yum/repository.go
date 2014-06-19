@@ -117,7 +117,7 @@ func (repo *Repository) setupBackendFromRemote() error {
 	}
 
 	for _, bname := range repo.Backends {
-		repo.msg.Infof("checking availability of backend [%s]\n", bname)
+		repo.msg.Debugf("checking availability of backend [%s]\n", bname)
 		ba, err := NewBackend(bname, repo)
 		if err != nil {
 			ba.Close()
@@ -142,7 +142,7 @@ func (repo *Repository) setupBackendFromRemote() error {
 		if !repo.Backend.HasDB() || rrepomd.Timestamp.After(lrepomd.Timestamp) {
 			// we need to update the DB
 			url := repo.RepoUrl + "/" + rrepomd.Location
-			repo.msg.Infof("updating the RPM database for %s\n", bname)
+			repo.msg.Debugf("updating the RPM database for %s\n", bname)
 			err = repo.Backend.GetLatestDB(url)
 			if err != nil {
 				repo.msg.Warnf("problem updating RPM database for backend [%s]: %v\n", bname, err)
@@ -181,7 +181,7 @@ func (repo *Repository) setupBackendFromRemote() error {
 		return fmt.Errorf("No valid backend found")
 	}
 
-	repo.msg.Infof("repository [%s] - chosen backend [%T]\n", repo.Name, repo.Backend)
+	repo.msg.Debugf("repository [%s] - chosen backend [%T]\n", repo.Name, repo.Backend)
 	return err
 }
 
@@ -200,7 +200,7 @@ func (repo *Repository) setupBackendFromLocal() error {
 
 	var backend Backend
 	for _, bname := range repo.Backends {
-		repo.msg.Infof("checking availability of backend [%s]\n", bname)
+		repo.msg.Debugf("checking availability of backend [%s]\n", bname)
 		ba, err := NewBackend(bname, repo)
 		if err != nil {
 			continue
@@ -234,7 +234,7 @@ func (repo *Repository) setupBackendFromLocal() error {
 		return fmt.Errorf("No valid backend found")
 	}
 
-	repo.msg.Infof("repository [%s] - chosen backend [%T]\n", repo.Name, repo.Backend)
+	repo.msg.Debugf("repository [%s] - chosen backend [%T]\n", repo.Name, repo.Backend)
 	return err
 }
 

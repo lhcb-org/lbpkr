@@ -244,7 +244,7 @@ func (ctx *Context) initSignalHandler() {
 func (ctx *Context) initRpmDb() error {
 	var err error
 	msg := ctx.msg
-	msg.Infof("RPM DB in %q\n", ctx.dbpath)
+	msg.Debugf("RPM DB in %q\n", ctx.dbpath)
 	err = os.MkdirAll(ctx.dbpath, 0755)
 	if err != nil {
 		msg.Errorf(
@@ -257,7 +257,7 @@ func (ctx *Context) initRpmDb() error {
 
 	pkgdir := filepath.Join(ctx.dbpath, "Packages")
 	if !path_exists(pkgdir) {
-		msg.Infof("Initializing RPM db\n")
+		msg.Debugf("Initializing RPM db\n")
 		cmd := exec.Command(
 			"rpm",
 			"--dbpath", ctx.dbpath,
@@ -323,7 +323,7 @@ func (ctx *Context) checkPreRequisites() error {
 
 	for k, ext := range ctx.extstatus {
 		if ext.err == nil {
-			ctx.msg.Infof("%s: Found %q\n", k, ext.cmd)
+			ctx.msg.Debugf("%s: Found %q\n", k, ext.cmd)
 			continue
 		}
 		ctx.msg.Infof("%s: Missing - trying compensatory measure\n", k)
@@ -345,7 +345,7 @@ func (ctx *Context) checkPreRequisites() error {
 			err: err,
 		}
 		if err == nil {
-			ctx.msg.Infof("%s: Found %q\n", k, cmd)
+			ctx.msg.Debugf("%s: Found %q\n", k, cmd)
 			continue
 		}
 		ctx.msg.Infof("%s: Missing\n", k)

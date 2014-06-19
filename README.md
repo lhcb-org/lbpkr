@@ -11,6 +11,12 @@ lbpkr
 $ go get github.com/lhcb-org/lbpkr
 ```
 
+or, if you prefer the binary:
+```sh
+$ curl -O -L http://cern.ch/lhcbproject/dist/rpm/lbpkr && chmod +x ./lbpkr
+$ ./lbpkr help
+```
+
 ## Usage
 
 ### list available packages

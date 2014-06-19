@@ -71,7 +71,7 @@ func (rpm *rpmBase) ID() string {
 			return s
 		}
 	}
-	return fmt.Sprintf("%s-%s-%s-%s", str(rpm.name), str(rpm.version), str(rpm.release), str(rpm.epoch))
+	return fmt.Sprintf("%s-%s-%s", str(rpm.name), str(rpm.version), str(rpm.release))
 }
 
 func (rpm *rpmBase) ProvideMatches(p RPM) bool {

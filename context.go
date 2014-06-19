@@ -651,9 +651,14 @@ func (ctx *Context) Provides(filename string) error {
 	}
 	list := make([]pair, 0)
 	for _, rpm := range rpms {
-		out, err := ctx.rpm(false, "-qlp", filepath.Join(ctx.tmpdir, rpm.RpmFileName()))
+		rpmfile := filepath.Join(ctx.tmpdir, rpm.RpmFileName())
+		if _, errstat := os.Stat(rpmfile); errstat != nil {
+			err = fmt.Errorf("lbpkr: no such file [%s] (%v)", rpmfile, errstat)
+			return err
+		}
+		out, err := ctx.rpm(false, "-qlp", rpmfile)
 		if err != nil {
-			panic(err)
+			err = fmt.Errorf("lbpkr: error querying rpm-db: %v", err)
 			return err
 		}
 		scan := bufio.NewScanner(bytes.NewBuffer(out))
@@ -669,7 +674,7 @@ func (ctx *Context) Provides(filename string) error {
 		}
 		err = scan.Err()
 		if err != nil {
-			panic(err)
+			err = fmt.Errorf("lbpkr: error scaning rpm-output: %v", err)
 			return err
 		}
 	}
@@ -681,7 +686,7 @@ func (ctx *Context) Provides(filename string) error {
 	pkgs := make([]string, 0, len(list))
 	for _, p := range list {
 		pkgs = append(pkgs,
-			fmt.Sprintf("%s-%s-%s (%s)", p.pkg.Name(), p.pkg.Version(), p.pkg.Release(), p.file),
+			fmt.Sprintf("%s (%s)", p.pkg.ID(), p.file),
 		)
 	}
 

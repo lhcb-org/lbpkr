@@ -550,17 +550,18 @@ func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) 
 // ListPackages lists all packages satisfying pattern (a regexp)
 func (ctx *Context) ListPackages(name, version, release string) error {
 	var err error
-	total := 0
+
 	pkgs, err := ctx.yum.ListPackages(name, version, release)
 	if err != nil {
 		return err
 	}
 
+	sort.Sort(yum.Packages(pkgs))
 	for _, pkg := range pkgs {
-		fmt.Printf("%s\n", pkg.RpmName())
-		total += 1
+		fmt.Printf("%s\n", pkg.ID())
 	}
-	ctx.msg.Infof("Total matching: %d\n", total)
+
+	ctx.msg.Infof("Total matching: %d\n", len(pkgs))
 	return err
 }
 
@@ -612,6 +613,7 @@ func (ctx *Context) ListInstalledPackages(name, version, release string) error {
 		fmt.Printf("** No Match found **\n")
 		return err
 	}
+
 	sort.Strings(pkgs)
 	for _, pkg := range pkgs {
 		fmt.Printf("%s\n", pkg)

@@ -207,35 +207,35 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[string]*Package) (map[str
 	var lasterr error
 	msg := yum.msg
 
-	processed[pkg.RpmName()] = pkg
+	processed[pkg.ID()] = pkg
 	required := make(map[string]*Package)
 
 	nreqs := len(pkg.Requires())
-	msg.Verbosef(">>> pkg %s.%s-%s (req=%d)\n", pkg.Name(), pkg.Version(), pkg.Release(), nreqs)
+	msg.Verbosef(">>> pkg %s (req=%d)\n", pkg.ID(), nreqs)
 	for ireq, req := range pkg.Requires() {
-		msg.Verbosef("[%03d/%03d] processing deps for %s.%s-%s\n", ireq, nreqs, req.Name(), req.Version(), req.Release())
+		msg.Verbosef("[%03d/%03d] processing deps for %s\n", ireq, nreqs, req.ID())
 		if str_in_slice(req.Name(), g_IGNORED_PACKAGES) {
-			msg.Verbosef("[%03d/%03d] processing deps for %s.%s-%s [IGNORE]\n", ireq, nreqs, req.Name(), req.Version(), req.Release())
+			msg.Verbosef("[%03d/%03d] processing deps for %s [IGNORE]\n", ireq, nreqs, req.ID())
 			continue
 		}
 		p, err := yum.FindLatestMatchingRequire(req)
 		if err != nil {
 			lasterr = err
-			msg.Debugf("could not find match for %s.%s-%s\n", req.Name(), req.Version(), req.Release())
+			msg.Debugf("could not find match for %s\n", req.ID())
 			continue
 		}
-		if _, dup := processed[p.RpmName()]; dup {
-			msg.Warnf("cyclic dependency in repository with package: %s.%s-%s\n", p.Name(), p.Version(), p.Release())
+		if _, dup := processed[p.ID()]; dup {
+			msg.Debugf("package %s already processed (required by pkg=%s | req=%s)\n", p.ID(), pkg.ID(), req.ID())
 			continue
 		}
 		if p == nil {
-			msg.Errorf("package %s.%s-%s not found!\n", req.Name(), req.Version(), req.Release())
-			lasterr = fmt.Errorf("package %s.%s-%s not found", req.Name(), req.Version(), req.Release())
+			msg.Errorf("package %s not found!\n", req.ID())
+			lasterr = fmt.Errorf("package %s not found", req.ID())
 			continue
 			//return nil, fmt.Errorf("package %s.%s-%s not found", req.Name(), req.Version(), req.Release())
 		}
-		msg.Verbosef("--> adding dep %s.%s-%s\n", p.Name(), p.Version(), p.Release())
-		required[p.RpmName()] = p
+		msg.Verbosef("--> adding dep %s\n", p.ID())
+		required[p.ID()] = p
 		sdeps, err := yum.pkgDeps(p, processed)
 		if err != nil {
 			lasterr = err
@@ -243,7 +243,7 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[string]*Package) (map[str
 			//return nil, err
 		}
 		for _, sdep := range sdeps {
-			required[sdep.RpmName()] = sdep
+			required[sdep.ID()] = sdep
 		}
 	}
 

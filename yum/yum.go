@@ -194,9 +194,13 @@ func (yum *Client) PackageDeps(pkg *Package) ([]*Package, error) {
 		return nil, err
 	}
 
+	set := make(map[string]struct{})
 	pkgs := make([]*Package, 0, len(deps))
 	for p := range deps {
-		pkgs = append(pkgs, p)
+		if _, dup := set[p.RpmName()]; !dup {
+			set[p.RpmName()] = struct{}{}
+			pkgs = append(pkgs, p)
+		}
 	}
 	return pkgs, err
 }

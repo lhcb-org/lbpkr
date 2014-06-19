@@ -17,39 +17,19 @@ $ go get github.com/lhcb-org/lbpkr
 
 ```sh
 $ lbpkr list LHCB
-lbpkr INFO    RPM DB in "/opt/cern-sw/var/lib/rpm"
-repo INFO    checking availability of backend [RepositorySQLiteBackend]
-repo INFO    repository [repo] - chosen backend [*yum.RepositorySQLiteBackend]
-repo INFO    checking availability of backend [RepositorySQLiteBackend]
-repo INFO    updating the RPM database for RepositorySQLiteBackend
-repo INFO    repository [lcg] - chosen backend [*yum.RepositorySQLiteBackend]
-repo INFO    checking availability of backend [RepositorySQLiteBackend]
-repo INFO    updating the RPM database for RepositorySQLiteBackend
-repo INFO    repository [lhcbold] - chosen backend [*yum.RepositorySQLiteBackend]
-repo INFO    checking availability of backend [RepositorySQLiteBackend]
-repo INFO    updating the RPM database for RepositorySQLiteBackend
-repo INFO    repository [lhcb] - chosen backend [*yum.RepositorySQLiteBackend]
-lbpkr INFO    rpm: Found "/bin/rpm"
-LHCB_v34r2-1.0.0-1
-LHCB_v34r2_x86_64_slc5_gcc43_opt-1.0.0-1
-LHCB_v34r2_x86_64_slc5_gcc46_opt-1.0.0-1
-LHCB_v35r1p1_x86_64_slc5_gcc43_opt-1.0.0-1
-LHCB_v35r1p1-1.0.0-1
-LHCB_v35r0-1.0.0-1
-LHCB_v35r0_x86_64_slc5_gcc43_opt-1.0.0-1
-lbpkr INFO    Total matching: 7
+LHCBEXTERNALS_v68r0_x86_64_slc6_gcc48_opt-1.0.0-1-0
+LHCB_v37r1-1.0.0-1-0
+LHCB_v37r1_x86_64_slc6_gcc48_opt-1.0.0-1-0
+LHCB_v37r3-1.0.0-1-0
+LHCB_v37r3_x86_64_slc6_gcc48_dbg-1.0.0-1-0
+LHCB_v37r3_x86_64_slc6_gcc48_opt-1.0.0-1-0
+lbpkr INFO    Total matching: 6
 ```
 
 ### install a package (and its dependencies)
 
 ```sh
 $ lbpkr install -type=atlas LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    RPM DB in "/opt/cern-sw/var/lib/rpm"
-lbpkr INFO    Initializing RPM db
-repo INFO    checking availability of backend [RepositorySQLiteBackend]
-repo INFO    updating the RPM database for RepositorySQLiteBackend
-repo INFO    repository [repo] - chosen backend [*yum.RepositorySQLiteBackend]
-lbpkr INFO    rpm: Found "/bin/rpm"
 lbpkr INFO    installing RPM LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt 1 1
 lbpkr INFO    installing LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt and dependencies
 lbpkr INFO    found 31 RPMs to install:
@@ -68,14 +48,6 @@ lbpkr INFO    downloading http://atlas-computing.web.cern.ch/atlas-computing/lin
 
 ```sh
 $ lbpkr installed
-lbpkr INFO    RPM DB in "/opt/cern-sw/var/lib/rpm"
-repo INFO    checking availability of backend [RepositorySQLiteBackend]
-repo INFO    repository [lcg] - chosen backend [*yum.RepositorySQLiteBackend]
-repo INFO    checking availability of backend [RepositorySQLiteBackend]
-repo INFO    repository [lhcbold] - chosen backend [*yum.RepositorySQLiteBackend]
-repo INFO    checking availability of backend [RepositorySQLiteBackend]
-repo INFO    repository [lhcb] - chosen backend [*yum.RepositorySQLiteBackend]
-lbpkr INFO    rpm: Found "/bin/rpm"
 AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_opt-1.0.0-4
 Boost-f9e91_1.55.0_python2.7_x86_64_slc6_gcc48_opt-1.0.0-4
 CASTOR-9ccc5_2.1.13_6_x86_64_slc6_gcc48_opt-1.0.0-4
@@ -89,16 +61,28 @@ xrootd-3a806_3.2.7_x86_64_slc6_gcc48_opt-1.0.0-4
 
 ```sh
 $ lbpkr provides gaudirun.py
-lbpkr INFO    RPM DB in "/opt/cern-sw/var/lib/rpm"
-repo INFO    checking availability of backend [RepositorySQLiteBackend]
-repo INFO    repository [lcg] - chosen backend [*yum.RepositorySQLiteBackend]
-repo INFO    checking availability of backend [RepositorySQLiteBackend]
-repo INFO    repository [lhcbold] - chosen backend [*yum.RepositorySQLiteBackend]
-repo INFO    checking availability of backend [RepositorySQLiteBackend]
-repo INFO    repository [lhcb] - chosen backend [*yum.RepositorySQLiteBackend]
-lbpkr INFO    rpm: Found "/bin/rpm"
 GAUDI_v25r1-1.0.0-1 (/opt/cern-sw/lhcb/GAUDI/GAUDI_v25r1/Gaudi/scripts/.svn/prop-base/gaudirun.py.svn-base)
 GAUDI_v25r1_x86_64_slc6_gcc48_opt-1.0.0-1 (/opt/cern-sw/lhcb/GAUDI/GAUDI_v25r1/InstallArea/x86_64-slc6-gcc48-opt/scripts/gaudirun.py)
+```
+
+### list the dependencies of a given package
+
+```sh
+$ lbpkr deps ROOT-6ef81_5.34.18_x86_64_slc6_gcc48_opt
+CASTOR-9ccc5_2.1.13_6_x86_64_slc6_gcc48_opt-1.0.0-4-0
+GSL-a0511_1.10_x86_64_slc6_gcc48_opt-1.0.0-4-0
+Python-31787_2.7.6_x86_64_slc6_gcc48_opt-1.0.0-5-0
+Qt-f642c_4.8.4_x86_64_slc6_gcc48_opt-1.0.0-4-0
+dcap-cdd28_2.47.7_1_x86_64_slc6_gcc48_opt-1.0.0-4-0
+fftw-0c601_3.1.2_x86_64_slc6_gcc48_opt-1.0.0-4-0
+gcc_4.8.1_x86_64_slc6-1.0.0-1-0
+gfal-6fc75_1.13.0_0_x86_64_slc6_gcc48_opt-1.0.0-4-0
+graphviz-a8340_2.28.0_x86_64_slc6_gcc48_opt-1.0.0-4-0
+mysql-c4d2c_5.5.27_x86_64_slc6_gcc48_opt-1.0.0-4-0
+oracle-e33b7_11.2.0.3.0_x86_64_slc6_gcc48_opt-1.0.0-4-0
+sqlite-4b60e_3070900_x86_64_slc6_gcc48_opt-1.0.0-4-0
+srm_ifce-be254_1.13.0_0_x86_64_slc6_gcc48_opt-1.0.0-4-0
+xrootd-3a806_3.2.7_x86_64_slc6_gcc48_opt-1.0.0-4-0
 ```
 
 ### help
@@ -110,6 +94,7 @@ lbpkr - installs software in MYSITEROOT directory.
 Commands:
 
     check       check for RPM updates from the yum repository
+    deps        list all deps RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
     install     install a RPM from the yum repository
     installed   list all installed RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
     list        list all RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]

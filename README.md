@@ -91,6 +91,26 @@ srm_ifce-be254_1.13.0_0_x86_64_slc6_gcc48_opt-1.0.0-4
 xrootd-3a806_3.2.7_x86_64_slc6_gcc48_opt-1.0.0-4
 ```
 
+### dump the depencency graph of installed RPMs
+
+```sh
+$ lbpkr dep-grap -o graph.dot GAUDI
+GAUDI_v25r2-1.0.0-1
+GAUDI_v25r2_x86_64_slc6_gcc48_opt-1.0.0-1
+$ cat graph.dot
+digraph rpms {
+        "GAUDI_v25r2_x86_64_slc6_gcc48_opt-1.0.0-1"->"LHCBEXTERNALS_v68r0_x86_64_slc6_gcc48_opt-1.0.0-1";
+        "GAUDI_v25r2_x86_64_slc6_gcc48_opt-1.0.0-1"->"GAUDI_v25r2-1.0.0-1";
+        "GAUDI_v25r2-1.0.0-1" [ epoch="0", name="GAUDI_v25r2", release="1", version="1.0.0" ];
+        "GAUDI_v25r2_x86_64_slc6_gcc48_opt-1.0.0-1" [ epoch="0", name="GAUDI_v25r2_x86_64_slc6_gcc48_opt", release="1", version="1.0.0" ];
+        "LHCBEXTERNALS_v68r0_x86_64_slc6_gcc48_opt-1.0.0-1" [ epoch="0", name="LHCBEXTERNALS_v68r0_x86_64_slc6_gcc48_opt", release="1", version="1.0.0" ];
+
+}
+
+## dump the full graph rooted in GAUDI
+$ lbpkr dep-graph -o graph.dot -rec-lvl=-1 GAUDI
+```
+
 ### help
 
 ```sh
@@ -100,12 +120,14 @@ lbpkr - installs software in MYSITEROOT directory.
 Commands:
 
     check       check for RPM updates from the yum repository
+    dep-graph   dump the DOT graph of installed RPM packages [<name-pattern> [<version-pattern> [<release-pattern>]]]
     deps        list all deps RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
     install     install a RPM from the yum repository
     installed   list all installed RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
     list        list all RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
     provides    list all installed RPM packages providing the given file
     rpm         rpm passes through command-args to the RPM binary
+    self        admin/internal operations for lbpkr
     update      update RPMs from the yum repository
     version     print out script version
 

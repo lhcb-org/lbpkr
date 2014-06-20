@@ -24,6 +24,10 @@ func (cfg *lhcbConfig) Name() string {
 	return "lhcb"
 }
 
+func (cfg *lhcbConfig) DefaultSiteroot() string {
+	return "/opt/LHCbSoft"
+}
+
 // RelocateArgs returns the arguments to be passed to RPM for the repositories
 func (cfg *lhcbConfig) RelocateArgs(siteroot string) []string {
 	return []string{

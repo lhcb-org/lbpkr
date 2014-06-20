@@ -24,6 +24,10 @@ func (cfg *atlasConfig) Name() string {
 	return "atlas"
 }
 
+func (cfg *atlasConfig) DefaultSiteroot() string {
+	return "/opt/atlas"
+}
+
 // RelocateArgs returns the arguments to be passed to RPM for the repositories
 func (cfg *atlasConfig) RelocateArgs(siteroot string) []string {
 	return []string{

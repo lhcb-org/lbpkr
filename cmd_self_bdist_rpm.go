@@ -86,16 +86,18 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 	rpmbuild, err := exec.LookPath("rpmbuild")
 	if err != nil {
 		msg.Errorf("could not locate 'rpmbuild': %v\n", err)
-	}
-
-	lbpkr, err := filepath.Abs("/proc/self/exe")
-	if err != nil {
-		msg.Errorf("could not find lbpkr executable: %v\n", err)
 		return err
 	}
+
+	lbpkr, err := exec.LookPath(os.Args[0])
+	if err != nil {
+		msg.Errorf("could not locate '%s': %v\n", err, os.Args[0])
+		return err
+	}
+
 	lbpkr, err = filepath.EvalSymlinks(lbpkr)
 	if err != nil {
-		msg.Errorf("could not find real lbpkr executable: %v\n", err)
+		msg.Errorf("could not find '%s' executable: %v\n", lbpkr, err)
 		return err
 	}
 

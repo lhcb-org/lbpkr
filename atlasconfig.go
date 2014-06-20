@@ -7,15 +7,6 @@ import (
 	"strings"
 )
 
-var (
-	AtlasConfig = &atlasConfig{
-		ConfigBase: ConfigBase{
-			siteroot: os.Getenv("MYSITEROOT"),
-			repourl:  "http://atlas-computing.web.cern.ch/atlas-computing/links/reposDirectory/lcg/slc6/yum/",
-		},
-	}
-)
-
 type atlasConfig struct {
 	ConfigBase
 }

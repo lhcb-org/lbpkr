@@ -47,10 +47,20 @@ func (cfg *ConfigBase) RpmUpdate() bool {
 func NewConfig(cfgtype string) Config {
 	switch cfgtype {
 	case "atlas":
-		AtlasConfig.siteroot = os.Getenv("MYSITEROOT")
+		AtlasConfig := &atlasConfig{
+			ConfigBase: ConfigBase{
+				siteroot: os.Getenv("MYSITEROOT"),
+				repourl:  "http://atlas-computing.web.cern.ch/atlas-computing/links/reposDirectory/lcg/slc6/yum/",
+			},
+		}
 		return AtlasConfig
 	case "lhcb":
-		LHCbConfig.siteroot = os.Getenv("MYSITEROOT")
+		LHCbConfig := &lhcbConfig{
+			ConfigBase: ConfigBase{
+				siteroot: os.Getenv("MYSITEROOT"),
+				repourl:  "http://test-lbrpm.web.cern.ch/test-lbrpm",
+			},
+		}
 		return LHCbConfig
 	default:
 		panic("lbpkr: unknown config [" + cfgtype + "]")

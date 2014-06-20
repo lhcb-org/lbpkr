@@ -22,6 +22,7 @@ func init() {
 			lbpkr_make_cmd_list(),
 			lbpkr_make_cmd_provides(),
 			lbpkr_make_cmd_rpm(),
+			lbpkr_make_cmd_self(),
 			lbpkr_make_cmd_update(),
 			lbpkr_make_cmd_version(),
 		},

@@ -7,21 +7,16 @@ import (
 	"strings"
 )
 
-var (
-	LHCbConfig = &lhcbConfig{
-		ConfigBase: ConfigBase{
-			siteroot: os.Getenv("MYSITEROOT"),
-			repourl:  "http://test-lbrpm.web.cern.ch/test-lbrpm",
-		},
-	}
-)
-
 type lhcbConfig struct {
 	ConfigBase
 }
 
 func (cfg *lhcbConfig) Name() string {
 	return "lhcb"
+}
+
+func (cfg *lhcbConfig) DefaultSiteroot() string {
+	return "/opt/LHCbSoft"
 }
 
 // RelocateArgs returns the arguments to be passed to RPM for the repositories

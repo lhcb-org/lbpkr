@@ -7,21 +7,16 @@ import (
 	"strings"
 )
 
-var (
-	AtlasConfig = &atlasConfig{
-		ConfigBase: ConfigBase{
-			siteroot: os.Getenv("MYSITEROOT"),
-			repourl:  "http://atlas-computing.web.cern.ch/atlas-computing/links/reposDirectory/lcg/slc6/yum/",
-		},
-	}
-)
-
 type atlasConfig struct {
 	ConfigBase
 }
 
 func (cfg *atlasConfig) Name() string {
 	return "atlas"
+}
+
+func (cfg *atlasConfig) DefaultSiteroot() string {
+	return "/opt/atlas"
 }
 
 // RelocateArgs returns the arguments to be passed to RPM for the repositories

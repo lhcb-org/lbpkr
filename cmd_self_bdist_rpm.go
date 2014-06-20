@@ -274,5 +274,5 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-/*
+/{{.Prefix}}/usr/bin/lbpkr
 `

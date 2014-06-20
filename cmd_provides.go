@@ -52,6 +52,6 @@ func lbpkr_run_cmd_provides(cmd *commander.Command, args []string) error {
 	}
 	defer ctx.Close()
 
-	err = ctx.Provides(filename)
+	_, err = ctx.Provides(filename)
 	return err
 }

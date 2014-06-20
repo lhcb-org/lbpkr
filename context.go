@@ -158,6 +158,10 @@ func (ctx *Context) Close() error {
 	return ctx.yum.Close()
 }
 
+func (ctx *Context) Client() *yum.Client {
+	return ctx.yum
+}
+
 func (ctx *Context) SetLevel(lvl logger.Level) {
 	ctx.msg.SetLevel(lvl)
 	ctx.yum.SetLevel(lvl)
@@ -548,12 +552,12 @@ func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) 
 }
 
 // ListPackages lists all packages satisfying pattern (a regexp)
-func (ctx *Context) ListPackages(name, version, release string) error {
+func (ctx *Context) ListPackages(name, version, release string) ([]*yum.Package, error) {
 	var err error
 
 	pkgs, err := ctx.yum.ListPackages(name, version, release)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	sort.Sort(yum.Packages(pkgs))
@@ -562,7 +566,7 @@ func (ctx *Context) ListPackages(name, version, release string) error {
 	}
 
 	ctx.msg.Infof("Total matching: %d\n", len(pkgs))
-	return err
+	return pkgs, err
 }
 
 // Update checks whether updates are available and installs them if requested
@@ -571,11 +575,11 @@ func (ctx *Context) Update(checkOnly bool) error {
 }
 
 // ListInstalledPackages lists all installed packages satisfying the name/vers/release patterns
-func (ctx *Context) ListInstalledPackages(name, version, release string) error {
+func (ctx *Context) ListInstalledPackages(name, version, release string) ([]*yum.Package, error) {
 	var err error
 	installed, err := ctx.listInstalledPackages()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	filter := func(pkg [3]string) bool { return true }
 	if release != "" && version != "" && name != "" {
@@ -602,45 +606,47 @@ func (ctx *Context) ListInstalledPackages(name, version, release string) error {
 		}
 	}
 
-	pkgs := make([]string, 0, len(installed))
+	pkgs := make([]*yum.Package, 0, len(installed))
 	for _, pkg := range installed {
 		if !filter(pkg) {
 			continue
 		}
-		pkgs = append(pkgs, fmt.Sprintf("%s-%s-%s", pkg[0], pkg[1], pkg[2]))
+		p, err := ctx.yum.FindLatestMatchingName(pkg[0], pkg[1], pkg[2])
+		if err != nil {
+			return nil, err
+		}
+		pkgs = append(pkgs, p)
 	}
 	if len(pkgs) <= 0 {
 		fmt.Printf("** No Match found **\n")
-		return err
+		return nil, err
 	}
 
-	sort.Strings(pkgs)
+	sort.Sort(yum.Packages(pkgs))
 	for _, pkg := range pkgs {
-		fmt.Printf("%s\n", pkg)
+		fmt.Printf("%s\n", pkg.ID())
 	}
-	return err
+	return pkgs, err
 }
 
 // Provides lists all installed packages providing filename
-func (ctx *Context) Provides(filename string) error {
+func (ctx *Context) Provides(filename string) ([]*yum.Package, error) {
 	var err error
 	re_file, err := regexp.Compile(filename)
 	if err != nil {
-		panic(err)
-		return err
+		return nil, err
 	}
 
 	installed, err := ctx.listInstalledPackages()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	rpms := make([]*yum.Package, 0, len(installed))
 	for i := range installed {
 		ipkg := installed[i]
 		pkg, err := ctx.yum.FindLatestMatchingName(ipkg[0], ipkg[1], ipkg[2])
 		if err != nil {
-			panic(err)
-			return err
+			return nil, err
 		}
 		rpms = append(rpms, pkg)
 	}
@@ -654,12 +660,12 @@ func (ctx *Context) Provides(filename string) error {
 		rpmfile := filepath.Join(ctx.tmpdir, rpm.RpmFileName())
 		if _, errstat := os.Stat(rpmfile); errstat != nil {
 			err = fmt.Errorf("lbpkr: no such file [%s] (%v)", rpmfile, errstat)
-			return err
+			return nil, err
 		}
 		out, err := ctx.rpm(false, "-qlp", rpmfile)
 		if err != nil {
 			err = fmt.Errorf("lbpkr: error querying rpm-db: %v", err)
-			return err
+			return nil, err
 		}
 		scan := bufio.NewScanner(bytes.NewBuffer(out))
 		for scan.Scan() {
@@ -675,12 +681,12 @@ func (ctx *Context) Provides(filename string) error {
 		err = scan.Err()
 		if err != nil {
 			err = fmt.Errorf("lbpkr: error scaning rpm-output: %v", err)
-			return err
+			return nil, err
 		}
 	}
 	if len(list) <= 0 {
 		fmt.Printf("** No Match found **\n")
-		return err
+		return nil, err
 	}
 
 	pkgs := make([]string, 0, len(list))
@@ -694,27 +700,27 @@ func (ctx *Context) Provides(filename string) error {
 	for _, p := range pkgs {
 		fmt.Printf("%s\n", p)
 	}
-	return err
+	return rpms, err
 }
 
 // ListPackageDeps lists all the dependencies of the given RPM package
-func (ctx *Context) ListPackageDeps(name, version, release string) error {
+func (ctx *Context) ListPackageDeps(name, version, release string) ([]*yum.Package, error) {
 	var err error
 	pkg, err := ctx.yum.FindLatestMatchingName(name, version, release)
 	if err != nil {
-		return fmt.Errorf("lbpkr: no such package name=%q version=%q release=%q (%v)", name, version, release, err)
+		return nil, fmt.Errorf("lbpkr: no such package name=%q version=%q release=%q (%v)", name, version, release, err)
 	}
 
 	deps, err := ctx.yum.PackageDeps(pkg)
 	if err != nil {
-		return fmt.Errorf("lbpkr: could not find dependencies for package=%q (%v)", pkg.ID(), err)
+		return nil, fmt.Errorf("lbpkr: could not find dependencies for package=%q (%v)", pkg.ID(), err)
 	}
 
 	sort.Sort(yum.Packages(deps))
 	for _, pkg := range deps {
 		fmt.Printf("%s\n", pkg.ID())
 	}
-	return err
+	return deps, err
 }
 
 // Rpm runs the rpm command.

@@ -16,7 +16,7 @@ import (
 )
 
 // List of packages to ignore for our case
-var g_IGNORED_PACKAGES = []string{
+var IGNORED_PACKAGES = []string{
 	"rpmlib(CompressedFileNames)", "/bin/sh", "rpmlib(PayloadFilesHavePrefix)",
 	"rpmlib(PartialHardlinkSets)",
 }

@@ -196,7 +196,7 @@ func (repo *RepositoryXMLBackend) LoadDB() error {
 			)
 			pkg.provides = append(pkg.provides, prov)
 
-			if !str_in_slice(prov.Name(), g_IGNORED_PACKAGES) {
+			if !str_in_slice(prov.Name(), IGNORED_PACKAGES) {
 				repo.Provides[prov.Name()] = append(repo.Provides[prov.Name()], prov)
 			}
 		}

@@ -214,7 +214,7 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[string]*Package) (map[str
 	msg.Verbosef(">>> pkg %s (req=%d)\n", pkg.ID(), nreqs)
 	for ireq, req := range pkg.Requires() {
 		msg.Verbosef("[%03d/%03d] processing deps for %s\n", ireq, nreqs, req.ID())
-		if str_in_slice(req.Name(), g_IGNORED_PACKAGES) {
+		if str_in_slice(req.Name(), IGNORED_PACKAGES) {
 			msg.Verbosef("[%03d/%03d] processing deps for %s [IGNORE]\n", ireq, nreqs, req.ID())
 			continue
 		}

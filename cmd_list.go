@@ -63,6 +63,6 @@ func lbpkr_run_cmd_list(cmd *commander.Command, args []string) error {
 	}
 	defer ctx.Close()
 
-	err = ctx.ListPackages(name, vers, release)
+	_, err = ctx.ListPackages(name, vers, release)
 	return err
 }

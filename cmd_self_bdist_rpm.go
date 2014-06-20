@@ -72,6 +72,9 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 	if debug {
 		msg.SetLevel(logger.DEBUG)
 	}
+
+	// if siteroot is empty, re-create the config with the according
+	// Default-Siteroot value so RPM relocation will work correctly.
 	if siteroot := cfg.Siteroot(); siteroot == "" {
 		err = os.Setenv("MYSITEROOT", cfg.DefaultSiteroot())
 		if err != nil {

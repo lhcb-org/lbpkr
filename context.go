@@ -984,7 +984,7 @@ func (ctx *Context) installFiles(files []string, rpmdir string, forceInstall, up
 		args = []string{"-Uvh"}
 	}
 	if forceInstall {
-		args = append(args, "--force")
+		args = append(args, "--nodeps")
 	}
 	for _, fname := range files {
 		args = append(args, filepath.Join(rpmdir, fname))

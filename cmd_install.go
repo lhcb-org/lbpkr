@@ -23,6 +23,7 @@ ex:
 	}
 	cmd.Flag.Bool("v", false, "enable verbose mode")
 	cmd.Flag.String("type", "lhcb", "config type (lhcb|atlas)")
+	cmd.Flag.Bool("force", false, "force RPM installation (by-passing any check)")
 	return cmd
 }
 
@@ -31,6 +32,7 @@ func lbpkr_run_cmd_install(cmd *commander.Command, args []string) error {
 
 	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
+	force := cmd.Flag.Lookup("force").Value.Get().(bool)
 
 	rpmname := ""
 	version := ""
@@ -80,8 +82,7 @@ func lbpkr_run_cmd_install(cmd *commander.Command, args []string) error {
 
 	ctx.msg.Infof("installing RPM %s %s %s\n", rpmname, version, release)
 
-	forceInstall := false
 	update := false
-	err = ctx.InstallRPM(rpmname, version, release, forceInstall, update)
+	err = ctx.InstallRPM(rpmname, version, release, force, update)
 	return err
 }

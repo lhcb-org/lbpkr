@@ -46,6 +46,7 @@ func newClient(siteroot string, backends []string, checkForUpdates, manualConfig
 	// load the config and set the URLs accordingly
 	urls, err := client.loadConfig()
 	if err != nil {
+		client.msg.Errorf("could not load yum config: %v\n", err)
 		return nil, err
 	}
 
@@ -53,6 +54,7 @@ func newClient(siteroot string, backends []string, checkForUpdates, manualConfig
 	// we know connect to them to get the best method to get the appropriate files
 	err = client.initRepositories(urls, checkForUpdates, backends)
 	if err != nil {
+		client.msg.Errorf("could not initialize repositories: %v\n", err)
 		return nil, err
 	}
 
@@ -318,6 +320,10 @@ func (yum *Client) initRepositories(urls map[string]string, checkForUpdates bool
 		cachedir := filepath.Join(yum.lbyumcache, repo)
 		err = os.MkdirAll(cachedir, 0755)
 		if err != nil {
+			yum.msg.Errorf("could not create cachedir [%s] for repo [%s]: %v\n",
+				cachedir, repo,
+				err,
+			)
 			return err
 		}
 		r, err := NewRepository(
@@ -325,6 +331,10 @@ func (yum *Client) initRepositories(urls map[string]string, checkForUpdates bool
 			backends, setupBackend, checkForUpdates,
 		)
 		if err != nil {
+			yum.msg.Errorf("could not create yum repository repo [%s] (url=%v): %v\n",
+				repo, repourl,
+				err,
+			)
 			return err
 		}
 		r.msg = yum.msg

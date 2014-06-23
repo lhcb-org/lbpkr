@@ -65,7 +65,7 @@ func lbpkr_run_cmd_self_upload_rpm(cmd *commander.Command, args []string) error 
 			return err
 		}
 
-		msg.Debugf("update metadata...\n")
+		msg.Debugf("updating metadata...\n")
 		updatecmd := filepath.Join(rpmdir, "update.sh")
 		regen := exec.Command(updatecmd)
 		regen.Dir = rpmdir
@@ -77,7 +77,7 @@ func lbpkr_run_cmd_self_upload_rpm(cmd *commander.Command, args []string) error 
 			msg.Errorf("could not regenerate metadata: %v\n", err)
 			return err
 		}
-		msg.Debugf("update metadata... [ok]\n")
+		msg.Debugf("updating metadata... [ok]\n")
 
 	default:
 		return fmt.Errorf("lbpkr: config type [%s] not handled", cfgtype)

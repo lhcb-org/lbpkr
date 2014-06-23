@@ -79,6 +79,24 @@ func lbpkr_run_cmd_self_upload_rpm(cmd *commander.Command, args []string) error 
 		}
 		msg.Debugf("updating metadata... [ok]\n")
 
+		lbpkr, err := exec.LookPath(os.Args[0])
+		if err != nil {
+			msg.Errorf("could not locate '%s': %v\n", err, os.Args[0])
+			return err
+		}
+
+		lbpkr, err = filepath.EvalSymlinks(lbpkr)
+		if err != nil {
+			msg.Errorf("could not find '%s' executable: %v\n", lbpkr, err)
+			return err
+		}
+
+		err = bincp(filepath.Join(rpmdir, "lbpkr"), lbpkr)
+		if err != nil {
+			msg.Errorf("could not copy 'lbpkr': %v\n", err)
+			return err
+		}
+
 	default:
 		return fmt.Errorf("lbpkr: config type [%s] not handled", cfgtype)
 	}

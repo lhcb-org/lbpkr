@@ -15,7 +15,7 @@ func newLHCbConfig() *lhcbConfig {
 	return &lhcbConfig{
 		ConfigBase: ConfigBase{
 			siteroot: os.Getenv("MYSITEROOT"),
-			repourl:  "http://test-lbrpm.web.cern.ch/test-lbrpm",
+			repourl:  "http://cern.ch/lhcbproject/dist/rpm",
 		},
 	}
 }
@@ -92,14 +92,6 @@ func (cfg *lhcbConfig) InitYum(ctx *Context) error {
 			return err
 		}
 		defer f.Close()
-
-		err = ctx.writeYumRepo(f, map[string]string{
-			"name": "lhcbold",
-			"url":  repourl + "/rpm",
-		})
-		if err != nil {
-			return err
-		}
 
 		err = ctx.writeYumRepo(f, map[string]string{
 			"name": "lhcb",

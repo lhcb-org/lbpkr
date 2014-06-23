@@ -56,17 +56,27 @@ func PrintTrailer(ctx *Context) {
 }
 
 func bincp(dst, src string) error {
+	fsrc, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer fsrc.Close()
+
 	fdst, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
 	defer fdst.Close()
 
-	fsrc, err := os.Open(src)
+	fisrc, err := os.Stat(src)
 	if err != nil {
 		return err
 	}
-	defer fsrc.Close()
+
+	err = fdst.Chmod(fisrc.Mode())
+	if err != nil {
+		return err
+	}
 
 	_, err = io.Copy(fdst, fsrc)
 	return err

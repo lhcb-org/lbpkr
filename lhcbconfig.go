@@ -67,7 +67,7 @@ func (cfg *lhcbConfig) InitYum(ctx *Context) error {
 
 		err = ctx.writeYumRepo(f, map[string]string{
 			"name": "lcg",
-			"url":  "http://service-spi.web.cern.ch/service-spi/external/rpms/lcg",
+			"url":  "http://cern.ch/service-spi/external/rpms/lcg",
 		})
 		if err != nil {
 			return err

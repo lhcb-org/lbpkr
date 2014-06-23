@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -89,15 +88,19 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 		return err
 	}
 
-	lbpkr, err := exec.LookPath(os.Args[0])
+	tarcmd := exec.Command("lbpkr",
+		"self", "bdist",
+		"-type="+cfgtype,
+		"-name="+name,
+		"-version="+vers,
+		fmt.Sprintf("-v=%v", debug),
+	)
+	tarcmd.Stdout = os.Stdout
+	tarcmd.Stderr = os.Stderr
+	tarcmd.Stdin = os.Stdin
+	err = tarcmd.Run()
 	if err != nil {
-		msg.Errorf("could not locate '%s': %v\n", err, os.Args[0])
-		return err
-	}
-
-	lbpkr, err = filepath.EvalSymlinks(lbpkr)
-	if err != nil {
-		msg.Errorf("could not find '%s' executable: %v\n", lbpkr, err)
+		msg.Errorf("could not create tarball: %v\n", err)
 		return err
 	}
 
@@ -131,47 +134,7 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 	// prepare a tarball with the lbpkr binary.
 	dirname := fmt.Sprintf("%s-%s", data.Name, data.Version)
 	fname := dirname + ".tar.gz"
-
-	//
-	top := filepath.Join(tmpdir, dirname)
-
-	// create hierarchy of dirs for bdist
-	for _, dir := range []string{
-		filepath.Join("usr", "bin"),
-	} {
-		err = os.MkdirAll(filepath.Join(top, dirname, dir), 0755)
-		if err != nil {
-			return err
-		}
-	}
-
-	// install under /bin
-	dst_lbpkr := filepath.Join(top, dirname, "usr", "bin", "lbpkr")
-	dst, err := os.OpenFile(dst_lbpkr, os.O_WRONLY|os.O_CREATE, 0755)
-	if err != nil {
-		return err
-	}
-	defer func(dst *os.File) error {
-		err := dst.Sync()
-		if err != nil {
-			return err
-		}
-		err = dst.Close()
-		return err
-	}(dst)
-
-	src, err := os.Open(lbpkr)
-	if err != nil {
-		return err
-	}
-	defer func(src *os.File) error {
-		return src.Close()
-	}(src)
-
-	_, err = io.Copy(dst, src)
-	if err != nil {
-		return err
-	}
+	bdist_fname := dirname + "." + rpm_arch + ".tar.gz"
 
 	// create hierarchy of dirs for rpmbuild
 	for _, dir := range []string{"RPMS", "SRPMS", "BUILD", "SOURCES", "SPECS", "tmp"} {
@@ -181,8 +144,8 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 		}
 	}
 
-	// create tarball
-	err = _tar_gz(filepath.Join(rpmbuildroot, "SOURCES", fname), top)
+	// copy tarball
+	err = bincp(filepath.Join(rpmbuildroot, "SOURCES", fname), bdist_fname)
 	if err != nil {
 		return err
 	}
@@ -217,18 +180,7 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 		return err
 	}
 
-	rpm_src, err := os.Open(filepath.Join(rpmbuildroot, "RPMS", rpm_arch, rpm_fname))
-	if err != nil {
-		return err
-	}
-	defer rpm_src.Close()
-	rpm_dst, err := os.Create(rpm_fname)
-	if err != nil {
-		return err
-	}
-	defer rpm_dst.Close()
-
-	_, err = io.Copy(rpm_dst, rpm_src)
+	err = bincp(rpm_fname, filepath.Join(rpmbuildroot, "RPMS", rpm_arch, rpm_fname))
 	if err != nil {
 		return err
 	}

@@ -55,6 +55,23 @@ func PrintTrailer(ctx *Context) {
 	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
 }
 
+func bincp(dst, src string) error {
+	fdst, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer fdst.Close()
+
+	fsrc, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer fsrc.Close()
+
+	_, err = io.Copy(fdst, fsrc)
+	return err
+}
+
 func _tar_gz(targ, workdir string) error {
 
 	// FIXME: use archive/tar instead (once go-1.1 is out)

@@ -11,6 +11,15 @@ type atlasConfig struct {
 	ConfigBase
 }
 
+func newAtlasConfig() *atlasConfig {
+	return &atlasConfig{
+		ConfigBase: ConfigBase{
+			siteroot: os.Getenv("MYSITEROOT"),
+			repourl:  "http://atlas-computing.web.cern.ch/atlas-computing/links/reposDirectory/lcg/slc6/yum/",
+		},
+	}
+}
+
 func (cfg *atlasConfig) Name() string {
 	return "atlas"
 }

@@ -1,7 +1,5 @@
 package main
 
-import "os"
-
 type Config interface {
 	DefaultSiteroot() string
 	Siteroot() string
@@ -47,21 +45,9 @@ func (cfg *ConfigBase) RpmUpdate() bool {
 func NewConfig(cfgtype string) Config {
 	switch cfgtype {
 	case "atlas":
-		AtlasConfig := &atlasConfig{
-			ConfigBase: ConfigBase{
-				siteroot: os.Getenv("MYSITEROOT"),
-				repourl:  "http://atlas-computing.web.cern.ch/atlas-computing/links/reposDirectory/lcg/slc6/yum/",
-			},
-		}
-		return AtlasConfig
+		return newAtlasConfig()
 	case "lhcb":
-		LHCbConfig := &lhcbConfig{
-			ConfigBase: ConfigBase{
-				siteroot: os.Getenv("MYSITEROOT"),
-				repourl:  "http://test-lbrpm.web.cern.ch/test-lbrpm",
-			},
-		}
-		return LHCbConfig
+		return newLHCbConfig()
 	default:
 		panic("lbpkr: unknown config [" + cfgtype + "]")
 	}

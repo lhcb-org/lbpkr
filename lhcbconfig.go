@@ -11,6 +11,15 @@ type lhcbConfig struct {
 	ConfigBase
 }
 
+func newLHCbConfig() *lhcbConfig {
+	return &lhcbConfig{
+		ConfigBase: ConfigBase{
+			siteroot: os.Getenv("MYSITEROOT"),
+			repourl:  "http://test-lbrpm.web.cern.ch/test-lbrpm",
+		},
+	}
+}
+
 func (cfg *lhcbConfig) Name() string {
 	return "lhcb"
 }

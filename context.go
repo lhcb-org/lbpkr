@@ -492,6 +492,12 @@ func (ctx *Context) InstallRPM(name, version, release string, forceInstall, upda
 	if err != nil {
 		return err
 	}
+	// FIXME: this is because even though lbpkr is statically compiled, it grabs
+	//        a dependency against glibc through cgo+SQLite.
+	//        ==> generate the RPM with the proper deps ?
+	if name == "lbpkr" {
+		forceInstall = true
+	}
 	err = ctx.InstallPackage(pkg, forceInstall, update)
 	return err
 }
@@ -500,10 +506,15 @@ func (ctx *Context) InstallRPM(name, version, release string, forceInstall, upda
 func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) error {
 	var err error
 	ctx.msg.Infof("installing %s and dependencies\n", pkg.Name())
-	pkgs, err := ctx.yum.RequiredPackages(pkg)
-	if err != nil {
-		ctx.msg.Errorf("required-packages error: %v\n", err)
-		return err
+	var pkgs []*yum.Package
+	if pkg.Name() != "lbpkr" {
+		pkgs, err = ctx.yum.RequiredPackages(pkg)
+		if err != nil {
+			ctx.msg.Errorf("required-packages error: %v\n", err)
+			return err
+		}
+	} else {
+		pkgs = append(pkgs, pkg)
 	}
 	pkgset := make(map[string]*yum.Package)
 	for _, p := range pkgs {

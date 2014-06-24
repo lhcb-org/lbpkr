@@ -430,6 +430,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 	if err != nil {
 		return err
 	}
+
 	pkglist := make(map[string]yum.RPMSlice)
 	// group by key/version to make sure we only try to update the newest installed
 	for _, pkg := range pkgs {
@@ -451,12 +452,12 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		if yum.RpmLessThan(pkg, update) {
 			nupdates += 1
 			if checkOnly {
-				ctx.msg.Warnf("%s.%s-%s could be updated to %s\n",
+				ctx.msg.Infof("%s-%s-%s could be updated to %s\n",
 					pkg.Name(), pkg.Version(), pkg.Release(),
 					update.RpmName(),
 				)
 			} else {
-				ctx.msg.Warnf("updating %s.%s-%s to %s\n",
+				ctx.msg.Infof("updating %s-%s-%s to %s\n",
 					pkg.Name(), pkg.Version(), pkg.Release(),
 					update.RpmName(),
 				)

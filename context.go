@@ -443,7 +443,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		sort.Sort(rpms)
 		pkg := rpms[len(rpms)-1]
 		// create a RPM requirement and check whether we have a match
-		req := yum.NewRequires(pkg.Name(), pkg.Version(), pkg.Release(), "", "EQ", "")
+		req := yum.NewRequires(pkg.Name(), "", "", "", "EQ", "")
 		update, err := ctx.yum.FindLatestMatchingRequire(req)
 		if err != nil {
 			return err

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/gonuts/commander"
 	"github.com/gonuts/flag"
@@ -11,13 +12,14 @@ import (
 func lbpkr_make_cmd_remove() *commander.Command {
 	cmd := &commander.Command{
 		Run:       lbpkr_run_cmd_remove,
-		UsageLine: "remove [options] <rpmname> [<version> [<release>]]",
+		UsageLine: "remove [options] <rpmname> [<rpmname> [<rpmname>]]",
 		Short:     "remove a RPM from the yum repository",
 		Long: `
 remove removes a RPM from the yum repository.
 
 ex:
- $ lbpkr remove LHCb
+ $ lbpkr remove gcc_4.8.1_x86_64_slc6-1.0.0-1
+ $ lbpkr remove gcc_4.8.1_x86_64_slc6-1.0.0-1 xrootd-3a806_3.2.7_x86_64_slc6_gcc48_opt-1.0.0-4
 `,
 		Flag: *flag.NewFlagSet("lbpkr-remove", flag.ExitOnError),
 	}
@@ -34,42 +36,34 @@ func lbpkr_run_cmd_remove(cmd *commander.Command, args []string) error {
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 	force := cmd.Flag.Lookup("force").Value.Get().(bool)
 
-	rpmname := ""
-	version := ""
-	release := ""
+	rpms := make([][3]string, 0)
 	switch len(args) {
 	case 0:
 		cmd.Usage()
 		return fmt.Errorf("lbpkr: invalid number of arguments (got=%d)", len(args))
-	case 1:
-		rpmname = args[0]
-	case 2:
-		rpmname = args[0]
-		version = args[1]
-	case 3:
-		rpmname = args[0]
-		version = args[1]
-		release = args[2]
 	default:
-		return fmt.Errorf("lbpkr: invalid number of arguments. expected n=1|2|3. got=%d (%v)",
-			len(args),
-			args,
-		)
-	}
+		re := regexp.MustCompile(`(.*)-([\d\.]+)-(\d)$`)
+		for _, name := range args {
+			rpmname := name
+			version := ""
+			release := ""
 
-	re := regexp.MustCompile(`(.*)-([\d\.]+)-(\d)$`).FindAllStringSubmatch(rpmname, -1)
-	if len(re) == 1 {
-		m := re[0]
-		switch len(m) {
-		case 2:
-			rpmname = m[1]
-		case 3:
-			rpmname = m[1]
-			version = m[2]
-		case 4:
-			rpmname = m[1]
-			version = m[2]
-			release = m[3]
+			match := re.FindAllStringSubmatch(rpmname, -1)
+			if len(match) == 1 {
+				m := match[0]
+				switch len(m) {
+				case 2:
+					rpmname = m[1]
+				case 3:
+					rpmname = m[1]
+					version = m[2]
+				case 4:
+					rpmname = m[1]
+					version = m[2]
+					release = m[3]
+				}
+			}
+			rpms = append(rpms, [3]string{rpmname, version, release})
 		}
 	}
 
@@ -80,8 +74,16 @@ func lbpkr_run_cmd_remove(cmd *commander.Command, args []string) error {
 	}
 	defer ctx.Close()
 
-	ctx.msg.Infof("removing RPM %s %s %s\n", rpmname, version, release)
+	str := []string{}
+	for _, s := range rpms {
+		str = append(str, fmt.Sprintf("%s %s %s", s[0], s[1], s[2]))
+	}
+	plural := ""
+	if len(rpms) > 1 {
+		plural = "s"
+	}
+	ctx.msg.Infof("removing RPM%s:\n%v\n", plural, strings.Join(str, "\n"))
 
-	err = ctx.RemoveRPM(rpmname, version, release, force)
+	err = ctx.RemoveRPM(rpms, force)
 	return err
 }

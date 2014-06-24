@@ -734,6 +734,70 @@ func (ctx *Context) ListPackageDeps(name, version, release string) ([]*yum.Packa
 	return deps, err
 }
 
+// RemoveRPM installs a RPM by name
+func (ctx *Context) RemoveRPM(name, version, release string, force bool) error {
+	var err error
+	pkg, err := ctx.yum.FindLatestMatchingName(name, version, release)
+	if err != nil {
+		return err
+	}
+
+	required := pkg.Requires()
+
+	ctx.msg.Debugf("removing %s...\n", pkg.ID())
+	args := []string{"-e"}
+	if force {
+		args = append(args, "--nodeps")
+	}
+	args = append(args, pkg.Name())
+	_, err = ctx.rpm(true, args...)
+	if err != nil {
+		//ctx.msg.Errorf("could not remove package:\n%v", string(out))
+		return err
+	}
+
+	if len(required) > 0 {
+		reqs := make([]*yum.Package, 0, len(required))
+		for _, req := range required {
+			p, err := ctx.yum.FindLatestMatchingName(req.Name(), req.Version(), req.Release())
+			if err != nil {
+				return err
+			}
+			reqs = append(reqs, p)
+		}
+		sort.Sort(yum.Packages(reqs))
+		installed, err := ctx.listInstalledPackages()
+		if err != nil {
+			return err
+		}
+
+		still_req := make(map[string]struct{})
+		for _, pp := range installed {
+			p, err := ctx.yum.FindLatestMatchingName(pp[0], pp[1], pp[2])
+			if err != nil {
+				return err
+			}
+			for _, r := range p.Requires() {
+				pp, err := ctx.yum.FindLatestMatchingName(r.Name(), r.Version(), r.Release())
+				if err != nil {
+					return err
+				}
+				still_req[pp.ID()] = struct{}{}
+			}
+		}
+		remove := make([]string, 0, len(reqs))
+		// loop over installed package, if none requires one of the required package, flag it
+		for _, req := range reqs {
+			id := req.ID()
+			if _, dup := still_req[id]; !dup {
+				remove = append(remove, req.ID())
+			}
+		}
+		ctx.msg.Infof("packages no longer required: %v\n", strings.Join(remove, " "))
+	}
+	return err
+}
+
 // Rpm runs the rpm command.
 func (ctx *Context) Rpm(args ...string) error {
 	_, err := ctx.rpm(true, args...)

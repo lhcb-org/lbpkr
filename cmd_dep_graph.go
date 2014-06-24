@@ -111,7 +111,12 @@ func lbpkr_run_cmd_dep_graph(cmd *commander.Command, args []string) error {
 			}
 			dep, err := ctx.Client().FindLatestMatchingRequire(req)
 			if err != nil {
-				return err
+				ctx.msg.Infof("no package providing name=%q version=%q release=%q\n",
+					req.Name(),
+					req.Version(),
+					req.Release(),
+				)
+				continue
 			}
 			g.AddNode("rpms", strconv.Quote(dep.ID()), decorate(dep))
 			g.AddEdge(root, strconv.Quote(dep.ID()), true, nil)

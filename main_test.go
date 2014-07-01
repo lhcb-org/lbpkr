@@ -26,6 +26,10 @@ func TestLbpkrSelfBdist(t *testing.T) {
 }
 
 func TestLbpkrSelfBdistRpm(t *testing.T) {
+	if _, err := exec.LookPath("rpmbuild"); err != nil {
+		t.Skip("no rpmbuild installed")
+	}
+
 	tmpdir, err := ioutil.TempDir("", "test-lbpkr-")
 	if err != nil {
 		t.Fatalf("error creating temporary directory: %v", err)

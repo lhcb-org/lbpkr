@@ -11,10 +11,10 @@ type lhcbConfig struct {
 	ConfigBase
 }
 
-func newLHCbConfig() *lhcbConfig {
+func newLHCbConfig(siteroot string) *lhcbConfig {
 	return &lhcbConfig{
 		ConfigBase: ConfigBase{
-			siteroot: os.Getenv("MYSITEROOT"),
+			siteroot: siteroot,
 			repourl:  "http://cern.ch/lhcbproject/dist/rpm",
 		},
 	}

@@ -1,5 +1,9 @@
 package main
 
+import (
+	"os"
+)
+
 type Config interface {
 	DefaultSiteroot() string
 	Siteroot() string
@@ -42,12 +46,15 @@ func (cfg *ConfigBase) RpmUpdate() bool {
 }
 
 // NewConfig returns a default configuration value.
-func NewConfig(cfgtype string) Config {
+func NewConfig(cfgtype, siteroot string) Config {
+	if siteroot == "" {
+		siteroot = os.Getenv("MYSITEROOT")
+	}
 	switch cfgtype {
 	case "atlas":
-		return newAtlasConfig()
+		return newAtlasConfig(siteroot)
 	case "lhcb":
-		return newLHCbConfig()
+		return newLHCbConfig(siteroot)
 	default:
 		panic("lbpkr: unknown config [" + cfgtype + "]")
 	}

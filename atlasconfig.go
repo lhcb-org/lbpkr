@@ -11,10 +11,10 @@ type atlasConfig struct {
 	ConfigBase
 }
 
-func newAtlasConfig() *atlasConfig {
+func newAtlasConfig(siteroot string) *atlasConfig {
 	return &atlasConfig{
 		ConfigBase: ConfigBase{
-			siteroot: os.Getenv("MYSITEROOT"),
+			siteroot: siteroot,
 			repourl:  "http://atlas-computing.web.cern.ch/atlas-computing/links/reposDirectory/lcg/slc6/yum/",
 		},
 	}

@@ -66,19 +66,12 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 
 	rpmbuildroot := filepath.Join(tmpdir, "rpmbuild")
 
-	cfg := NewConfig(cfgtype)
+	siteroot := ""
+	cfg := NewConfig(cfgtype, siteroot)
 	msg := logger.New("lbpkr")
 	if debug {
 		msg.SetLevel(logger.DEBUG)
 	}
-
-	// re-create the config with the according Default-Siteroot value
-	// so RPM relocation will work correctly.
-	err = os.Setenv("MYSITEROOT", cfg.DefaultSiteroot())
-	if err != nil {
-		return err
-	}
-	cfg = NewConfig(cfgtype)
 
 	rpmbuild, err := exec.LookPath("rpmbuild")
 	if err != nil {
@@ -88,7 +81,6 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 
 	tarcmd := exec.Command("lbpkr",
 		"self", "bdist",
-		"-type="+cfgtype,
 		"-name="+name,
 		"-version="+vers,
 		fmt.Sprintf("-v=%v", debug),

@@ -21,8 +21,7 @@ ex:
 `,
 		Flag: *flag.NewFlagSet("lbpkr-deps", flag.ExitOnError),
 	}
-	cmd.Flag.Bool("v", false, "enable verbose mode")
-	cmd.Flag.String("type", "lhcb", "config type (lhcb|atlas)")
+	add_default_options(cmd)
 	return cmd
 }
 
@@ -31,6 +30,7 @@ func lbpkr_run_cmd_deps(cmd *commander.Command, args []string) error {
 
 	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
+	siteroot := cmd.Flag.Lookup("siteroot").Value.Get().(string)
 
 	name := ""
 	vers := ""
@@ -54,7 +54,7 @@ func lbpkr_run_cmd_deps(cmd *commander.Command, args []string) error {
 		)
 	}
 
-	cfg := NewConfig(cfgtype)
+	cfg := NewConfig(cfgtype, siteroot)
 	ctx, err := New(cfg, debug)
 	if err != nil {
 		return err

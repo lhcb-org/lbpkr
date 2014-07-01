@@ -30,7 +30,6 @@ ex:
 		Flag: *flag.NewFlagSet("lbpkr-self-bdist", flag.ExitOnError),
 	}
 	cmd.Flag.Bool("v", false, "enable verbose mode")
-	cmd.Flag.String("type", "lhcb", "config type (lhcb|atlas)")
 	cmd.Flag.String("name", "lbpkr", "name of the tarball to generate")
 	cmd.Flag.String("version", Version, "version of the tarball to generate")
 	return cmd
@@ -39,7 +38,6 @@ ex:
 func lbpkr_run_cmd_self_bdist(cmd *commander.Command, args []string) error {
 	var err error
 
-	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 	name := cmd.Flag.Lookup("name").Value.Get().(string)
 	vers := cmd.Flag.Lookup("version").Value.Get().(string)
@@ -61,20 +59,9 @@ func lbpkr_run_cmd_self_bdist(cmd *commander.Command, args []string) error {
 	defer os.RemoveAll(tmpdir)
 	//fmt.Printf(">>> [%s]\n", tmpdir)
 
-	cfg := NewConfig(cfgtype)
 	msg := logger.New("lbpkr")
 	if debug {
 		msg.SetLevel(logger.DEBUG)
-	}
-
-	// if siteroot is empty, re-create the config with the according
-	// Default-Siteroot value so RPM relocation will work correctly.
-	if siteroot := cfg.Siteroot(); siteroot == "" {
-		err = os.Setenv("MYSITEROOT", cfg.DefaultSiteroot())
-		if err != nil {
-			return err
-		}
-		cfg = NewConfig(cfgtype)
 	}
 
 	lbpkr, err := exec.LookPath(os.Args[0])

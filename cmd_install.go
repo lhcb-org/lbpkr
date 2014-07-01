@@ -21,8 +21,7 @@ ex:
 `,
 		Flag: *flag.NewFlagSet("lbpkr-install", flag.ExitOnError),
 	}
-	cmd.Flag.Bool("v", false, "enable verbose mode")
-	cmd.Flag.String("type", "lhcb", "config type (lhcb|atlas)")
+	add_default_options(cmd)
 	cmd.Flag.Bool("force", false, "force RPM installation (by-passing any check)")
 	return cmd
 }
@@ -30,6 +29,7 @@ ex:
 func lbpkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	var err error
 
+	siteroot := cmd.Flag.Lookup("siteroot").Value.Get().(string)
 	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 	force := cmd.Flag.Lookup("force").Value.Get().(bool)
@@ -73,7 +73,7 @@ func lbpkr_run_cmd_install(cmd *commander.Command, args []string) error {
 		}
 	}
 
-	cfg := NewConfig(cfgtype)
+	cfg := NewConfig(cfgtype, siteroot)
 	ctx, err := New(cfg, debug)
 	if err != nil {
 		return err

@@ -12,12 +12,17 @@ type lhcbConfig struct {
 }
 
 func newLHCbConfig(siteroot string) *lhcbConfig {
-	return &lhcbConfig{
+
+	cfg := &lhcbConfig{
 		ConfigBase: ConfigBase{
 			siteroot: siteroot,
 			repourl:  "http://cern.ch/lhcbproject/dist/rpm",
 		},
 	}
+	if siteroot == "" {
+		cfg.siteroot = cfg.DefaultSiteroot()
+	}
+	return cfg
 }
 
 func (cfg *lhcbConfig) Name() string {

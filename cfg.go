@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 )
 
 type Config interface {
@@ -48,7 +49,8 @@ func (cfg *ConfigBase) RpmUpdate() bool {
 // NewConfig returns a default configuration value.
 func NewConfig(cfgtype, siteroot string) Config {
 	if siteroot == "" {
-		siteroot = os.Getenv("MYSITEROOT")
+		paths := strings.Split(os.Getenv("MYSITEROOT"), string(os.PathListSeparator))
+		siteroot = paths[0]
 	}
 	switch cfgtype {
 	case "atlas":

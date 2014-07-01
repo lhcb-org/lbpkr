@@ -28,17 +28,20 @@ func init() {
 			lbpkr_make_cmd_update(),
 			lbpkr_make_cmd_version(),
 		},
-		Flag: *flag.NewFlagSet("lbpkr", flag.ExitOnError),
+		Flag: *flag.NewFlagSet("lbpkr", flag.ContinueOnError),
 	}
 }
 
 func main() {
-	err := g_cmd.Flag.Parse(os.Args[1:])
-	if err != nil {
+	var args []string
 
+	err := g_cmd.Flag.Parse(os.Args[1:])
+	if err != nil || err == flag.ErrHelp {
+		args = []string{"help"}
+	} else {
+		args = g_cmd.Flag.Args()
 	}
 
-	args := g_cmd.Flag.Args()
 	err = g_cmd.Dispatch(args)
 	handle_err(err)
 }

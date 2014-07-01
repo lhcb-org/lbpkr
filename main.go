@@ -45,3 +45,9 @@ func main() {
 	err = g_cmd.Dispatch(args)
 	handle_err(err)
 }
+
+func add_default_options(cmd *commander.Command) {
+	cmd.Flag.String("siteroot", "", "path to site installation")
+	cmd.Flag.Bool("v", false, "enable verbose mode")
+	cmd.Flag.String("type", "lhcb", "config type (lhcb|atlas)")
+}

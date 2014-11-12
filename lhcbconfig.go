@@ -36,6 +36,7 @@ func (cfg *lhcbConfig) DefaultSiteroot() string {
 // RelocateArgs returns the arguments to be passed to RPM for the repositories
 func (cfg *lhcbConfig) RelocateArgs(siteroot string) []string {
 	return []string{
+		"--relocate", fmt.Sprintf("%s=%s", "/opt/lcg/external", filepath.Join(siteroot, "lcg", "external")),
 		"--relocate", fmt.Sprintf("%s=%s", "/opt/lcg", filepath.Join(siteroot, "lcg", "releases")),
 		"--relocate", fmt.Sprintf("%s=%s", "/opt/LHCbSoft", siteroot),
 		"--badreloc",
@@ -101,6 +102,35 @@ func (cfg *lhcbConfig) InitYum(ctx *Context) error {
 		err = ctx.writeYumRepo(f, map[string]string{
 			"name": "lhcb",
 			"url":  repourl + "/lhcb",
+		})
+		if err != nil {
+			return err
+		}
+
+		err = f.Sync()
+		if err != nil {
+			return err
+		}
+
+		err = f.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+
+	// lhcb ext stuff
+	{
+		repo := filepath.Join(repodir, "lhcbext.repo")
+		f, err := os.Create(repo)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		err = ctx.writeYumRepo(f, map[string]string{
+			"name": "lhcbext",
+			"url":  repourl + "/lcg",
 		})
 		if err != nil {
 			return err

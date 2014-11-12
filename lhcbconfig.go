@@ -117,5 +117,34 @@ func (cfg *lhcbConfig) InitYum(ctx *Context) error {
 		}
 	}
 
+
+	// lhcb ext stuff
+	{
+		repo := filepath.Join(repodir, "lhcbext.repo")
+		f, err := os.Create(repo)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		err = ctx.writeYumRepo(f, map[string]string{
+			"name": "lhcbext",
+			"url":  repourl + "/lcg",
+		})
+		if err != nil {
+			return err
+		}
+
+		err = f.Sync()
+		if err != nil {
+			return err
+		}
+
+		err = f.Close()
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }

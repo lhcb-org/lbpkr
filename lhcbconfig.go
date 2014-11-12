@@ -36,6 +36,7 @@ func (cfg *lhcbConfig) DefaultSiteroot() string {
 // RelocateArgs returns the arguments to be passed to RPM for the repositories
 func (cfg *lhcbConfig) RelocateArgs(siteroot string) []string {
 	return []string{
+		"--relocate", fmt.Sprintf("%s=%s", "/opt/lcg/external", filepath.Join(siteroot, "lcg", "external")),
 		"--relocate", fmt.Sprintf("%s=%s", "/opt/lcg", filepath.Join(siteroot, "lcg", "releases")),
 		"--relocate", fmt.Sprintf("%s=%s", "/opt/LHCbSoft", siteroot),
 		"--badreloc",

@@ -1,21 +1,26 @@
 ## simple makefile to log workflow
-.PHONY: all test clean build
+.PHONY: all test clean build install
 
 export LBPKR_VERSION=0.1.`date +%Y%m%d`
 export LBPKR_RELEASE=0
 export LBPKR_REVISION=`git rev-parse --short HEAD`
 
-#GOFLAGS := $(GOFLAGS:-race -v)
-GOFLAGS := $(GOFLAGS:-v)
+GOFLAGS ?= $(GOFLAGS:)
 
-all: build test
-	@echo "## bye."
+all: install test
 
-build: clean
+
+build:
+	@go build $(GOFLAGS) ./...
+
+install:
 	@go get $(GOFLAGS) ./...
 
-test: build
-	@go test -v $(GOFLAGS) ./...
+test: install
+	@go test $(GOFLAGS) ./...
+
+bench: install
+	@go test -run=NONE -bench=. $(GOFLAGS) ./...
 
 clean:
 	@go clean $(GOFLAGS) -i ./...

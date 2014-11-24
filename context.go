@@ -42,6 +42,7 @@ type Context struct {
 	libdir    string
 	initfile  string
 
+	dryrun    bool
 	extstatus map[string]External
 	reqext    []string
 	extfix    map[string]FixFct
@@ -136,6 +137,13 @@ func New(cfg Config, dbg bool) (*Context, error) {
 	}
 
 	return &ctx, err
+}
+
+func (ctx *Context) setDry(dry bool) {
+	if dry != ctx.dryrun {
+		ctx.msg.Debugf("changing dry-run from [%v] to [%v]...\n", ctx.dryrun, dry)
+		ctx.dryrun = dry
+	}
 }
 
 func (ctx *Context) Exit(rc int) {

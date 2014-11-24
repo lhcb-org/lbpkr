@@ -515,21 +515,75 @@ func (ctx *Context) InstallRPM(name, version, release string, forceInstall, upda
 	return err
 }
 
-// InstallPackage installs a specific RPM, checking if not already installed
-func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) error {
+// InstallProject installs a whole project by name
+func (ctx *Context) InstallProject(name, version, release, platforms string, forceInstall, update bool) error {
 	var err error
-	ctx.msg.Infof("installing %s and dependencies\n", pkg.Name())
-	var pkgs []*yum.Package
-	if pkg.Name() != "lbpkr" {
-		pkgs, err = ctx.yum.RequiredPackages(pkg)
+
+	archs := make([]string, 0, 2)
+	if platforms == "" {
+		// if no CMTCONFIG defined, we'll default to "ALL"
+		platforms = os.Getenv("CMTCONFIG")
+	}
+
+	switch platforms {
+	case "", "ALL", "all":
+		// FIXME(sbinet) find a better way to get the list of all CMTCONFIGs
+		// FIXME(sbinet) the list of all CMTCONFIGs should also be predicated on a project version
+		//               (because the list of available platforms depend on the project version!)
+		archs = []string{
+			"x86_64_slc6_gcc48_dbg",
+			"x86_64_slc6_gcc48_opt",
+		}
+	default:
+		for _, v := range strings.Split(platforms, ",") {
+			v = strings.TrimSpace(v)
+			if v != "" {
+				archs = append(archs, v)
+			}
+		}
+	}
+
+	projname := name + "_" + version
+	ctx.msg.Infof("installing project name=%q version=%q for archs=%v\n", name, version, archs)
+	pkgs := make([]*yum.Package, 0, len(archs))
+	for _, arch := range archs {
+		pkg, err := ctx.yum.FindLatestProvider(projname+"_"+arch, "", release)
 		if err != nil {
-			ctx.msg.Errorf("required-packages error: %v\n", err)
 			return err
 		}
-	} else {
 		pkgs = append(pkgs, pkg)
 	}
+
+	err = ctx.InstallPackages(pkgs, forceInstall, update)
+	return err
+}
+
+// InstallPackage installs a specific RPM, checking if not already installed
+func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) error {
+	pkgs := []*yum.Package{pkg}
+	return ctx.InstallPackages(pkgs, forceInstall, update)
+}
+
+// InstallPackages installs a list of specific RPMs, checking if not already installed
+func (ctx *Context) InstallPackages(packages []*yum.Package, forceInstall, update bool) error {
+	var err error
+	var pkgs []*yum.Package
 	pkgset := make(map[string]*yum.Package)
+	for _, pkg := range packages {
+		ctx.msg.Infof("installing %s and dependencies\n", pkg.RpmName())
+		if pkg.Name() != "lbpkr" {
+			var opkgs []*yum.Package
+			opkgs, err = ctx.yum.RequiredPackages(pkg)
+			if err != nil {
+				ctx.msg.Errorf("required-packages error: %v\n", err)
+				return err
+			}
+			pkgs = append(pkgs, opkgs...)
+		} else {
+			pkgs = append(pkgs, pkg)
+		}
+	}
+
 	for _, p := range pkgs {
 		pkgset[p.RpmName()] = p
 	}

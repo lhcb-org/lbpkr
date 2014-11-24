@@ -19,6 +19,7 @@ func init() {
 			lbpkr_make_cmd_deps(),
 			lbpkr_make_cmd_dep_graph(),
 			lbpkr_make_cmd_install(),
+			lbpkr_make_cmd_install_project(),
 			lbpkr_make_cmd_installed(),
 			lbpkr_make_cmd_list(),
 			lbpkr_make_cmd_provides(),

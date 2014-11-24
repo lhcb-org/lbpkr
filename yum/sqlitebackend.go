@@ -147,7 +147,7 @@ func (repo *RepositorySQLiteBackend) LoadDB() error {
 	return err
 }
 
-// FindLatestMatchingName locats a package by name, returns the latest available version.
+// FindLatestMatchingName locates a package by name, returns the latest available version.
 func (repo *RepositorySQLiteBackend) FindLatestMatchingName(name, version, release string) (*Package, error) {
 	var pkg *Package
 	var err error

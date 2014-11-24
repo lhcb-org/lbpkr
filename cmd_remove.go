@@ -25,6 +25,7 @@ ex:
 	}
 	add_default_options(cmd)
 	cmd.Flag.Bool("force", false, "force removal of RPM")
+	cmd.Flag.Bool("dry-run", false, "dry run. do not actually run the command")
 	return cmd
 }
 
@@ -34,6 +35,7 @@ func lbpkr_run_cmd_remove(cmd *commander.Command, args []string) error {
 	siteroot := cmd.Flag.Lookup("siteroot").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 	force := cmd.Flag.Lookup("force").Value.Get().(bool)
+	dry := cmd.Flag.Lookup("dry-run").Value.Get().(bool)
 
 	rpms := make([][3]string, 0)
 	switch len(args) {
@@ -72,6 +74,7 @@ func lbpkr_run_cmd_remove(cmd *commander.Command, args []string) error {
 		return err
 	}
 	defer ctx.Close()
+	ctx.setDry(dry)
 
 	str := []string{}
 	for _, s := range rpms {

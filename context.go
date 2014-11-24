@@ -753,6 +753,10 @@ func (ctx *Context) RemoveRPM(rpms [][3]string, force bool) error {
 		args = append(args, "--nodeps")
 	}
 
+	if ctx.dryrun {
+		args = append(args, "--test")
+	}
+
 	for _, id := range rpms {
 		pkg, err := ctx.yum.FindLatestMatchingName(id[0], id[1], id[2])
 		if err != nil {

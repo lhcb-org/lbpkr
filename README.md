@@ -35,7 +35,7 @@ lbpkr INFO    Total matching: 6
 ### install a package (and its dependencies)
 
 ```sh
-$ lbpkr install -type=atlas LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt-1-1
+$ lbpkr install LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt-1-1
 lbpkr INFO    installing RPM LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt 1 1
 lbpkr INFO    installing LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt and dependencies
 lbpkr INFO    found 31 RPMs to install:

@@ -28,7 +28,6 @@ func lbpkr_run_cmd_update(cmd *commander.Command, args []string) error {
 	var err error
 
 	siteroot := cmd.Flag.Lookup("siteroot").Value.Get().(string)
-	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 
 	switch len(args) {
@@ -41,7 +40,7 @@ func lbpkr_run_cmd_update(cmd *commander.Command, args []string) error {
 		)
 	}
 
-	cfg := NewConfig(cfgtype, siteroot)
+	cfg := NewConfig(siteroot)
 	ctx, err := New(cfg, debug)
 	if err != nil {
 		return err

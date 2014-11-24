@@ -27,7 +27,6 @@ ex:
 func lbpkr_run_cmd_check(cmd *commander.Command, args []string) error {
 	var err error
 
-	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 	siteroot := cmd.Flag.Lookup("siteroot").Value.Get().(string)
 
@@ -41,7 +40,7 @@ func lbpkr_run_cmd_check(cmd *commander.Command, args []string) error {
 		)
 	}
 
-	cfg := NewConfig(cfgtype, siteroot)
+	cfg := NewConfig(siteroot)
 	ctx, err := New(cfg, debug)
 	if err != nil {
 		return err

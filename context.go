@@ -502,8 +502,7 @@ func (ctx *Context) install(project, version, cmtconfig string) error {
 func (ctx *Context) InstallRPM(name, version, release string, forceInstall, update bool) error {
 	var err error
 
-	req := yum.NewRequires(name, version, release, "", "EQ", "")
-	pkg, err := ctx.yum.FindLatestMatchingRequire(req)
+	pkg, err := ctx.yum.FindLatestProvider(name, version, release)
 	if err != nil {
 		return err
 	}

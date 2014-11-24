@@ -161,6 +161,13 @@ func (yum *Client) FindLatestMatchingRequire(requirement *Requires) (*Package, e
 	return pkg, err
 }
 
+// FindLatestProvider returns the requested package (found by "provides") or an error.
+func (yum *Client) FindLatestProvider(name, version, release string) (*Package, error) {
+	req := NewRequires(name, version, release, "", "EQ", "")
+	pkg, err := yum.FindLatestMatchingRequire(req)
+	return pkg, err
+}
+
 // ListPackages lists all packages satisfying pattern (a regexp)
 func (yum *Client) ListPackages(name, version, release string) ([]*Package, error) {
 	var err error

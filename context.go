@@ -439,6 +439,10 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		return err
 	}
 
+	if !checkOnly && ctx.dryrun {
+		checkOnly = true
+	}
+
 	pkglist := make(map[string]yum.RPMSlice)
 	// group by key/version to make sure we only try to update the newest installed
 	for _, pkg := range pkgs {

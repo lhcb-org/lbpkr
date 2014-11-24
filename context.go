@@ -549,6 +549,11 @@ func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) 
 		return fmt.Errorf("no RPM to install")
 	}
 
+	if ctx.dryrun {
+		ctx.msg.Infof("no RPM installed (dry-run)\n")
+		return nil
+	}
+
 	// filtering urls to only keep the ones not already installed
 	filtered, err := ctx.filterURLs(pkgs)
 	if err != nil {
@@ -1080,6 +1085,10 @@ func (ctx *Context) installFiles(files []string, rpmdir string, forceInstall, up
 	if forceInstall {
 		args = append(args, "--nodeps")
 	}
+	if ctx.dryrun {
+		args = append(args, "--test")
+	}
+
 	for _, fname := range files {
 		args = append(args, filepath.Join(rpmdir, fname))
 	}

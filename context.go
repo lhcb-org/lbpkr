@@ -42,6 +42,7 @@ type Context struct {
 	libdir    string
 	initfile  string
 
+	dryrun    bool
 	extstatus map[string]External
 	reqext    []string
 	extfix    map[string]FixFct
@@ -136,6 +137,13 @@ func New(cfg Config, dbg bool) (*Context, error) {
 	}
 
 	return &ctx, err
+}
+
+func (ctx *Context) setDry(dry bool) {
+	if dry != ctx.dryrun {
+		ctx.msg.Debugf("changing dry-run from [%v] to [%v]...\n", ctx.dryrun, dry)
+		ctx.dryrun = dry
+	}
 }
 
 func (ctx *Context) Exit(rc int) {
@@ -431,6 +439,10 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		return err
 	}
 
+	if !checkOnly && ctx.dryrun {
+		checkOnly = true
+	}
+
 	pkglist := make(map[string]yum.RPMSlice)
 	// group by key/version to make sure we only try to update the newest installed
 	for _, pkg := range pkgs {
@@ -539,6 +551,11 @@ func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) 
 
 	if len(pkgs) <= 0 {
 		return fmt.Errorf("no RPM to install")
+	}
+
+	if ctx.dryrun {
+		ctx.msg.Infof("no RPM installed (dry-run)\n")
+		return nil
 	}
 
 	// filtering urls to only keep the ones not already installed
@@ -743,6 +760,10 @@ func (ctx *Context) RemoveRPM(rpms [][3]string, force bool) error {
 	args := []string{"-e"}
 	if force {
 		args = append(args, "--nodeps")
+	}
+
+	if ctx.dryrun {
+		args = append(args, "--test")
 	}
 
 	for _, id := range rpms {
@@ -1068,6 +1089,10 @@ func (ctx *Context) installFiles(files []string, rpmdir string, forceInstall, up
 	if forceInstall {
 		args = append(args, "--nodeps")
 	}
+	if ctx.dryrun {
+		args = append(args, "--test")
+	}
+
 	for _, fname := range files {
 		args = append(args, filepath.Join(rpmdir, fname))
 	}

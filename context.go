@@ -455,9 +455,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 	for _, rpms := range pkglist {
 		sort.Sort(rpms)
 		pkg := rpms[len(rpms)-1]
-		// create a RPM requirement and check whether we have a match
-		req := yum.NewRequires(pkg.Name(), "", "", "", "EQ", "")
-		update, err := ctx.yum.FindLatestMatchingRequire(req)
+		update, err := ctx.yum.FindLatestProvider(pkg.Name(), "", "")
 		if err != nil {
 			return err
 		}
@@ -642,7 +640,7 @@ func (ctx *Context) ListInstalledPackages(name, version, release string) ([]*yum
 		if !filter(pkg) {
 			continue
 		}
-		p, err := ctx.yum.FindLatestMatchingName(pkg[0], pkg[1], pkg[2])
+		p, err := ctx.yum.FindLatestProvider(pkg[0], pkg[1], pkg[2])
 		if err != nil {
 			return nil, err
 		}
@@ -675,7 +673,7 @@ func (ctx *Context) Provides(filename string) ([]*yum.Package, error) {
 	rpms := make([]*yum.Package, 0, len(installed))
 	for i := range installed {
 		ipkg := installed[i]
-		pkg, err := ctx.yum.FindLatestMatchingName(ipkg[0], ipkg[1], ipkg[2])
+		pkg, err := ctx.yum.FindLatestProvider(ipkg[0], ipkg[1], ipkg[2])
 		if err != nil {
 			return nil, err
 		}
@@ -737,7 +735,7 @@ func (ctx *Context) Provides(filename string) ([]*yum.Package, error) {
 // ListPackageDeps lists all the dependencies of the given RPM package
 func (ctx *Context) ListPackageDeps(name, version, release string) ([]*yum.Package, error) {
 	var err error
-	pkg, err := ctx.yum.FindLatestMatchingName(name, version, release)
+	pkg, err := ctx.yum.FindLatestProvider(name, version, release)
 	if err != nil {
 		return nil, fmt.Errorf("lbpkr: no such package name=%q version=%q release=%q (%v)", name, version, release, err)
 	}
@@ -769,7 +767,7 @@ func (ctx *Context) RemoveRPM(rpms [][3]string, force bool) error {
 	}
 
 	for _, id := range rpms {
-		pkg, err := ctx.yum.FindLatestMatchingName(id[0], id[1], id[2])
+		pkg, err := ctx.yum.FindLatestProvider(id[0], id[1], id[2])
 		if err != nil {
 			return err
 		}
@@ -787,7 +785,7 @@ func (ctx *Context) RemoveRPM(rpms [][3]string, force bool) error {
 	if len(required) > 0 {
 		reqs := make([]*yum.Package, 0, len(required))
 		for _, req := range required {
-			p, err := ctx.yum.FindLatestMatchingName(req.Name(), req.Version(), req.Release())
+			p, err := ctx.yum.FindLatestProvider(req.Name(), req.Version(), req.Release())
 			if err != nil {
 				continue
 			}
@@ -801,12 +799,12 @@ func (ctx *Context) RemoveRPM(rpms [][3]string, force bool) error {
 
 		still_req := make(map[string]struct{})
 		for _, pp := range installed {
-			p, err := ctx.yum.FindLatestMatchingName(pp[0], pp[1], pp[2])
+			p, err := ctx.yum.FindLatestProvider(pp[0], pp[1], pp[2])
 			if err != nil {
 				continue
 			}
 			for _, r := range p.Requires() {
-				pp, err := ctx.yum.FindLatestMatchingName(r.Name(), r.Version(), r.Release())
+				pp, err := ctx.yum.FindLatestProvider(r.Name(), r.Version(), r.Release())
 				if err != nil {
 					continue
 				}

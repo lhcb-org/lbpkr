@@ -23,6 +23,7 @@ ex:
 	}
 	add_default_options(cmd)
 	cmd.Flag.Bool("force", false, "force RPM installation (by-passing any check)")
+	cmd.Flag.Bool("dry-run", false, "dry run. do not actually run the command")
 	return cmd
 }
 
@@ -32,6 +33,7 @@ func lbpkr_run_cmd_install(cmd *commander.Command, args []string) error {
 	siteroot := cmd.Flag.Lookup("siteroot").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 	force := cmd.Flag.Lookup("force").Value.Get().(bool)
+	dry := cmd.Flag.Lookup("dry-run").Value.Get().(bool)
 
 	rpmname := ""
 	version := ""
@@ -78,6 +80,7 @@ func lbpkr_run_cmd_install(cmd *commander.Command, args []string) error {
 		return err
 	}
 	defer ctx.Close()
+	ctx.setDry(dry)
 
 	ctx.msg.Infof("installing RPM %s %s %s\n", rpmname, version, release)
 

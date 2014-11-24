@@ -31,7 +31,6 @@ ex:
 		Flag: *flag.NewFlagSet("lbpkr-self-bdist-rpm", flag.ExitOnError),
 	}
 	cmd.Flag.Bool("v", false, "enable verbose mode")
-	cmd.Flag.String("type", "lhcb", "config type (lhcb|atlas)")
 	cmd.Flag.String("name", "lbpkr", "name of the RPM to generate")
 	cmd.Flag.String("version", Version, "version of the RPM to generate")
 	cmd.Flag.Int("release", 0, "release number of the RPM to generate")
@@ -41,7 +40,6 @@ ex:
 func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 	var err error
 
-	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 	name := cmd.Flag.Lookup("name").Value.Get().(string)
 	vers := cmd.Flag.Lookup("version").Value.Get().(string)
@@ -67,7 +65,7 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 	rpmbuildroot := filepath.Join(tmpdir, "rpmbuild")
 
 	siteroot := ""
-	cfg := NewConfig(cfgtype, siteroot)
+	cfg := NewConfig(siteroot)
 	msg := logger.New("lbpkr")
 	if debug {
 		msg.SetLevel(logger.DEBUG)

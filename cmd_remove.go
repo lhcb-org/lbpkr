@@ -32,7 +32,6 @@ func lbpkr_run_cmd_remove(cmd *commander.Command, args []string) error {
 	var err error
 
 	siteroot := cmd.Flag.Lookup("siteroot").Value.Get().(string)
-	cfgtype := cmd.Flag.Lookup("type").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 	force := cmd.Flag.Lookup("force").Value.Get().(bool)
 
@@ -67,7 +66,7 @@ func lbpkr_run_cmd_remove(cmd *commander.Command, args []string) error {
 		}
 	}
 
-	cfg := NewConfig(cfgtype, siteroot)
+	cfg := NewConfig(siteroot)
 	ctx, err := New(cfg, debug)
 	if err != nil {
 		return err

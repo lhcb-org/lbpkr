@@ -7,17 +7,40 @@ import (
 	"strings"
 )
 
-type lhcbConfig struct {
-	ConfigBase
+type Config interface {
+	DefaultSiteroot() string
+	Siteroot() string
+	RepoUrl() string
+	Name() string
+	Debug() bool
+	RpmUpdate() bool
+
+	// RelocateArgs returns the arguments to be passed to RPM for the repositories
+	RelocateArgs(siteroot string) []string
+
+	// RelocateFile returns the relocated file path
+	RelocateFile(fname, siteroot string) string
+
+	InitYum(*Context) error
 }
 
-func newLHCbConfig(siteroot string) *lhcbConfig {
+// lhcbConfig holds the options and defaults for the (LHCb) installer
+type lhcbConfig struct {
+	siteroot  string // where to install software, binaries, ...
+	repourl   string
+	debug     bool
+	rpmupdate bool // install/update switch
+}
 
+// NewConfig returns a default configuration value.
+func NewConfig(siteroot string) Config {
+	if siteroot == "" {
+		paths := strings.Split(os.Getenv("MYSITEROOT"), string(os.PathListSeparator))
+		siteroot = paths[0]
+	}
 	cfg := &lhcbConfig{
-		ConfigBase: ConfigBase{
-			siteroot: siteroot,
-			repourl:  "http://cern.ch/lhcbproject/dist/rpm",
-		},
+		siteroot: siteroot,
+		repourl:  "http://cern.ch/lhcbproject/dist/rpm",
 	}
 	if siteroot == "" {
 		cfg.siteroot = cfg.DefaultSiteroot()
@@ -25,6 +48,21 @@ func newLHCbConfig(siteroot string) *lhcbConfig {
 	return cfg
 }
 
+func (cfg *lhcbConfig) Siteroot() string {
+	return cfg.siteroot
+}
+
+func (cfg *lhcbConfig) RepoUrl() string {
+	return cfg.repourl
+}
+
+func (cfg *lhcbConfig) Debug() bool {
+	return cfg.debug
+}
+
+func (cfg *lhcbConfig) RpmUpdate() bool {
+	return cfg.rpmupdate
+}
 func (cfg *lhcbConfig) Name() string {
 	return "lhcb"
 }
@@ -117,7 +155,6 @@ func (cfg *lhcbConfig) InitYum(ctx *Context) error {
 			return err
 		}
 	}
-
 
 	// lhcb ext stuff
 	{

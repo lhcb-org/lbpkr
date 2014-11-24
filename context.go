@@ -501,10 +501,13 @@ func (ctx *Context) install(project, version, cmtconfig string) error {
 // InstallRPM installs a RPM by name
 func (ctx *Context) InstallRPM(name, version, release string, forceInstall, update bool) error {
 	var err error
-	pkg, err := ctx.yum.FindLatestMatchingName(name, version, release)
+
+	req := yum.NewRequires(name, version, release, "", "EQ", "")
+	pkg, err := ctx.yum.FindLatestMatchingRequire(req)
 	if err != nil {
 		return err
 	}
+
 	// FIXME: this is because even though lbpkr is statically compiled, it grabs
 	//        a dependency against glibc through cgo+SQLite.
 	//        ==> generate the RPM with the proper deps ?

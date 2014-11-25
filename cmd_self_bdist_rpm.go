@@ -77,7 +77,7 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 		return err
 	}
 
-	tarcmd := exec.Command("lbpkr",
+	tarcmd := newCommand("lbpkr",
 		"self", "bdist",
 		"-name="+name,
 		"-version="+vers,
@@ -156,7 +156,7 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 	spec.Sync()
 	spec.Close()
 
-	rpm := exec.Command(rpmbuild, "-ba", filepath.Join("SPECS", spec_fname))
+	rpm := newCommand(rpmbuild, "-ba", filepath.Join("SPECS", spec_fname))
 	rpm.Dir = rpmbuildroot
 	if debug {
 		rpm.Stdout = os.Stdout

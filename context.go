@@ -270,7 +270,7 @@ func (ctx *Context) initRpmDb() error {
 	pkgdir := filepath.Join(ctx.dbpath, "Packages")
 	if !path_exists(pkgdir) {
 		msg.Debugf("Initializing RPM db\n")
-		cmd := exec.Command(
+		cmd := newCommand(
 			"rpm",
 			"--dbpath", ctx.dbpath,
 			"--initdb",
@@ -921,7 +921,7 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 	rpmargs = append(rpmargs, args...)
 
 	ctx.msg.Debugf("RPM command: rpm %v\n", rpmargs)
-	cmd := exec.Command("rpm", rpmargs...)
+	cmd := newCommand("rpm", rpmargs...)
 	ctx.submux.Lock()
 	ctx.subcmds = append(ctx.subcmds, cmd)
 	ctx.submux.Unlock()

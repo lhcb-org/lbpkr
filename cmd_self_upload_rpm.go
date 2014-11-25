@@ -67,7 +67,7 @@ func lbpkr_run_cmd_self_upload_rpm(cmd *commander.Command, args []string) error 
 
 		msg.Debugf("updating metadata...\n")
 		updatecmd := filepath.Join(rpmdir, "update.sh")
-		regen := exec.Command(updatecmd)
+		regen := newCommand(updatecmd)
 		regen.Dir = rpmdir
 		regen.Stdout = os.Stdout
 		regen.Stderr = os.Stderr

@@ -9,8 +9,16 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
+
+// newCommand is like os/exec.Command but ensures the subprocess is part of a process-group
+func newCommand(name string, args ...string) *exec.Cmd {
+	cmd := exec.Command(name, args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	return cmd
+}
 
 func path_exists(name string) bool {
 	_, err := os.Stat(name)
@@ -96,7 +104,7 @@ func _tar_gz(targ, workdir string) error {
 		args := []string{"-zcf", targ}
 		args = append(args, matches...)
 		//fmt.Printf(">> %v\n", args)
-		cmd := exec.Command("tar", args...)
+		cmd := newCommand("tar", args...)
 		cmd.Dir = workdir
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout

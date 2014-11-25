@@ -20,6 +20,16 @@ func newCommand(name string, args ...string) *exec.Cmd {
 	return cmd
 }
 
+// killProcess kills a process by way of its process-group.
+func killProcess(p *os.Process) error {
+	pgid, err := syscall.Getpgid(p.Pid)
+	if err != nil {
+		return err
+	}
+	err = syscall.Kill(-pgid, syscall.SIGKILL) // note the minus sign
+	return err
+}
+
 func path_exists(name string) bool {
 	_, err := os.Stat(name)
 	if err == nil {

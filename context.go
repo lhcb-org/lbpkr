@@ -210,23 +210,9 @@ func (ctx *Context) initSignalHandler() {
 						// fmt.Fprintf(os.Stderr, ">>> nil Process\n")
 						continue
 					}
-					pstate := cmd.ProcessState
-					if pstate != nil && pstate.Exited() {
-						// fmt.Fprintf(os.Stderr, ">>> process already exited\n")
-						continue
-					}
-					// fmt.Fprintf(os.Stderr, ">>> signaling...\n")
-					_ = proc.Signal(sig)
-					// fmt.Fprintf(os.Stderr, ">>> signaling... [done]\n")
-					ps, pserr := proc.Wait()
+					pserr := killProcess(proc)
 					if pserr != nil {
 						ctx.msg.Errorf("waited and got: %#v (%v)\n", pserr, pserr.Error())
-					} else {
-						if !ps.Exited() {
-							// fmt.Fprintf(os.Stderr, ">>> killing...\n")
-							proc.Kill()
-							// fmt.Fprintf(os.Stderr, ">>> killing... [done]\n")
-						}
 					}
 					if stdout, ok := cmd.Stdout.(interface {
 						Sync() error

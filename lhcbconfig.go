@@ -83,6 +83,7 @@ func (cfg *lhcbConfig) RelocateArgs(siteroot string) []string {
 
 // RelocateFile returns the relocated file path
 func (cfg *lhcbConfig) RelocateFile(fname, siteroot string) string {
+	fname = strings.Replace(fname, "/opt/lcg/external", filepath.Join(siteroot, "lcg", "external"), 1)
 	fname = strings.Replace(fname, "/opt/lcg", filepath.Join(siteroot, "lcg", "releases"), 1)
 	fname = strings.Replace(fname, "/opt/LHCbSoft", siteroot, 1)
 	return fname

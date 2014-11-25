@@ -35,19 +35,37 @@ lbpkr INFO    Total matching: 6
 ### install a package (and its dependencies)
 
 ```sh
-$ lbpkr install LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    installing RPM LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt 1 1
-lbpkr INFO    installing LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt and dependencies
-lbpkr INFO    found 31 RPMs to install:
-lbpkr INFO    	[001/031] AtlasSetup-00.03.74-1
-lbpkr INFO    	[002/031] CLHEP_1_9_4_7_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    	[003/031] CASTOR_2_1_13_6_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    	[004/031] ROOT_5_34_13_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    	[005/031] Expat_2_0_1_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    	[006/031] GCCXML_0_9_0_20120309p2_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    	[007/031] Boost_1_53_0_python2_7_i686_slc6_gcc47_opt-1-1
+$ lbpkr install LCG_67_LCGCMT_LCGCMT_67_x86_64_slc6_gcc48_opt
+lbpkr INFO    installing RPMs [LCG_67_LCGCMT_LCGCMT_67_x86_64_slc6_gcc48_opt]
+lbpkr INFO    installing LCG_67_LCGCMT_LCGCMT_67_x86_64_slc6_gcc48_opt-1.0.0-1 and dependencies
+lbpkr INFO    found 8 RPMs to install:
+lbpkr INFO    	[001/008] LCGCMT-41fd6_LCGCMT_67_x86_64_slc6_gcc48_opt-1.0.0-1
+lbpkr INFO    	[002/008] LCGMeta_67_externals_x86_64_slc6_gcc48_opt-1.0.0-1
+lbpkr INFO    	[003/008] LCG_67_LCGCMT_LCGCMT_67_x86_64_slc6_gcc48_opt-1.0.0-1
+lbpkr INFO    	[004/008] LCG_67_Python_2.7.4_x86_64_slc6_gcc48_opt-1.0.0-1
+lbpkr INFO    	[005/008] LCG_67_sqlite_3070900_x86_64_slc6_gcc48_opt-1.0.0-1
+lbpkr INFO    	[006/008] Python-2b616_2.7.4_x86_64_slc6_gcc48_opt-1.0.0-1
+lbpkr INFO    	[007/008] gcc_4.8.1_x86_64_slc6-1.0.0-1
+lbpkr INFO    	[008/008] sqlite-4b60e_3070900_x86_64_slc6_gcc48_opt-1.0.0-7
 [...]
-lbpkr INFO    downloading http://atlas-computing.web.cern.ch/atlas-computing/links/reposDirectory/lcg/slc6/yum//noarch/AIDA_3_2_1_noarch-1-1.noarch.rpm to /opt/cern-sw/tmp/AIDA_3_2_1_noarch-1-1.rpm
+lbpkr INFO    [008/008] downloaded http://cern.ch/service-spi/external/rpms/lcg/gcc_4.8.1_x86_64_slc6-1.0.0-1.noarch.rpm
+```
+
+### install a project
+
+```sh
+$ lbpkr install-project -platforms=all GAUDI v25r5
+lbpkr INFO    installing project GAUDI v25r5
+lbpkr INFO    installing project name="GAUDI" version="v25r5" for archs=[x86_64_slc6_gcc48_dbg x86_64_slc6_gcc48_opt]
+lbpkr INFO    installing GAUDI_v25r5_x86_64_slc6_gcc48_dbg-1.0.0-1 and dependencies
+lbpkr INFO    installing GAUDI_v25r5_x86_64_slc6_gcc48_opt-1.0.0-1 and dependencies
+lbpkr INFO    found 186 RPMs to install:
+lbpkr INFO    	[001/186] AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_dbg-1.0.0-12
+lbpkr INFO    	[002/186] AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_opt-1.0.0-7
+lbpkr INFO    	[003/186] Boost-f9e91_1.55.0_python2.7_x86_64_slc6_gcc48_dbg-1.0.0-12
+[...]
+lbpkr INFO    [001/184] downloaded http://cern.ch/service-spi/external/rpms/lcg/LCG_70root6_srm_ifce_1.13.0_0_x86_64_slc6_gcc48_opt-1.0.0-12.noarch.rpm
+[...]
 ```
 
 ### list installed packages

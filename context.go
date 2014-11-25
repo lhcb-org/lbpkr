@@ -498,20 +498,31 @@ func (ctx *Context) install(project, version, cmtconfig string) error {
 
 // InstallRPM installs a RPM by name
 func (ctx *Context) InstallRPM(name, version, release string, forceInstall, update bool) error {
+	return ctx.InstallRPMs([]string{name + "-" + version + "-" + release}, forceInstall, update)
+}
+
+// InstallRPMs installs a (list of) RPM(s) by name
+func (ctx *Context) InstallRPMs(rpms []string, forceInstall, update bool) error {
 	var err error
 
-	pkg, err := ctx.yum.FindLatestProvider(name, version, release)
-	if err != nil {
-		return err
+	pkgs := make([]*yum.Package, 0, len(rpms))
+	for _, name := range rpms {
+		pkg, err := ctx.yum.FindLatestProvider(name, "", "")
+		if err != nil {
+			return err
+		}
+
+		// FIXME: this is because even though lbpkr is statically compiled, it grabs
+		//        a dependency against glibc through cgo+SQLite.
+		//        ==> generate the RPM with the proper deps ?
+		if name == "lbpkr" {
+			forceInstall = true
+		}
+
+		pkgs = append(pkgs, pkg)
 	}
 
-	// FIXME: this is because even though lbpkr is statically compiled, it grabs
-	//        a dependency against glibc through cgo+SQLite.
-	//        ==> generate the RPM with the proper deps ?
-	if name == "lbpkr" {
-		forceInstall = true
-	}
-	err = ctx.InstallPackage(pkg, forceInstall, update)
+	err = ctx.InstallPackages(pkgs, forceInstall, update)
 	return err
 }
 

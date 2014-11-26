@@ -210,23 +210,9 @@ func (ctx *Context) initSignalHandler() {
 						// fmt.Fprintf(os.Stderr, ">>> nil Process\n")
 						continue
 					}
-					pstate := cmd.ProcessState
-					if pstate != nil && pstate.Exited() {
-						// fmt.Fprintf(os.Stderr, ">>> process already exited\n")
-						continue
-					}
-					// fmt.Fprintf(os.Stderr, ">>> signaling...\n")
-					_ = proc.Signal(sig)
-					// fmt.Fprintf(os.Stderr, ">>> signaling... [done]\n")
-					ps, pserr := proc.Wait()
+					pserr := killProcess(proc)
 					if pserr != nil {
 						ctx.msg.Errorf("waited and got: %#v (%v)\n", pserr, pserr.Error())
-					} else {
-						if !ps.Exited() {
-							// fmt.Fprintf(os.Stderr, ">>> killing...\n")
-							proc.Kill()
-							// fmt.Fprintf(os.Stderr, ">>> killing... [done]\n")
-						}
 					}
 					if stdout, ok := cmd.Stdout.(interface {
 						Sync() error
@@ -270,7 +256,7 @@ func (ctx *Context) initRpmDb() error {
 	pkgdir := filepath.Join(ctx.dbpath, "Packages")
 	if !path_exists(pkgdir) {
 		msg.Debugf("Initializing RPM db\n")
-		cmd := exec.Command(
+		cmd := newCommand(
 			"rpm",
 			"--dbpath", ctx.dbpath,
 			"--initdb",
@@ -498,38 +484,103 @@ func (ctx *Context) install(project, version, cmtconfig string) error {
 
 // InstallRPM installs a RPM by name
 func (ctx *Context) InstallRPM(name, version, release string, forceInstall, update bool) error {
+	return ctx.InstallRPMs([]string{name + "-" + version + "-" + release}, forceInstall, update)
+}
+
+// InstallRPMs installs a (list of) RPM(s) by name
+func (ctx *Context) InstallRPMs(rpms []string, forceInstall, update bool) error {
 	var err error
 
-	pkg, err := ctx.yum.FindLatestProvider(name, version, release)
-	if err != nil {
-		return err
+	pkgs := make([]*yum.Package, 0, len(rpms))
+	for _, name := range rpms {
+		pkg, err := ctx.yum.FindLatestProvider(name, "", "")
+		if err != nil {
+			return err
+		}
+
+		// FIXME: this is because even though lbpkr is statically compiled, it grabs
+		//        a dependency against glibc through cgo+SQLite.
+		//        ==> generate the RPM with the proper deps ?
+		if name == "lbpkr" {
+			forceInstall = true
+		}
+
+		pkgs = append(pkgs, pkg)
 	}
 
-	// FIXME: this is because even though lbpkr is statically compiled, it grabs
-	//        a dependency against glibc through cgo+SQLite.
-	//        ==> generate the RPM with the proper deps ?
-	if name == "lbpkr" {
-		forceInstall = true
+	err = ctx.InstallPackages(pkgs, forceInstall, update)
+	return err
+}
+
+// InstallProject installs a whole project by name
+func (ctx *Context) InstallProject(name, version, release, platforms string, forceInstall, update bool) error {
+	var err error
+
+	archs := make([]string, 0, 2)
+	if platforms == "" {
+		// if no CMTCONFIG defined, we'll default to "ALL"
+		platforms = os.Getenv("CMTCONFIG")
 	}
-	err = ctx.InstallPackage(pkg, forceInstall, update)
+
+	switch platforms {
+	case "", "ALL", "all":
+		// FIXME(sbinet) find a better way to get the list of all CMTCONFIGs
+		// FIXME(sbinet) the list of all CMTCONFIGs should also be predicated on a project version
+		//               (because the list of available platforms depend on the project version!)
+		archs = []string{
+			"x86_64_slc6_gcc48_dbg",
+			"x86_64_slc6_gcc48_opt",
+		}
+	default:
+		for _, v := range strings.Split(platforms, ",") {
+			v = strings.TrimSpace(v)
+			if v != "" {
+				archs = append(archs, v)
+			}
+		}
+	}
+
+	projname := name + "_" + version
+	ctx.msg.Infof("installing project name=%q version=%q for archs=%v\n", name, version, archs)
+	pkgs := make([]*yum.Package, 0, len(archs))
+	for _, arch := range archs {
+		pkg, err := ctx.yum.FindLatestProvider(projname+"_"+arch, "", release)
+		if err != nil {
+			return err
+		}
+		pkgs = append(pkgs, pkg)
+	}
+
+	err = ctx.InstallPackages(pkgs, forceInstall, update)
 	return err
 }
 
 // InstallPackage installs a specific RPM, checking if not already installed
 func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) error {
+	pkgs := []*yum.Package{pkg}
+	return ctx.InstallPackages(pkgs, forceInstall, update)
+}
+
+// InstallPackages installs a list of specific RPMs, checking if not already installed
+func (ctx *Context) InstallPackages(packages []*yum.Package, forceInstall, update bool) error {
 	var err error
-	ctx.msg.Infof("installing %s and dependencies\n", pkg.Name())
 	var pkgs []*yum.Package
-	if pkg.Name() != "lbpkr" {
-		pkgs, err = ctx.yum.RequiredPackages(pkg)
-		if err != nil {
-			ctx.msg.Errorf("required-packages error: %v\n", err)
-			return err
-		}
-	} else {
-		pkgs = append(pkgs, pkg)
-	}
 	pkgset := make(map[string]*yum.Package)
+	for _, pkg := range packages {
+		ctx.msg.Infof("installing %s and dependencies\n", pkg.RpmName())
+		if pkg.Name() != "lbpkr" {
+			var opkgs []*yum.Package
+			opkgs, err = ctx.yum.RequiredPackages(pkg)
+			if err != nil {
+				ctx.msg.Errorf("required-packages error: %v\n", err)
+				return err
+			}
+			pkgs = append(pkgs, opkgs...)
+		} else {
+			pkgs = append(pkgs, pkg)
+		}
+	}
+
 	for _, p := range pkgs {
 		pkgset[p.RpmName()] = p
 	}
@@ -856,7 +907,7 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 	rpmargs = append(rpmargs, args...)
 
 	ctx.msg.Debugf("RPM command: rpm %v\n", rpmargs)
-	cmd := exec.Command("rpm", rpmargs...)
+	cmd := newCommand("rpm", rpmargs...)
 	ctx.submux.Lock()
 	ctx.subcmds = append(ctx.subcmds, cmd)
 	ctx.submux.Unlock()

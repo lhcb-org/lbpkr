@@ -32,22 +32,65 @@ LHCB_v37r3_x86_64_slc6_gcc48_opt-1.0.0-1
 lbpkr INFO    Total matching: 6
 ```
 
-### install a package (and its dependencies)
+### install a (list of) package(s) (and its dependencies)
 
 ```sh
-$ lbpkr install LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    installing RPM LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt 1 1
-lbpkr INFO    installing LCGCMT_LCGCMT_67b_i686_slc6_gcc47_opt and dependencies
-lbpkr INFO    found 31 RPMs to install:
-lbpkr INFO    	[001/031] AtlasSetup-00.03.74-1
-lbpkr INFO    	[002/031] CLHEP_1_9_4_7_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    	[003/031] CASTOR_2_1_13_6_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    	[004/031] ROOT_5_34_13_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    	[005/031] Expat_2_0_1_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    	[006/031] GCCXML_0_9_0_20120309p2_i686_slc6_gcc47_opt-1-1
-lbpkr INFO    	[007/031] Boost_1_53_0_python2_7_i686_slc6_gcc47_opt-1-1
+$ lbpkr install \
+   LCG_70_AIDA_3.2.1_x86_64_slc6_gcc48_opt \
+   LCG_70root6_AIDA_3.2.1_x86_64_slc6_gcc48_opt
+
+lbpkr INFO    installing RPMs [LCG_70_AIDA_3.2.1_x86_64_slc6_gcc48_opt LCG_70root6_AIDA_3.2.1_x86_64_slc6_gcc48_opt]
+lbpkr INFO    installing LCG_70_AIDA_3.2.1_x86_64_slc6_gcc48_opt-1.0.0-12 and dependencies
+lbpkr INFO    installing LCG_70root6_AIDA_3.2.1_x86_64_slc6_gcc48_opt-1.0.0-12 and dependencies
+lbpkr INFO    found 8 RPMs to install:
+lbpkr INFO    	[001/008] AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_opt-1.0.0-7
+lbpkr INFO    	[002/008] LCGMeta_70_externals_x86_64_slc6_gcc48_opt-1.0.0-12
+lbpkr INFO    	[003/008] LCGMeta_70root6_externals_x86_64_slc6_gcc48_opt-1.0.0-13
+lbpkr INFO    	[004/008] LCG_70_AIDA_3.2.1_x86_64_slc6_gcc48_opt-1.0.0-12
+lbpkr INFO    	[005/008] LCG_70_gcc_4.8.1_x86_64_slc6-1.0.0-71
+lbpkr INFO    	[006/008] LCG_70root6_AIDA_3.2.1_x86_64_slc6_gcc48_opt-1.0.0-12
+lbpkr INFO    	[007/008] LCG_70root6_gcc_4.8.1_x86_64_slc6-1.0.0-16
+lbpkr INFO    	[008/008] gcc_4.8.1_x86_64_slc6-1.0.0-1
+lbpkr INFO    [001/008] downloaded http://cern.ch/service-spi/external/rpms/lcg/LCG_70root6_gcc_4.8.1_x86_64_slc6-1.0.0-16.noarch.rpm
+lbpkr INFO    [002/008] downloaded http://cern.ch/service-spi/external/rpms/lcg/LCG_70_gcc_4.8.1_x86_64_slc6-1.0.0-71.noarch.rpm
+lbpkr INFO    [003/008] downloaded http://cern.ch/service-spi/external/rpms/lcg/LCGMeta_70root6_externals_x86_64_slc6_gcc48_opt-1.0.0-13.noarch.rpm
+lbpkr INFO    [004/008] downloaded http://cern.ch/service-spi/external/rpms/lcg/LCG_70_AIDA_3.2.1_x86_64_slc6_gcc48_opt-1.0.0-12.noarch.rpm
+lbpkr INFO    [005/008] downloaded http://cern.ch/service-spi/external/rpms/lcg/LCGMeta_70_externals_x86_64_slc6_gcc48_opt-1.0.0-12.noarch.rpm
+lbpkr INFO    [006/008] downloaded http://cern.ch/service-spi/external/rpms/lcg/LCG_70root6_AIDA_3.2.1_x86_64_slc6_gcc48_opt-1.0.0-12.noarch.rpm
+lbpkr INFO    [007/008] downloaded http://cern.ch/service-spi/external/rpms/lcg/AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_opt-1.0.0-7.noarch.rpm
+lbpkr INFO    [008/008] downloaded http://cern.ch/service-spi/external/rpms/lcg/gcc_4.8.1_x86_64_slc6-1.0.0-1.noarch.rpm
+lbpkr INFO    installing [8] RPMs...
+Preparing...                ##################################################
+AIDA-3fe9f_3.2.1_x86_64_slc6##################################################
+gcc_4.8.1_x86_64_slc6       ##################################################
+LCG_70root6_gcc_4.8.1_x86_64##################################################
+LCG_70_gcc_4.8.1_x86_64_slc6##################################################
+LCGMeta_70_externals_x86_64_##################################################
+LCGMeta_70root6_externals_x8##################################################
+LCG_70root6_AIDA_3.2.1_x86_6##################################################
+LCG_70_AIDA_3.2.1_x86_64_slc##################################################
+```
+
+### install a project
+
+```sh
+$ lbpkr install-project -platforms=all GAUDI v25r5
+lbpkr INFO    installing project GAUDI v25r5
+lbpkr INFO    installing project name="GAUDI" version="v25r5" for archs=[x86_64_slc6_gcc48_dbg x86_64_slc6_gcc48_opt]
+lbpkr INFO    installing GAUDI_v25r5_x86_64_slc6_gcc48_dbg-1.0.0-1 and dependencies
+lbpkr INFO    installing GAUDI_v25r5_x86_64_slc6_gcc48_opt-1.0.0-1 and dependencies
+lbpkr INFO    found 186 RPMs to install:
+lbpkr INFO    	[001/186] AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_dbg-1.0.0-12
+lbpkr INFO    	[002/186] AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_opt-1.0.0-7
+lbpkr INFO    	[003/186] Boost-f9e91_1.55.0_python2.7_x86_64_slc6_gcc48_dbg-1.0.0-12
 [...]
-lbpkr INFO    downloading http://atlas-computing.web.cern.ch/atlas-computing/links/reposDirectory/lcg/slc6/yum//noarch/AIDA_3_2_1_noarch-1-1.noarch.rpm to /opt/cern-sw/tmp/AIDA_3_2_1_noarch-1-1.rpm
+lbpkr INFO    [001/184] downloaded http://cern.ch/service-spi/external/rpms/lcg/LCG_70root6_srm_ifce_1.13.0_0_x86_64_slc6_gcc48_opt-1.0.0-12.noarch.rpm
+[...]
+lbpkr INFO    [186/186] downloaded http://cern.ch/service-spi/external/rpms/lcg/ROOT-90bb1_6.02.01_x86_64_slc6_gcc48_dbg-1.0.0-12.noarch.rpm
+lbpkr INFO    installing [186] RPMs...
+Preparing...                ##################################################
+[...]
+GAUDI_v25r5_x86_64_slc6_gcc4##################################################
 ```
 
 ### list installed packages
@@ -119,18 +162,19 @@ lbpkr - installs software in MYSITEROOT directory.
 
 Commands:
 
-    check       check for RPM updates from the yum repository
-    dep-graph   dump the DOT graph of installed RPM packages [<name-pattern> [<version-pattern> [<release-pattern>]]]
-    deps        list all deps RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
-    install     install a RPM from the yum repository
-    installed   list all installed RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
-    list        list all RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
-    provides    list all installed RPM packages providing the given file
-    remove      remove a RPM from the yum repository
-    rpm         rpm passes through command-args to the RPM binary
-    self        admin/internal operations for lbpkr
-    update      update RPMs from the yum repository
-    version     print out script version
+    check           check for RPM updates from the yum repository
+    dep-graph       dump the DOT graph of installed RPM packages [<name-pattern> [<version-pattern> [<release-pattern>]]]
+    deps            list all deps RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
+    install         install a (list of) RPM(s) from the yum repository
+    install-project install-project a whole project from the yum repository
+    installed       list all installed RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
+    list            list all RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
+    provides        list all installed RPM packages providing the given file
+    remove          remove a RPM from the yum repository
+    rpm             rpm passes through command-args to the RPM binary
+    self            admin/internal operations for lbpkr
+    update          update RPMs from the yum repository
+    version         print out script version
 
 Use "lbpkr help <command>" for more information about a command.
 ```

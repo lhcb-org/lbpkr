@@ -14,7 +14,7 @@ func TestLbpkrSelfBdist(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpdir)
 
-	cmd := exec.Command("lbpkr", "self", "bdist")
+	cmd := newCommand("lbpkr", "self", "bdist")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = tmpdir
@@ -36,7 +36,7 @@ func TestLbpkrSelfBdistRpm(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpdir)
 
-	cmd := exec.Command("lbpkr", "self", "bdist-rpm")
+	cmd := newCommand("lbpkr", "self", "bdist-rpm")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = tmpdir
@@ -54,7 +54,7 @@ func TestLbpkrInstallLbpkr(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpdir)
 
-	cmd := exec.Command("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr")
+	cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = tmpdir

@@ -60,7 +60,7 @@ func lbpkr_run_cmd_deps(cmd *commander.Command, args []string) error {
 	}
 	defer ctx.Close()
 
-	pkg, err := ctx.Client().FindLatestMatchingName(name, vers, release)
+	pkg, err := ctx.Client().FindLatestProvider(name, vers, release)
 	if err != nil {
 		return err
 	}

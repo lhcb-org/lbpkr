@@ -177,7 +177,7 @@ func TestDependencyGreater(t *testing.T) {
 		t.Fatalf("expected release=1. got=%q\n", exp, pkg.Release())
 	}
 
-	deps, err := yum.PackageDeps(pkg)
+	deps, err := yum.PackageDeps(pkg, -1)
 	if err != nil {
 		t.Fatalf("could not find package deps: %v\n", err)
 	}
@@ -225,7 +225,7 @@ func TestDependencyEqual(t *testing.T) {
 		t.Fatalf("expected release=%q. got=%q\n", exp, pkg.Release())
 	}
 
-	deps, err := yum.PackageDeps(pkg)
+	deps, err := yum.PackageDeps(pkg, -1)
 	if err != nil {
 		t.Fatalf("could not find package deps: %v\n", err)
 	}
@@ -273,13 +273,72 @@ func TestCyclicDependency(t *testing.T) {
 		t.Fatalf("expected release=%q. got=%q\n", exp, pkg.Release())
 	}
 
-	deps, err := yum.PackageDeps(pkg)
+	deps, err := yum.PackageDeps(pkg, -1)
 	if err != nil {
 		t.Fatalf("could not find package deps: %v\n", err)
 	}
 
 	if len(deps) != 2 {
-		t.Fatalf("expected #deps=%d. got=%d\n", 1, len(deps))
+		t.Fatalf("expected #deps=%d. got=%d\n", 2, len(deps))
+	}
+}
+
+func TestPackageDepsDepth(t *testing.T) {
+
+	yum, err := getTestClient(t)
+	if err != nil {
+		t.Fatalf("could not create test repo: %v\n", err)
+	}
+	defer yum.Close()
+
+	pkg, err := yum.FindLatestMatchingName("TCyclicDep", "", "")
+	if err != nil {
+		t.Fatalf("could not find latest matching name: %v\n", err)
+	}
+
+	if pkg == nil {
+		t.Fatalf("could not find latest matching name: nil package\n")
+	}
+
+	exp := "1.0.0"
+	if pkg.Version() != exp {
+		t.Fatalf("expected version=%q. got=%q\n", exp, pkg.Version())
+	}
+
+	exp = "1"
+	if pkg.Release() != exp {
+		t.Fatalf("expected release=%q. got=%q\n", exp, pkg.Release())
+	}
+
+	for _, table := range []struct {
+		ngens int
+		want  int
+	}{
+		{
+			ngens: -1,
+			want:  2,
+		},
+		{
+			ngens: 0,
+			want:  0,
+		},
+		{
+			ngens: 1,
+			want:  1,
+		},
+		{
+			ngens: 2,
+			want:  2,
+		},
+	} {
+		deps, err := yum.PackageDeps(pkg, table.ngens)
+		if err != nil {
+			t.Fatalf("ngens=%d -- could not find package deps: %v\n", table.ngens, err)
+		}
+
+		if len(deps) != table.want {
+			t.Fatalf("ngens=%d -- expected #deps=%d. got=%d\n", table.ngens, table.want, len(deps))
+		}
 	}
 }
 
@@ -508,7 +567,7 @@ func TestLoadConfig(t *testing.T) {
 			"zlib_1.2.5_x86_64_slc5_gcc43_opt",
 		}
 
-		found, err := yum.RequiredPackages(brunel)
+		found, err := yum.RequiredPackages(brunel, -1)
 		if err != nil {
 			t.Fatalf("could not retrieve list of required packages for BRUNEL: %v (siteroot=%q)\n", err, siteroot)
 		}

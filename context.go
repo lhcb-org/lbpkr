@@ -300,7 +300,12 @@ func (ctx *Context) initYum() error {
 			return err
 		}
 	}
+
 	err = ctx.cfg.InitYum(ctx)
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 

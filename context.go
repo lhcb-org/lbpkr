@@ -739,8 +739,12 @@ func (ctx *Context) Provides(filename string) ([]*yum.Package, error) {
 	for _, rpm := range rpms {
 		rpmfile := filepath.Join(ctx.tmpdir, rpm.RpmFileName())
 		if _, errstat := os.Stat(rpmfile); errstat != nil {
-			err = fmt.Errorf("lbpkr: no such file [%s] (%v)", rpmfile, errstat)
-			return nil, err
+			// try to re-download the file
+			_, errdl := ctx.downloadFiles([]*yum.Package{rpm}, ctx.tmpdir)
+			if errdl != nil {
+				err = fmt.Errorf("lbpkr: no such file [%s] (%v)", rpmfile, errstat)
+				return nil, err
+			}
 		}
 		out, err := ctx.rpm(false, "-qlp", rpmfile)
 		if err != nil {

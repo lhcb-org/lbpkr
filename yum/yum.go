@@ -203,9 +203,8 @@ func (yum *Client) PackageDeps(pkg *Package) ([]*Package, error) {
 	var err error
 	processed := make(map[string]*Package)
 	deps, err := yum.pkgDeps(pkg, processed)
-	if err != nil {
-		return nil, err
-	}
+	// do not handle the pkg-deps error (if any) just yet.
+	// process the package deps we've got so far
 
 	pkgs := make([]*Package, 0, len(deps))
 	for _, p := range deps {
@@ -234,7 +233,7 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[string]*Package) (map[str
 		p, err := yum.FindLatestMatchingRequire(req)
 		if err != nil {
 			lasterr = err
-			msg.Debugf("could not find match for %s\n", req.ID())
+			msg.Errorf("could not find match for %s\n", req.ID())
 			continue
 		}
 		if _, dup := processed[p.ID()]; dup {

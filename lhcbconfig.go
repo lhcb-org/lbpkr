@@ -16,10 +16,10 @@ type Config interface {
 	RpmUpdate() bool
 
 	// RelocateArgs returns the arguments to be passed to RPM for the repositories
-	RelocateArgs(siteroot string) []string
+	RelocateArgs() []string
 
 	// RelocateFile returns the relocated file path
-	RelocateFile(fname, siteroot string) string
+	RelocateFile(fname string) string
 
 	InitYum(*Context) error
 }
@@ -72,20 +72,20 @@ func (cfg *lhcbConfig) DefaultSiteroot() string {
 }
 
 // RelocateArgs returns the arguments to be passed to RPM for the repositories
-func (cfg *lhcbConfig) RelocateArgs(siteroot string) []string {
+func (cfg *lhcbConfig) RelocateArgs() []string {
 	return []string{
-		"--relocate", fmt.Sprintf("%s=%s", "/opt/lcg/external", filepath.Join(siteroot, "lcg", "external")),
-		"--relocate", fmt.Sprintf("%s=%s", "/opt/lcg", filepath.Join(siteroot, "lcg", "releases")),
-		"--relocate", fmt.Sprintf("%s=%s", "/opt/LHCbSoft", siteroot),
+		"--relocate", fmt.Sprintf("%s=%s", "/opt/lcg/external", filepath.Join(cfg.siteroot, "lcg", "external")),
+		"--relocate", fmt.Sprintf("%s=%s", "/opt/lcg", filepath.Join(cfg.siteroot, "lcg", "releases")),
+		"--relocate", fmt.Sprintf("%s=%s", "/opt/LHCbSoft", cfg.siteroot),
 		"--badreloc",
 	}
 }
 
 // RelocateFile returns the relocated file path
-func (cfg *lhcbConfig) RelocateFile(fname, siteroot string) string {
-	fname = strings.Replace(fname, "/opt/lcg/external", filepath.Join(siteroot, "lcg", "external"), 1)
-	fname = strings.Replace(fname, "/opt/lcg", filepath.Join(siteroot, "lcg", "releases"), 1)
-	fname = strings.Replace(fname, "/opt/LHCbSoft", siteroot, 1)
+func (cfg *lhcbConfig) RelocateFile(fname string) string {
+	fname = strings.Replace(fname, "/opt/lcg/external", filepath.Join(cfg.siteroot, "lcg", "external"), 1)
+	fname = strings.Replace(fname, "/opt/lcg", filepath.Join(cfg.siteroot, "lcg", "releases"), 1)
+	fname = strings.Replace(fname, "/opt/LHCbSoft", cfg.siteroot, 1)
 	return fname
 }
 

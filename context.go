@@ -749,11 +749,11 @@ func (ctx *Context) Provides(filename string) ([]*yum.Package, error) {
 		}
 		scan := bufio.NewScanner(bytes.NewBuffer(out))
 		for scan.Scan() {
-			file := scan.Text()
+			file := ctx.cfg.RelocateFile(scan.Text())
 			if re_file.MatchString(file) {
 				list = append(list, pair{
 					pkg:  rpm,
-					file: ctx.cfg.RelocateFile(file, ctx.siteroot),
+					file: ctx.cfg.RelocateFile(file),
 				})
 				break
 			}
@@ -900,9 +900,18 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 		}
 	}
 
+	// FIXME(sbinet)
+	// when in query-mode, rpm --dbpath ... will print the filenames without
+	// relocating them.
+	// we should fix that up as that may be utterly confusing.
+	// e.g. it would print:
+	//  /opt/lcg/blas/20110419-e1974/x86_64-slc6-gcc48-opt/lib/libBLAS.a
+	// instead of:
+	//  $MYSITEROOT/lcg/releases/blas/20110419-e1974/x86_64-slc6-gcc48-opt/lib/libBLAS.a
+
 	rpmargs := []string{"--dbpath", ctx.dbpath}
 	if !query_mode && install_mode {
-		rpmargs = append(rpmargs, ctx.cfg.RelocateArgs(ctx.siteroot)...)
+		rpmargs = append(rpmargs, ctx.cfg.RelocateArgs()...)
 	}
 	rpmargs = append(rpmargs, args...)
 

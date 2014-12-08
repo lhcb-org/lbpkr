@@ -566,19 +566,56 @@ func (ctx *Context) InstallPackages(packages []*yum.Package, forceInstall, updat
 	var err error
 	var pkgs []*yum.Package
 	pkgset := make(map[string]*yum.Package)
+
+	processed := make(map[string]*yum.Package)
+	var collect func(pkg *yum.Package) ([]*yum.Package, error)
+
+	collect = func(pkg *yum.Package) ([]*yum.Package, error) {
+		if _, dup := processed[pkg.ID()]; dup {
+			return nil, nil
+		}
+		rpkgs, err := ctx.yum.PackageDeps(pkg, 1)
+		if err != nil {
+			return nil, err
+		}
+		processed[pkg.ID()] = pkg
+		var pkgset = make(map[string]*yum.Package)
+		if !ctx.isRpmInstalled(pkg.RpmName(), pkg.Version()) {
+			pkgset[pkg.RpmName()] = pkg
+		}
+
+		for _, rpkg := range rpkgs {
+			if ctx.isRpmInstalled(rpkg.RpmName(), "") {
+				continue
+			}
+			opkgs, err := collect(rpkg)
+			if err != nil {
+				return nil, err
+			}
+			for _, opkg := range opkgs {
+				pkgset[opkg.RpmName()] = opkg
+			}
+		}
+		pkgs := make([]*yum.Package, 0, len(pkgset))
+		for _, p := range pkgset {
+			pkgs = append(pkgs, p)
+		}
+		return pkgs, err
+	}
+
 	for _, pkg := range packages {
 		ctx.msg.Infof("installing %s and dependencies\n", pkg.RpmName())
-		if pkg.Name() != "lbpkr" {
-			var opkgs []*yum.Package
-			opkgs, err = ctx.yum.RequiredPackages(pkg)
-			if err != nil {
-				ctx.msg.Errorf("required-packages error: %v\n", err)
-				return err
-			}
-			pkgs = append(pkgs, opkgs...)
-		} else {
+		if pkg.Name() == "lbpkr" {
 			pkgs = append(pkgs, pkg)
+			continue
 		}
+		var opkgs []*yum.Package
+		opkgs, err = collect(pkg)
+		if err != nil {
+			ctx.msg.Errorf("required-packages error: %v\n", err)
+			return err
+		}
+		pkgs = append(pkgs, opkgs...)
 	}
 
 	for _, p := range pkgs {
@@ -788,14 +825,14 @@ func (ctx *Context) Provides(filename string) ([]*yum.Package, error) {
 }
 
 // ListPackageDeps lists all the dependencies of the given RPM package
-func (ctx *Context) ListPackageDeps(name, version, release string) ([]*yum.Package, error) {
+func (ctx *Context) ListPackageDeps(name, version, release string, depthmax int) ([]*yum.Package, error) {
 	var err error
 	pkg, err := ctx.yum.FindLatestProvider(name, version, release)
 	if err != nil {
 		return nil, fmt.Errorf("lbpkr: no such package name=%q version=%q release=%q (%v)", name, version, release, err)
 	}
 
-	deps, depsErr := ctx.yum.PackageDeps(pkg)
+	deps, depsErr := ctx.yum.PackageDeps(pkg, depthmax)
 	// do not handle the depsErr error just yet.
 	// printout the deps we've got so far.
 	if depsErr != nil {

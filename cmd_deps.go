@@ -22,6 +22,7 @@ ex:
 		Flag: *flag.NewFlagSet("lbpkr-deps", flag.ExitOnError),
 	}
 	add_default_options(cmd)
+	cmd.Flag.Int("maxdepth", -1, "maximum depth level of dependency graph (-1: all)")
 	return cmd
 }
 
@@ -30,6 +31,7 @@ func lbpkr_run_cmd_deps(cmd *commander.Command, args []string) error {
 
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 	siteroot := cmd.Flag.Lookup("siteroot").Value.Get().(string)
+	dmax := cmd.Flag.Lookup("maxdepth").Value.Get().(int)
 
 	name := ""
 	vers := ""
@@ -65,7 +67,7 @@ func lbpkr_run_cmd_deps(cmd *commander.Command, args []string) error {
 		return err
 	}
 
-	_, err = ctx.ListPackageDeps(pkg.Name(), pkg.Version(), pkg.Release())
+	_, err = ctx.ListPackageDeps(pkg.Name(), pkg.Version(), pkg.Release(), dmax)
 	if err != nil {
 		return err
 	}

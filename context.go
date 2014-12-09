@@ -1283,6 +1283,10 @@ func (ctx *Context) AddRepository(name, repo string) error {
 func (ctx *Context) RemoveRepository(name string) error {
 	var err error
 	fname := filepath.Join(ctx.yumreposd, name+".repo")
+	if !path_exists(fname) {
+		return fmt.Errorf("lbpkr: no such repo %q", name)
+	}
+
 	cfg, err := config.ReadDefault(fname)
 	if err != nil {
 		return err

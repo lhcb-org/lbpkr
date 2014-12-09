@@ -170,8 +170,8 @@ Commands:
     installed       list all installed RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
     list            list all RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
     provides        list all installed RPM packages providing the given file
-    remove          remove a RPM from the yum repository
-    rpm             rpm passes through command-args to the RPM binary
+    rm              remove a RPM from the yum repository
+    rpm             pass through command-args to the RPM binary
     self            admin/internal operations for lbpkr
     update          update RPMs from the yum repository
     version         print out script version

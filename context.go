@@ -1244,6 +1244,10 @@ func (ctx *Context) AddRepository(name, repo string) error {
 	}
 
 	fname := filepath.Join(ctx.yumreposd, name+".repo")
+	if path_exists(fname) {
+		return fmt.Errorf("lbpkr: repo %q already exists", name)
+	}
+
 	defer func() {
 		if err != nil {
 			os.Remove(fname)

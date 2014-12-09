@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 )
 
 // newCommand is like os/exec.Command but ensures the subprocess is part of a process-group
@@ -50,27 +49,6 @@ func handle_err(err error) {
 		}
 		os.Exit(1)
 	}
-}
-
-func PrintHeader(ctx *Context) {
-	now := time.Now()
-	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
-	ctx.msg.Infof(
-		"<<< %s - start of lbpkr-%s installation >>>\n",
-		now, Version,
-	)
-	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
-	ctx.msg.Debugf("cmd line args: %v\n", os.Args)
-}
-
-func PrintTrailer(ctx *Context) {
-	now := time.Now()
-	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
-	ctx.msg.Infof(
-		"<<< %s - end of lbpkr-%s installation >>>\n",
-		now, Version,
-	)
-	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
 }
 
 func bincp(dst, src string) error {

@@ -12,16 +12,16 @@ import (
 func lbpkr_make_cmd_remove() *commander.Command {
 	cmd := &commander.Command{
 		Run:       lbpkr_run_cmd_remove,
-		UsageLine: "remove [options] <rpmname> [<rpmname> [<rpmname>]]",
+		UsageLine: "rm [options] <rpmname> [<rpmname> [<rpmname>]]",
 		Short:     "remove a RPM from the yum repository",
 		Long: `
-remove removes a RPM from the yum repository.
+rm removes a RPM from the yum repository.
 
 ex:
- $ lbpkr remove gcc_4.8.1_x86_64_slc6-1.0.0-1
- $ lbpkr remove gcc_4.8.1_x86_64_slc6-1.0.0-1 xrootd-3a806_3.2.7_x86_64_slc6_gcc48_opt-1.0.0-4
+ $ lbpkr rm gcc_4.8.1_x86_64_slc6-1.0.0-1
+ $ lbpkr rm gcc_4.8.1_x86_64_slc6-1.0.0-1 xrootd-3a806_3.2.7_x86_64_slc6_gcc48_opt-1.0.0-4
 `,
-		Flag: *flag.NewFlagSet("lbpkr-remove", flag.ExitOnError),
+		Flag: *flag.NewFlagSet("lbpkr-rm", flag.ExitOnError),
 	}
 	add_default_options(cmd)
 	cmd.Flag.Bool("force", false, "force removal of RPM")

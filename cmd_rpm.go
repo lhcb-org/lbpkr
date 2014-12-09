@@ -11,7 +11,7 @@ func lbpkr_make_cmd_rpm() *commander.Command {
 	cmd := &commander.Command{
 		Run:       lbpkr_run_cmd_rpm,
 		UsageLine: "rpm [options] -- <rpm-command-args>",
-		Short:     "rpm passes through command-args to the RPM binary",
+		Short:     "pass through command-args to the RPM binary",
 		Long: `
 rpm passes through command-args to the RPM binary.
 

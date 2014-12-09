@@ -171,4 +171,28 @@ func _tar_gz(targ, workdir string) error {
 	return f.Close()
 }
 
+func sanitizePathOrURL(path string) (string, error) {
+	switch {
+	case strings.Contains(path, "://"):
+		// a url. hopefully a correctly formed one.
+		return path, nil
+	case strings.Contains(path, ":/"):
+		// maybe a url. hopefully a correctly formed one.
+		return path, nil
+	}
+	p, err := filepath.Abs(path)
+	if err != nil {
+		return path, err
+	}
+
+	// p, err = filepath.EvalSymlinks(p)
+	// if err != nil {
+	// 	return path, err
+	// }
+
+	p = filepath.Clean(p)
+
+	return p, nil
+}
+
 // EOF

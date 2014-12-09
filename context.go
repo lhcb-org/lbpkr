@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gonuts/config"
 	"github.com/gonuts/logger"
 	"github.com/lhcb-org/lbpkr/yum"
 )
@@ -1228,6 +1229,118 @@ func (ctx *Context) checkRpmFile(fname string) bool {
 	}
 	ok := err == nil
 	return ok
+}
+
+// AddRepository adds a repository named name and located at repo.
+func (ctx *Context) AddRepository(name, repo string) error {
+	repo, err := sanitizePathOrURL(repo)
+	if err != nil {
+		return err
+	}
+
+	data := map[string]string{
+		"name": name,
+		"url":  repo,
+	}
+
+	fname := filepath.Join(ctx.yumreposd, name+".repo")
+	defer func() {
+		if err != nil {
+			os.Remove(fname)
+		}
+	}()
+
+	f, err := os.Create(fname)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	err = ctx.writeYumRepo(f, data)
+	if err != nil {
+		return err
+	}
+
+	err = f.Close()
+	if err != nil {
+		return err
+	}
+
+	// make sure the new repo is correct
+	ctx, err = New(ctx.cfg, false)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+// RemoveRepository removes the repository named name.
+func (ctx *Context) RemoveRepository(name string) error {
+	var err error
+	fname := filepath.Join(ctx.yumreposd, name+".repo")
+	cfg, err := config.ReadDefault(fname)
+	if err != nil {
+		return err
+	}
+	v, err := cfg.String(name, "name")
+	if err != nil {
+		return err
+	}
+	if v != name {
+		return fmt.Errorf("lbpkr: invalid repo name (got=%q. want=%q)", v, name)
+	}
+	err = os.Remove(fname)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+// ListRepositories lists all repositories.
+func (ctx *Context) ListRepositories() error {
+	var err error
+	reposdir, err := os.Open(ctx.yumreposd)
+	if err != nil {
+		return err
+	}
+	defer reposdir.Close()
+
+	dirs, err := reposdir.Readdir(-1)
+	if err != nil {
+		return err
+	}
+
+	for _, fi := range dirs {
+		fname := filepath.Join(ctx.yumreposd, fi.Name())
+		cfg, err := config.ReadDefault(fname)
+		if err != nil {
+			return err
+		}
+		for _, section := range cfg.Sections() {
+			if section == config.DEFAULT_SECTION {
+				continue
+			}
+			name, err := cfg.String(section, "name")
+			if err != nil {
+				return err
+			}
+			baseurl, err := cfg.String(section, "baseurl")
+			if err != nil {
+				return err
+			}
+			isEnabled, err := cfg.Bool(section, "enabled")
+			if err != nil {
+				return err
+			}
+			enabled := "disabled"
+			if isEnabled {
+				enabled = "enabled"
+			}
+			fmt.Printf("%s: %q (%s)\n", name, baseurl, enabled)
+		}
+	}
+	return err
 }
 
 // EOF

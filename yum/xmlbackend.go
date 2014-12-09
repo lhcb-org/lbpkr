@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -56,12 +55,12 @@ func (repo *RepositoryXMLBackend) GetLatestDB(url string) error {
 	}
 	defer out.Close()
 
-	resp, err := http.Get(url)
+	r, err := getRemoteData(url)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
-	_, err = io.Copy(out, resp.Body)
+	defer r.Close()
+	_, err = io.Copy(out, r)
 	return err
 }
 

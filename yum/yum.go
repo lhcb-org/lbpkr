@@ -189,8 +189,10 @@ func (yum *Client) ListPackages(name, version, release string) ([]*Package, erro
 }
 
 // RequiredPackages returns the list of all required packages for pkg (including pkg itself)
-func (yum *Client) RequiredPackages(pkg *Package) ([]*Package, error) {
-	pkgs, err := yum.PackageDeps(pkg)
+// maxdepth is the maximum number of generations along which to track dependencies.
+// if maxdepth < 0, track them all
+func (yum *Client) RequiredPackages(pkg *Package, maxdepth int) ([]*Package, error) {
+	pkgs, err := yum.PackageDeps(pkg, maxdepth)
 	if err != nil {
 		return nil, err
 	}
@@ -199,10 +201,12 @@ func (yum *Client) RequiredPackages(pkg *Package) ([]*Package, error) {
 }
 
 // PackageDeps returns all dependencies for the package (excluding the package itself)
-func (yum *Client) PackageDeps(pkg *Package) ([]*Package, error) {
+// maxdepth is the maximum number of generations along which to track dependencies.
+// if maxdepth < 0, track them all
+func (yum *Client) PackageDeps(pkg *Package, maxdepth int) ([]*Package, error) {
 	var err error
 	processed := make(map[string]*Package)
-	deps, err := yum.pkgDeps(pkg, processed)
+	deps, err := yum.pkgDeps(pkg, processed, maxdepth, 0)
 	// do not handle the pkg-deps error (if any) just yet.
 	// process the package deps we've got so far
 
@@ -214,13 +218,20 @@ func (yum *Client) PackageDeps(pkg *Package) ([]*Package, error) {
 }
 
 // pkgDeps returns all dependencies for the package (excluding the package itself)
-func (yum *Client) pkgDeps(pkg *Package, processed map[string]*Package) (map[string]*Package, error) {
+// maxdepth is the maximum number of generations along which to track dependencies.
+// if maxdepth < 0, track them all
+// idepth is the current generation number
+func (yum *Client) pkgDeps(pkg *Package, processed map[string]*Package, maxdepth, idepth int) (map[string]*Package, error) {
 	var err error
 	var lasterr error
 	msg := yum.msg
 
 	processed[pkg.ID()] = pkg
 	required := make(map[string]*Package)
+
+	if maxdepth == 0 {
+		return required, nil
+	}
 
 	nreqs := len(pkg.Requires())
 	msg.Verbosef(">>> pkg %s (req=%d)\n", pkg.ID(), nreqs)
@@ -248,14 +259,15 @@ func (yum *Client) pkgDeps(pkg *Package, processed map[string]*Package) (map[str
 		}
 		msg.Verbosef("--> adding dep %s\n", p.ID())
 		required[p.ID()] = p
-		sdeps, err := yum.pkgDeps(p, processed)
-		if err != nil {
-			lasterr = err
-			continue
-			//return nil, err
-		}
-		for _, sdep := range sdeps {
-			required[sdep.ID()] = sdep
+		if maxdepth < 0 || maxdepth > idepth+1 {
+			sdeps, err := yum.pkgDeps(p, processed, maxdepth, idepth+1)
+			if err != nil {
+				lasterr = err
+				continue
+			}
+			for _, sdep := range sdeps {
+				required[sdep.ID()] = sdep
+			}
 		}
 	}
 

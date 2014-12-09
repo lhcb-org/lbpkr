@@ -27,7 +27,7 @@ ex:
 	}
 	add_default_options(cmd)
 	cmd.Flag.String("o", "graph.dot", "generate a DOT file holding the dependency graph")
-	cmd.Flag.Int("rec-lvl", 1, "recursive-level (-1 to display all the graph)")
+	cmd.Flag.Int("maxdepth", 1, "maximum depth level of dependency graph (-1: all)")
 	return cmd
 }
 
@@ -37,7 +37,7 @@ func lbpkr_run_cmd_dep_graph(cmd *commander.Command, args []string) error {
 	siteroot := cmd.Flag.Lookup("siteroot").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 	dotfname := cmd.Flag.Lookup("o").Value.Get().(string)
-	reclvl := cmd.Flag.Lookup("rec-lvl").Value.Get().(int)
+	dmax := cmd.Flag.Lookup("maxdepth").Value.Get().(int)
 
 	name := ""
 	vers := ""
@@ -119,7 +119,7 @@ func lbpkr_run_cmd_dep_graph(cmd *commander.Command, args []string) error {
 			}
 			g.AddNode("rpms", strconv.Quote(dep.ID()), decorate(dep))
 			g.AddEdge(root, strconv.Quote(dep.ID()), true, nil)
-			if lvl < reclvl || reclvl < 0 {
+			if lvl < dmax || dmax < 0 {
 				err = process(dep, lvl+1)
 				if err != nil {
 					return err

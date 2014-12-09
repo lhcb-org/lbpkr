@@ -151,7 +151,7 @@ digraph rpms {
 }
 
 ## dump the full graph rooted in GAUDI_v25r2_x86_64_slc6_gcc48_opt
-$ lbpkr dep-graph -o graph.dot -rec-lvl=-1 GAUDI_v25r2_x86_64_slc6_gcc48_opt
+$ lbpkr dep-graph -o graph.dot -maxdepth=-1 GAUDI_v25r2_x86_64_slc6_gcc48_opt
 ```
 
 ### help

@@ -795,15 +795,22 @@ func (ctx *Context) ListPackageDeps(name, version, release string) ([]*yum.Packa
 		return nil, fmt.Errorf("lbpkr: no such package name=%q version=%q release=%q (%v)", name, version, release, err)
 	}
 
-	deps, err := ctx.yum.PackageDeps(pkg)
-	if err != nil {
-		return nil, fmt.Errorf("lbpkr: could not find dependencies for package=%q (%v)", pkg.ID(), err)
+	deps, depsErr := ctx.yum.PackageDeps(pkg)
+	// do not handle the depsErr error just yet.
+	// printout the deps we've got so far.
+	if depsErr != nil {
+		err = depsErr
 	}
 
 	sort.Sort(yum.Packages(deps))
 	for _, pkg := range deps {
 		fmt.Printf("%s\n", pkg.ID())
 	}
+
+	if depsErr != nil {
+		return nil, fmt.Errorf("lbpkr: could not find dependencies for package=%q (%v)", pkg.ID(), depsErr)
+	}
+
 	return deps, err
 }
 

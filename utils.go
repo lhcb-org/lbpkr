@@ -102,26 +102,6 @@ func bincp(dst, src string) error {
 
 func _tar_gz(targ, workdir string) error {
 
-	// FIXME: use archive/tar instead (once go-1.1 is out)
-	{
-		matches, err := filepath.Glob(filepath.Join(workdir, "*"))
-		if err != nil {
-			return err
-		}
-		for i, m := range matches {
-			matches[i] = m[len(workdir)+1:]
-		}
-		args := []string{"-zcf", targ}
-		args = append(args, matches...)
-		//fmt.Printf(">> %v\n", args)
-		cmd := newCommand("tar", args...)
-		cmd.Dir = workdir
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
-	}
-
 	f, err := os.Create(targ)
 	if err != nil {
 		return err

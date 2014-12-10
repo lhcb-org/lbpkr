@@ -22,6 +22,8 @@ ex:
 	}
 	add_default_options(cmd)
 	cmd.Flag.Bool("dry-run", false, "dry run. do not actually run the command")
+	cmd.Flag.Bool("nodeps", false, "do not install package dependencies")
+	cmd.Flag.Bool("justdb", false, "update the database, but do not modify the filesystem")
 	return cmd
 }
 
@@ -31,6 +33,8 @@ func lbpkr_run_cmd_update(cmd *commander.Command, args []string) error {
 	siteroot := cmd.Flag.Lookup("siteroot").Value.Get().(string)
 	debug := cmd.Flag.Lookup("v").Value.Get().(bool)
 	dry := cmd.Flag.Lookup("dry-run").Value.Get().(bool)
+	nodeps := cmd.Flag.Lookup("nodeps").Value.Get().(bool)
+	justdb := cmd.Flag.Lookup("justdb").Value.Get().(bool)
 
 	switch len(args) {
 	case 0:
@@ -43,7 +47,12 @@ func lbpkr_run_cmd_update(cmd *commander.Command, args []string) error {
 	}
 
 	cfg := NewConfig(siteroot)
-	ctx, err := New(cfg, Debug(debug), EnableDryRun(dry))
+	ctx, err := New(cfg,
+		Debug(debug),
+		EnableDryRun(dry),
+		EnableNoDeps(nodeps),
+		EnableJustDb(justdb),
+	)
 	if err != nil {
 		return err
 	}

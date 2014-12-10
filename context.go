@@ -656,7 +656,11 @@ func (ctx *Context) InstallPackages(packages []*yum.Package) error {
 	}
 
 	for _, pkg := range packages {
-		ctx.msg.Infof("installing %s and dependencies\n", pkg.RpmName())
+		dodeps := " and dependencies"
+		if ctx.options.NoDeps {
+			dodeps = " (w/o dependencies)"
+		}
+		ctx.msg.Infof("installing %s%s\n", pkg.RpmName(), dodeps)
 		if pkg.Name() == "lbpkr" {
 			pkgs = append(pkgs, pkg)
 			continue

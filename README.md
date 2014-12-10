@@ -193,12 +193,12 @@ lbpkr - installs software in MYSITEROOT directory.
 Commands:
 
     check           check for RPM updates from the yum repository
-    dep-graph       dump the DOT graph of installed RPM packages [<name-pattern> [<version-pattern> [<release-pattern>]]]
-    deps            list all deps RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
+    dep-graph       dump the DOT graph of installed RPM packages
+    deps            list deps of RPM packages
     install         install a (list of) RPM(s) from the yum repository
     install-project install-project a whole project from the yum repository
-    installed       list all installed RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
-    list            list all RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
+    installed       list installed RPM packages
+    list            list RPM packages
     provides        list all installed RPM packages providing the given file
     repo-add        add a repository
     repo-ls         list repositories

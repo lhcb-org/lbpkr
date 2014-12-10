@@ -11,7 +11,7 @@ func lbpkr_make_cmd_list() *commander.Command {
 	cmd := &commander.Command{
 		Run:       lbpkr_run_cmd_list,
 		UsageLine: "list [options] <name-pattern> [<version-pattern> [<release-pattern>]]",
-		Short:     "list all RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]",
+		Short:     "list RPM packages",
 		Long: `
 list lists all RPM packages satisfying <name-pattern>.
 
@@ -56,7 +56,7 @@ func lbpkr_run_cmd_list(cmd *commander.Command, args []string) error {
 	}
 
 	cfg := NewConfig(siteroot)
-	ctx, err := New(cfg, debug)
+	ctx, err := New(cfg, Debug(debug))
 	if err != nil {
 		return err
 	}

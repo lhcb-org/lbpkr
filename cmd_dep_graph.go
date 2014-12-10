@@ -15,7 +15,7 @@ func lbpkr_make_cmd_dep_graph() *commander.Command {
 	cmd := &commander.Command{
 		Run:       lbpkr_run_cmd_dep_graph,
 		UsageLine: "dep-graph [options] [<name-pattern> [<version-pattern> [<release-pattern>]]]",
-		Short:     "dump the DOT graph of installed RPM packages [<name-pattern> [<version-pattern> [<release-pattern>]]]",
+		Short:     "dump the DOT graph of installed RPM packages",
 		Long: `
 dep-graph dumps the DAG of the installed RPM package(s) satisfying [<name-pattern> [<version-pattern> [<release-pattern>]]].
 
@@ -64,7 +64,7 @@ func lbpkr_run_cmd_dep_graph(cmd *commander.Command, args []string) error {
 	}
 
 	cfg := NewConfig(siteroot)
-	ctx, err := New(cfg, debug)
+	ctx, err := New(cfg, Debug(debug))
 	if err != nil {
 		return err
 	}

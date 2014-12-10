@@ -47,6 +47,15 @@ type Context struct {
 	reqext    []string
 	extfix    map[string]FixFct
 
+	// options for the rpm binary
+	options struct {
+		Force  bool // force rpm installation (by-passing any check)
+		DryRun bool // dry run. do not actually run the command
+		NoDeps bool // do not install package dependencies
+		JustDb bool // update the database, but do not modify the filesystem
+		Update bool // update the packages
+	}
+
 	ndls int // number of concurrent downloads
 
 	sigch   chan os.Signal
@@ -55,7 +64,49 @@ type Context struct {
 	atexit  []func()     // functions to run at-exit
 }
 
-func New(cfg Config, dbg bool) (*Context, error) {
+// Debug enables/disables debug mode of Context
+func Debug(dbg bool) func(*Context) {
+	return func(ctx *Context) {
+		if dbg {
+			ctx.msg.SetLevel(logger.DEBUG)
+		}
+	}
+}
+
+// EnableForce forces rpm installation (by-passing any check)
+func EnableForce(force bool) func(*Context) {
+	return func(ctx *Context) {
+		ctx.options.Force = force
+	}
+}
+
+// EnableDryRun sets the dry-run mode. no command is actually run.
+func EnableDryRun(dryrun bool) func(*Context) {
+	return func(ctx *Context) {
+		ctx.options.DryRun = dryrun
+	}
+}
+
+// EnableUpdate
+func EnableUpdate(update bool) func(*Context) {
+	return func(ctx *Context) {
+		ctx.options.Update = update
+	}
+}
+
+func EnableNoDeps(nodeps bool) func(*Context) {
+	return func(ctx *Context) {
+		ctx.options.NoDeps = nodeps
+	}
+}
+
+func EnableJustDb(justdb bool) func(*Context) {
+	return func(ctx *Context) {
+		ctx.options.JustDb = justdb
+	}
+}
+
+func New(cfg Config, options ...func(*Context)) (*Context, error) {
 	var err error
 	siteroot := cfg.Siteroot()
 	if siteroot == "" {
@@ -80,9 +131,11 @@ func New(cfg Config, dbg bool) (*Context, error) {
 		subcmds:   make([]*exec.Cmd, 0),
 		atexit:    make([]func(), 0),
 	}
-	if dbg {
-		ctx.msg.SetLevel(logger.DEBUG)
+
+	for _, opt := range options {
+		opt(&ctx)
 	}
+
 	for _, dir := range []string{
 		siteroot,
 		ctx.dbpath,
@@ -118,7 +171,7 @@ func New(cfg Config, dbg bool) (*Context, error) {
 	if err != nil {
 		return nil, err
 	}
-	if dbg {
+	if ctx.msg.Level() < logger.INFO {
 		ctx.yum.SetLevel(logger.DEBUG)
 	}
 
@@ -137,13 +190,6 @@ func New(cfg Config, dbg bool) (*Context, error) {
 	}
 
 	return &ctx, err
-}
-
-func (ctx *Context) setDry(dry bool) {
-	if dry != ctx.dryrun {
-		ctx.msg.Debugf("changing dry-run from [%v] to [%v]...\n", ctx.dryrun, dry)
-		ctx.dryrun = dry
-	}
 }
 
 func (ctx *Context) Exit(rc int) {
@@ -466,9 +512,9 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		return err
 	}
 
-	forceInstall := false
-	doUpdate := true
-	err = ctx.InstallRPMs(toupdate, forceInstall, doUpdate)
+	ctx.options.Force = false
+	ctx.options.Update = true
+	err = ctx.InstallRPMs(toupdate)
 	if err != nil {
 		return err
 	}
@@ -485,13 +531,13 @@ func (ctx *Context) install(project, version, cmtconfig string) error {
 }
 
 // InstallRPM installs a RPM by name
-func (ctx *Context) InstallRPM(name, version, release string, forceInstall, update bool) error {
+func (ctx *Context) InstallRPM(name, version, release string) error {
 	rpms := []string{name}
-	return ctx.InstallRPMs(rpms, forceInstall, update)
+	return ctx.InstallRPMs(rpms)
 }
 
 // InstallRPMs installs a (list of) RPM(s) by name
-func (ctx *Context) InstallRPMs(rpms []string, forceInstall, update bool) error {
+func (ctx *Context) InstallRPMs(rpms []string) error {
 	var err error
 
 	pkgs := make([]*yum.Package, 0, len(rpms))
@@ -505,18 +551,21 @@ func (ctx *Context) InstallRPMs(rpms []string, forceInstall, update bool) error 
 		//        a dependency against glibc through cgo+SQLite.
 		//        ==> generate the RPM with the proper deps ?
 		if name == "lbpkr" {
-			forceInstall = true
+			if len(rpms) > 1 {
+				return fmt.Errorf("lbpkr: please install/update 'lbpkr' first")
+			}
+			ctx.options.Force = true
 		}
 
 		pkgs = append(pkgs, pkg)
 	}
 
-	err = ctx.InstallPackages(pkgs, forceInstall, update)
+	err = ctx.InstallPackages(pkgs)
 	return err
 }
 
 // InstallProject installs a whole project by name
-func (ctx *Context) InstallProject(name, version, release, platforms string, forceInstall, update bool) error {
+func (ctx *Context) InstallProject(name, version, release, platforms string) error {
 	var err error
 
 	archs := make([]string, 0, 2)
@@ -554,18 +603,18 @@ func (ctx *Context) InstallProject(name, version, release, platforms string, for
 		pkgs = append(pkgs, pkg)
 	}
 
-	err = ctx.InstallPackages(pkgs, forceInstall, update)
+	err = ctx.InstallPackages(pkgs)
 	return err
 }
 
 // InstallPackage installs a specific RPM, checking if not already installed
-func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) error {
+func (ctx *Context) InstallPackage(pkg *yum.Package) error {
 	pkgs := []*yum.Package{pkg}
-	return ctx.InstallPackages(pkgs, forceInstall, update)
+	return ctx.InstallPackages(pkgs)
 }
 
 // InstallPackages installs a list of specific RPMs, checking if not already installed
-func (ctx *Context) InstallPackages(packages []*yum.Package, forceInstall, update bool) error {
+func (ctx *Context) InstallPackages(packages []*yum.Package) error {
 	var err error
 	var pkgs []*yum.Package
 	pkgset := make(map[string]*yum.Package)
@@ -609,6 +658,11 @@ func (ctx *Context) InstallPackages(packages []*yum.Package, forceInstall, updat
 	for _, pkg := range packages {
 		ctx.msg.Infof("installing %s and dependencies\n", pkg.RpmName())
 		if pkg.Name() == "lbpkr" {
+			pkgs = append(pkgs, pkg)
+			continue
+		}
+		if ctx.options.NoDeps {
+			// user requested to NOT install dependencies
 			pkgs = append(pkgs, pkg)
 			continue
 		}
@@ -667,7 +721,7 @@ func (ctx *Context) InstallPackages(packages []*yum.Package, forceInstall, updat
 	}
 
 	// install these files
-	err = ctx.installFiles(files, ctx.tmpdir, forceInstall, update)
+	err = ctx.installFiles(files, ctx.tmpdir)
 	return err
 }
 
@@ -1191,16 +1245,19 @@ func (ctx *Context) downloadFile(pkg *yum.Package, dir string) error {
 }
 
 // installFiles installs some RPM files given the location of the RPM DB
-func (ctx *Context) installFiles(files []string, rpmdir string, forceInstall, update bool) error {
+func (ctx *Context) installFiles(files []string, rpmdir string) error {
 	var err error
 	args := []string{"-ivh", "--oldpackage"}
-	if update || ctx.cfg.RpmUpdate() {
+	if ctx.options.Update || ctx.cfg.RpmUpdate() {
 		args = []string{"-Uvh"}
 	}
-	if forceInstall {
+	if ctx.options.Force || ctx.options.NoDeps {
 		args = append(args, "--nodeps")
 	}
-	if ctx.dryrun {
+	if ctx.options.JustDb {
+		args = append(args, "--justdb")
+	}
+	if ctx.options.DryRun {
 		args = append(args, "--test")
 	}
 
@@ -1268,7 +1325,7 @@ func (ctx *Context) AddRepository(name, repo string) error {
 	}
 
 	// make sure the new repo is correct
-	ctx, err = New(ctx.cfg, false)
+	ctx, err = New(ctx.cfg, Debug(false))
 	if err != nil {
 		return err
 	}

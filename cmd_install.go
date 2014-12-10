@@ -59,7 +59,6 @@ func lbpkr_run_cmd_install(cmd *commander.Command, args []string) error {
 
 	ctx.msg.Infof("installing RPMs %v\n", args)
 
-	update := false
-	err = ctx.InstallRPMs(args, force, update)
+	err = ctx.InstallRPMs(args)
 	return err
 }

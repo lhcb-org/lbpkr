@@ -512,9 +512,9 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		return err
 	}
 
-	forceInstall := false
-	doUpdate := true
-	err = ctx.InstallRPMs(toupdate, forceInstall, doUpdate)
+	ctx.options.Force = false
+	ctx.options.Update = true
+	err = ctx.InstallRPMs(toupdate)
 	if err != nil {
 		return err
 	}
@@ -531,13 +531,13 @@ func (ctx *Context) install(project, version, cmtconfig string) error {
 }
 
 // InstallRPM installs a RPM by name
-func (ctx *Context) InstallRPM(name, version, release string, forceInstall, update bool) error {
+func (ctx *Context) InstallRPM(name, version, release string) error {
 	rpms := []string{name}
-	return ctx.InstallRPMs(rpms, forceInstall, update)
+	return ctx.InstallRPMs(rpms)
 }
 
 // InstallRPMs installs a (list of) RPM(s) by name
-func (ctx *Context) InstallRPMs(rpms []string, forceInstall, update bool) error {
+func (ctx *Context) InstallRPMs(rpms []string) error {
 	var err error
 
 	pkgs := make([]*yum.Package, 0, len(rpms))
@@ -551,18 +551,18 @@ func (ctx *Context) InstallRPMs(rpms []string, forceInstall, update bool) error 
 		//        a dependency against glibc through cgo+SQLite.
 		//        ==> generate the RPM with the proper deps ?
 		if name == "lbpkr" {
-			forceInstall = true
+			ctx.options.Force = true
 		}
 
 		pkgs = append(pkgs, pkg)
 	}
 
-	err = ctx.InstallPackages(pkgs, forceInstall, update)
+	err = ctx.InstallPackages(pkgs)
 	return err
 }
 
 // InstallProject installs a whole project by name
-func (ctx *Context) InstallProject(name, version, release, platforms string, forceInstall, update bool) error {
+func (ctx *Context) InstallProject(name, version, release, platforms string) error {
 	var err error
 
 	archs := make([]string, 0, 2)
@@ -600,18 +600,18 @@ func (ctx *Context) InstallProject(name, version, release, platforms string, for
 		pkgs = append(pkgs, pkg)
 	}
 
-	err = ctx.InstallPackages(pkgs, forceInstall, update)
+	err = ctx.InstallPackages(pkgs)
 	return err
 }
 
 // InstallPackage installs a specific RPM, checking if not already installed
-func (ctx *Context) InstallPackage(pkg *yum.Package, forceInstall, update bool) error {
+func (ctx *Context) InstallPackage(pkg *yum.Package) error {
 	pkgs := []*yum.Package{pkg}
-	return ctx.InstallPackages(pkgs, forceInstall, update)
+	return ctx.InstallPackages(pkgs)
 }
 
 // InstallPackages installs a list of specific RPMs, checking if not already installed
-func (ctx *Context) InstallPackages(packages []*yum.Package, forceInstall, update bool) error {
+func (ctx *Context) InstallPackages(packages []*yum.Package) error {
 	var err error
 	var pkgs []*yum.Package
 	pkgset := make(map[string]*yum.Package)
@@ -713,7 +713,7 @@ func (ctx *Context) InstallPackages(packages []*yum.Package, forceInstall, updat
 	}
 
 	// install these files
-	err = ctx.installFiles(files, ctx.tmpdir, forceInstall, update)
+	err = ctx.installFiles(files, ctx.tmpdir)
 	return err
 }
 
@@ -1237,16 +1237,19 @@ func (ctx *Context) downloadFile(pkg *yum.Package, dir string) error {
 }
 
 // installFiles installs some RPM files given the location of the RPM DB
-func (ctx *Context) installFiles(files []string, rpmdir string, forceInstall, update bool) error {
+func (ctx *Context) installFiles(files []string, rpmdir string) error {
 	var err error
 	args := []string{"-ivh", "--oldpackage"}
-	if update || ctx.cfg.RpmUpdate() {
+	if ctx.options.Update || ctx.cfg.RpmUpdate() {
 		args = []string{"-Uvh"}
 	}
-	if forceInstall {
+	if ctx.options.Force || ctx.options.NoDeps {
 		args = append(args, "--nodeps")
 	}
-	if ctx.dryrun {
+	if ctx.options.JustDb {
+		args = append(args, "--justdb")
+	}
+	if ctx.options.DryRun {
 		args = append(args, "--test")
 	}
 

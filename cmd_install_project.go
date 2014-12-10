@@ -79,7 +79,6 @@ func lbpkr_run_cmd_install_project(cmd *commander.Command, args []string) error 
 
 	ctx.msg.Infof("installing project %s %s %s\n", projname, version, release)
 
-	update := false
-	err = ctx.InstallProject(projname, version, release, archs, force, update)
+	err = ctx.InstallProject(projname, version, release, archs)
 	return err
 }

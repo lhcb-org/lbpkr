@@ -47,6 +47,15 @@ type Context struct {
 	reqext    []string
 	extfix    map[string]FixFct
 
+	// options for the rpm binary
+	options struct {
+		Force  bool // force rpm installation (by-passing any check)
+		DryRun bool // dry run. do not actually run the command
+		NoDeps bool // do not install package dependencies
+		JustDb bool // update the database, but do not modify the filesystem
+		Update bool // update the packages
+	}
+
 	ndls int // number of concurrent downloads
 
 	sigch   chan os.Signal
@@ -55,7 +64,49 @@ type Context struct {
 	atexit  []func()     // functions to run at-exit
 }
 
-func New(cfg Config, dbg bool) (*Context, error) {
+// Debug enables/disables debug mode of Context
+func Debug(dbg bool) func(*Context) {
+	return func(ctx *Context) {
+		if dbg {
+			ctx.msg.SetLevel(logger.DEBUG)
+		}
+	}
+}
+
+// EnableForce forces rpm installation (by-passing any check)
+func EnableForce(force bool) func(*Context) {
+	return func(ctx *Context) {
+		ctx.options.Force = force
+	}
+}
+
+// EnableDryRun sets the dry-run mode. no command is actually run.
+func EnableDryRun(dryrun bool) func(*Context) {
+	return func(ctx *Context) {
+		ctx.options.DryRun = dryrun
+	}
+}
+
+// EnableUpdate
+func EnableUpdate(update bool) func(*Context) {
+	return func(ctx *Context) {
+		ctx.options.Update = update
+	}
+}
+
+func EnableNoDeps(nodeps bool) func(*Context) {
+	return func(ctx *Context) {
+		ctx.options.NoDeps = nodeps
+	}
+}
+
+func EnableJustDb(justdb bool) func(*Context) {
+	return func(ctx *Context) {
+		ctx.options.JustDb = justdb
+	}
+}
+
+func New(cfg Config, options ...func(*Context)) (*Context, error) {
 	var err error
 	siteroot := cfg.Siteroot()
 	if siteroot == "" {
@@ -80,9 +131,11 @@ func New(cfg Config, dbg bool) (*Context, error) {
 		subcmds:   make([]*exec.Cmd, 0),
 		atexit:    make([]func(), 0),
 	}
-	if dbg {
-		ctx.msg.SetLevel(logger.DEBUG)
+
+	for _, opt := range options {
+		opt(&ctx)
 	}
+
 	for _, dir := range []string{
 		siteroot,
 		ctx.dbpath,
@@ -118,7 +171,7 @@ func New(cfg Config, dbg bool) (*Context, error) {
 	if err != nil {
 		return nil, err
 	}
-	if dbg {
+	if ctx.msg.Level() < logger.INFO {
 		ctx.yum.SetLevel(logger.DEBUG)
 	}
 

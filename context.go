@@ -551,6 +551,9 @@ func (ctx *Context) InstallRPMs(rpms []string) error {
 		//        a dependency against glibc through cgo+SQLite.
 		//        ==> generate the RPM with the proper deps ?
 		if name == "lbpkr" {
+			if len(rpms) > 1 {
+				return fmt.Errorf("lbpkr: please install/update 'lbpkr' first")
+			}
 			ctx.options.Force = true
 		}
 

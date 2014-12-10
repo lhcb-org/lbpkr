@@ -11,7 +11,7 @@ func lbpkr_make_cmd_deps() *commander.Command {
 	cmd := &commander.Command{
 		Run:       lbpkr_run_cmd_deps,
 		UsageLine: "deps [options] <name-pattern> [<version-pattern> [<release-pattern>]]",
-		Short:     "list all deps RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]",
+		Short:     "list deps of RPM packages",
 		Long: `
 deps lists all dependencies of the RPM package satisfying <name-pattern> [<version-pattern> [<release-pattern>]].
 

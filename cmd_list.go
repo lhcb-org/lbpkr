@@ -11,7 +11,7 @@ func lbpkr_make_cmd_list() *commander.Command {
 	cmd := &commander.Command{
 		Run:       lbpkr_run_cmd_list,
 		UsageLine: "list [options] <name-pattern> [<version-pattern> [<release-pattern>]]",
-		Short:     "list all RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]",
+		Short:     "list RPM packages",
 		Long: `
 list lists all RPM packages satisfying <name-pattern>.
 

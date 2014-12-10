@@ -11,7 +11,7 @@ func lbpkr_make_cmd_installed() *commander.Command {
 	cmd := &commander.Command{
 		Run:       lbpkr_run_cmd_installed,
 		UsageLine: "installed [options] <name-pattern> [<version-pattern> [<release-pattern>]]",
-		Short:     "list all installed RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]",
+		Short:     "list installed RPM packages",
 		Long: `
 installed lists all installed RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]].
 

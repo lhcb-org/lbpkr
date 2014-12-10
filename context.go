@@ -490,7 +490,8 @@ func (ctx *Context) install(project, version, cmtconfig string) error {
 
 // InstallRPM installs a RPM by name
 func (ctx *Context) InstallRPM(name, version, release string, forceInstall, update bool) error {
-	return ctx.InstallRPMs([]string{name + "-" + version + "-" + release}, forceInstall, update)
+	rpms := []string{name}
+	return ctx.InstallRPMs(rpms, forceInstall, update)
 }
 
 // InstallRPMs installs a (list of) RPM(s) by name

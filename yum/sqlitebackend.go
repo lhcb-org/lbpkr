@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -80,12 +79,12 @@ func (repo *RepositorySQLiteBackend) GetLatestDB(url string) error {
 	defer tmp.Close()
 	defer os.RemoveAll(tmp.Name())
 
-	resp, err := http.Get(url)
+	r, err := getRemoteData(url)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
-	_, err = io.Copy(tmp, resp.Body)
+	defer r.Close()
+	_, err = io.Copy(tmp, r)
 	if err != nil {
 		return err
 	}

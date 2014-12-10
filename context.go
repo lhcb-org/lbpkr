@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -17,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gonuts/config"
 	"github.com/gonuts/logger"
 	"github.com/lhcb-org/lbpkr/yum"
 )
@@ -300,7 +300,12 @@ func (ctx *Context) initYum() error {
 			return err
 		}
 	}
+
 	err = ctx.cfg.InitYum(ctx)
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -437,7 +442,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		pkglist[key] = append(pkglist[key], prov)
 	}
 
-	nupdates := 0
+	toupdate := make([]string, 0, len(pkglist))
 	for _, rpms := range pkglist {
 		sort.Sort(rpms)
 		pkg := rpms[len(rpms)-1]
@@ -446,32 +451,29 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 			return err
 		}
 		if yum.RpmLessThan(pkg, update) {
-			nupdates += 1
 			if checkOnly {
 				ctx.msg.Infof("%s-%s-%s could be updated to %s\n",
 					pkg.Name(), pkg.Version(), pkg.Release(),
 					update.RpmName(),
 				)
-			} else {
-				ctx.msg.Infof("updating %s-%s-%s to %s\n",
-					pkg.Name(), pkg.Version(), pkg.Release(),
-					update.RpmName(),
-				)
-				forceInstall := false
-				doUpdate := true
-				err = ctx.InstallRPM(update.Name(), update.Version(), update.Release(), forceInstall, doUpdate)
-				if err != nil {
-					return err
-				}
 			}
+			toupdate = append(toupdate, pkg.Name())
 		}
 	}
 
 	if checkOnly {
-		ctx.msg.Infof("packages to update: %d\n", nupdates)
-	} else {
-		ctx.msg.Infof("packages updated: %d\n", nupdates)
+		ctx.msg.Infof("packages to update: %d\n", len(toupdate))
+		return err
 	}
+
+	forceInstall := false
+	doUpdate := true
+	err = ctx.InstallRPMs(toupdate, forceInstall, doUpdate)
+	if err != nil {
+		return err
+	}
+
+	ctx.msg.Infof("packages updated: %d\n", len(toupdate))
 	return err
 }
 
@@ -484,7 +486,8 @@ func (ctx *Context) install(project, version, cmtconfig string) error {
 
 // InstallRPM installs a RPM by name
 func (ctx *Context) InstallRPM(name, version, release string, forceInstall, update bool) error {
-	return ctx.InstallRPMs([]string{name + "-" + version + "-" + release}, forceInstall, update)
+	rpms := []string{name}
+	return ctx.InstallRPMs(rpms, forceInstall, update)
 }
 
 // InstallRPMs installs a (list of) RPM(s) by name
@@ -1145,7 +1148,7 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 	for i := 0; i < todl; i++ {
 		err = <-errch
 		if err != nil {
-			quit <- struct{}{}
+			close(quit)
 			ctx.msg.Errorf("error downloading a RPM: %v\n", err)
 			return nil, err
 		}
@@ -1165,13 +1168,13 @@ func (ctx *Context) downloadFile(pkg *yum.Package, dir string) error {
 	}
 	defer f.Close()
 
-	resp, err := http.Get(pkg.Url())
+	r, err := getRemoteData(pkg.Url())
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer r.Close()
 
-	_, err = io.Copy(f, resp.Body)
+	_, err = io.Copy(f, r)
 	if err != nil {
 		return err
 	}
@@ -1223,6 +1226,126 @@ func (ctx *Context) checkRpmFile(fname string) bool {
 	}
 	ok := err == nil
 	return ok
+}
+
+// AddRepository adds a repository named name and located at repo.
+func (ctx *Context) AddRepository(name, repo string) error {
+	repo, err := sanitizePathOrURL(repo)
+	if err != nil {
+		return err
+	}
+
+	data := map[string]string{
+		"name": name,
+		"url":  repo,
+	}
+
+	fname := filepath.Join(ctx.yumreposd, name+".repo")
+	if path_exists(fname) {
+		return fmt.Errorf("lbpkr: repo %q already exists", name)
+	}
+
+	defer func() {
+		if err != nil {
+			os.Remove(fname)
+		}
+	}()
+
+	f, err := os.Create(fname)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	err = ctx.writeYumRepo(f, data)
+	if err != nil {
+		return err
+	}
+
+	err = f.Close()
+	if err != nil {
+		return err
+	}
+
+	// make sure the new repo is correct
+	ctx, err = New(ctx.cfg, false)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+// RemoveRepository removes the repository named name.
+func (ctx *Context) RemoveRepository(name string) error {
+	var err error
+	fname := filepath.Join(ctx.yumreposd, name+".repo")
+	if !path_exists(fname) {
+		return fmt.Errorf("lbpkr: no such repo %q", name)
+	}
+
+	cfg, err := config.ReadDefault(fname)
+	if err != nil {
+		return err
+	}
+	v, err := cfg.String(name, "name")
+	if err != nil {
+		return err
+	}
+	if v != name {
+		return fmt.Errorf("lbpkr: invalid repo name (got=%q. want=%q)", v, name)
+	}
+	err = os.Remove(fname)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+// ListRepositories lists all repositories.
+func (ctx *Context) ListRepositories() error {
+	var err error
+	reposdir, err := os.Open(ctx.yumreposd)
+	if err != nil {
+		return err
+	}
+	defer reposdir.Close()
+
+	dirs, err := reposdir.Readdir(-1)
+	if err != nil {
+		return err
+	}
+
+	for _, fi := range dirs {
+		fname := filepath.Join(ctx.yumreposd, fi.Name())
+		cfg, err := config.ReadDefault(fname)
+		if err != nil {
+			return err
+		}
+		for _, section := range cfg.Sections() {
+			if section == config.DEFAULT_SECTION {
+				continue
+			}
+			name, err := cfg.String(section, "name")
+			if err != nil {
+				return err
+			}
+			baseurl, err := cfg.String(section, "baseurl")
+			if err != nil {
+				return err
+			}
+			isEnabled, err := cfg.Bool(section, "enabled")
+			if err != nil {
+				return err
+			}
+			enabled := "disabled"
+			if isEnabled {
+				enabled = "enabled"
+			}
+			fmt.Printf("%s: %q (%s)\n", name, baseurl, enabled)
+		}
+	}
+	return err
 }
 
 // EOF

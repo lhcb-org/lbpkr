@@ -154,6 +154,36 @@ digraph rpms {
 $ lbpkr dep-graph -o graph.dot -maxdepth=-1 GAUDI_v25r2_x86_64_slc6_gcc48_opt
 ```
 
+### manage yum repositories
+
+```sh
+
+# list current yum repositories
+$ lbpkr repo-ls
+lcg: "http://cern.ch/service-spi/external/rpms/lcg" (enabled)
+lhcb: "http://cern.ch/lhcbproject/dist/rpm/lhcb" (enabled)
+lhcbext: "http://cern.ch/lhcbproject/dist/rpm/lcg" (enabled)
+
+# add a test repo
+$ lbpkr repo-add my-repo /tmp/somewhere
+
+# list
+$ lbpkr repo-ls
+lcg: "http://cern.ch/service-spi/external/rpms/lcg" (enabled)
+lhcb: "http://cern.ch/lhcbproject/dist/rpm/lhcb" (enabled)
+lhcbext: "http://cern.ch/lhcbproject/dist/rpm/lcg" (enabled)
+my-repo: "/tmp/somewhere" (enabled)
+
+# remove the test repo
+$ lbpkr repo-rm my-repo
+
+# list
+$ lbpkr repo-ls
+lcg: "http://cern.ch/service-spi/external/rpms/lcg" (enabled)
+lhcb: "http://cern.ch/lhcbproject/dist/rpm/lhcb" (enabled)
+lhcbext: "http://cern.ch/lhcbproject/dist/rpm/lcg" (enabled)
+```
+
 ### help
 
 ```sh
@@ -170,6 +200,9 @@ Commands:
     installed       list all installed RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
     list            list all RPM packages satisfying <name-pattern> [<version-pattern> [<release-pattern>]]
     provides        list all installed RPM packages providing the given file
+    repo-add        add a repository
+    repo-ls         list repositories
+    repo-rm         remove a repository
     rm              remove a RPM from the yum repository
     rpm             pass through command-args to the RPM binary
     self            admin/internal operations for lbpkr

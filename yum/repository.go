@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -240,13 +239,14 @@ func (repo *Repository) setupBackendFromLocal() error {
 
 // remoteMetadata retrieves the repo metadata file content
 func (repo *Repository) remoteMetadata() ([]byte, error) {
-	resp, err := http.Get(repo.RepoMdUrl)
+	r, err := getRemoteData(repo.RepoMdUrl)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer r.Close()
+
 	buf := new(bytes.Buffer)
-	_, err = io.Copy(buf, resp.Body)
+	_, err = io.Copy(buf, r)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strings"
 
 	gocfg "github.com/gonuts/config"
 	"github.com/gonuts/logger"
@@ -325,6 +326,9 @@ func (yum *Client) parseRepoConfigFile(fname string) (map[string]string, error) 
 		repourl, err := cfg.String(section, "baseurl")
 		if err != nil {
 			return nil, err
+		}
+		if strings.HasPrefix(repourl, "/") {
+			repourl = "file://" + repourl
 		}
 		yum.msg.Debugf("adding repo=%q url=%q from file [%s]\n", section, repourl, fname)
 		repos[section] = repourl

@@ -5,12 +5,13 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 )
 
 // newCommand is like os/exec.Command but ensures the subprocess is part of a process-group
@@ -50,27 +51,6 @@ func handle_err(err error) {
 		}
 		os.Exit(1)
 	}
-}
-
-func PrintHeader(ctx *Context) {
-	now := time.Now()
-	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
-	ctx.msg.Infof(
-		"<<< %s - start of lbpkr-%s installation >>>\n",
-		now, Version,
-	)
-	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
-	ctx.msg.Debugf("cmd line args: %v\n", os.Args)
-}
-
-func PrintTrailer(ctx *Context) {
-	now := time.Now()
-	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
-	ctx.msg.Infof(
-		"<<< %s - end of lbpkr-%s installation >>>\n",
-		now, Version,
-	)
-	ctx.msg.Infof("%s\n", strings.Repeat("=", 80))
 }
 
 func bincp(dst, src string) error {
@@ -169,6 +149,53 @@ func _tar_gz(targ, workdir string) error {
 		return err
 	}
 	return f.Close()
+}
+
+func sanitizePathOrURL(path string) (string, error) {
+	switch {
+	case strings.Contains(path, "://"):
+		// a url. hopefully a correctly formed one.
+		return path, nil
+	case strings.Contains(path, ":/"):
+		// maybe a url. hopefully a correctly formed one.
+		return path, nil
+	}
+	p, err := filepath.Abs(path)
+	if err != nil {
+		return path, err
+	}
+
+	// p, err = filepath.EvalSymlinks(p)
+	// if err != nil {
+	// 	return path, err
+	// }
+
+	p = filepath.Clean(p)
+
+	return p, nil
+}
+
+func getRemoteData(rpath string) (io.ReadCloser, error) {
+	url, err := url.Parse(rpath)
+	if err != nil {
+		return nil, err
+	}
+
+	switch url.Scheme {
+	case "file":
+		f, err := os.Open(url.Path)
+		if err != nil {
+			return nil, err
+		}
+		return f, nil
+
+	default:
+		resp, err := http.Get(rpath)
+		if err != nil {
+			return nil, err
+		}
+		return resp.Body, nil
+	}
 }
 
 // EOF

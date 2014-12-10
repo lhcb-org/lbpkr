@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -1172,13 +1171,13 @@ func (ctx *Context) downloadFile(pkg *yum.Package, dir string) error {
 	}
 	defer f.Close()
 
-	resp, err := http.Get(pkg.Url())
+	r, err := getRemoteData(pkg.Url())
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer r.Close()
 
-	_, err = io.Copy(f, resp.Body)
+	_, err = io.Copy(f, r)
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,8 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -171,6 +173,29 @@ func sanitizePathOrURL(path string) (string, error) {
 	p = filepath.Clean(p)
 
 	return p, nil
+}
+
+func getRemoteData(rpath string) (io.ReadCloser, error) {
+	url, err := url.Parse(rpath)
+	if err != nil {
+		return nil, err
+	}
+
+	switch url.Scheme {
+	case "file":
+		f, err := os.Open(url.Path)
+		if err != nil {
+			return nil, err
+		}
+		return f, nil
+
+	default:
+		resp, err := http.Get(rpath)
+		if err != nil {
+			return nil, err
+		}
+		return resp.Body, nil
+	}
 }
 
 // EOF

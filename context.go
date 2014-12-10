@@ -658,6 +658,11 @@ func (ctx *Context) InstallPackages(packages []*yum.Package) error {
 			pkgs = append(pkgs, pkg)
 			continue
 		}
+		if ctx.options.NoDeps {
+			// user requested to NOT install dependencies
+			pkgs = append(pkgs, pkg)
+			continue
+		}
 		var opkgs []*yum.Package
 		opkgs, err = collect(pkg)
 		if err != nil {

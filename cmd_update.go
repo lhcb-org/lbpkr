@@ -43,12 +43,11 @@ func lbpkr_run_cmd_update(cmd *commander.Command, args []string) error {
 	}
 
 	cfg := NewConfig(siteroot)
-	ctx, err := New(cfg, debug)
+	ctx, err := New(cfg, Debug(debug), EnableDryRun(dry))
 	if err != nil {
 		return err
 	}
 	defer ctx.Close()
-	ctx.setDry(dry)
 
 	ctx.msg.Infof("updating RPMs\n")
 	checkOnly := false

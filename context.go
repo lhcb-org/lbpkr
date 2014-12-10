@@ -192,13 +192,6 @@ func New(cfg Config, options ...func(*Context)) (*Context, error) {
 	return &ctx, err
 }
 
-func (ctx *Context) setDry(dry bool) {
-	if dry != ctx.dryrun {
-		ctx.msg.Debugf("changing dry-run from [%v] to [%v]...\n", ctx.dryrun, dry)
-		ctx.dryrun = dry
-	}
-}
-
 func (ctx *Context) Exit(rc int) {
 	err := ctx.Close()
 	if err != nil {

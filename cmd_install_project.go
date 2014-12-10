@@ -26,6 +26,8 @@ ex:
 	cmd.Flag.Bool("force", false, "force RPM installation (by-passing any check)")
 	cmd.Flag.Bool("dry-run", false, "dry run. do not actually run the command")
 	cmd.Flag.String("platforms", "", "comma-separated list of (regex) platforms to install")
+	cmd.Flag.Bool("nodeps", false, "do not verify package dependencies")
+	cmd.Flag.Bool("justdb", false, "update the database, but do not modify the filesystem")
 	return cmd
 }
 
@@ -37,6 +39,8 @@ func lbpkr_run_cmd_install_project(cmd *commander.Command, args []string) error 
 	force := cmd.Flag.Lookup("force").Value.Get().(bool)
 	dry := cmd.Flag.Lookup("dry-run").Value.Get().(bool)
 	archs := cmd.Flag.Lookup("platforms").Value.Get().(string)
+	nodeps := cmd.Flag.Lookup("nodeps").Value.Get().(bool)
+	justdb := cmd.Flag.Lookup("justdb").Value.Get().(bool)
 
 	projname := ""
 	version := ""
@@ -62,12 +66,16 @@ func lbpkr_run_cmd_install_project(cmd *commander.Command, args []string) error 
 	}
 
 	cfg := NewConfig(siteroot)
-	ctx, err := New(cfg, debug)
+	ctx, err := New(
+		cfg,
+		Debug(debug),
+		EnableForce(force), EnableDryRun(dry), EnableNoDeps(nodeps),
+		EnableJustDb(justdb),
+	)
 	if err != nil {
 		return err
 	}
 	defer ctx.Close()
-	ctx.setDry(dry)
 
 	ctx.msg.Infof("installing project %s %s %s\n", projname, version, release)
 

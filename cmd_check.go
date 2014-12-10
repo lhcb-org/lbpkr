@@ -41,7 +41,7 @@ func lbpkr_run_cmd_check(cmd *commander.Command, args []string) error {
 	}
 
 	cfg := NewConfig(siteroot)
-	ctx, err := New(cfg, debug)
+	ctx, err := New(cfg, Debug(debug))
 	if err != nil {
 		return err
 	}

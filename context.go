@@ -1322,7 +1322,7 @@ func (ctx *Context) AddRepository(name, repo string) error {
 	}
 
 	// make sure the new repo is correct
-	ctx, err = New(ctx.cfg, false)
+	ctx, err = New(ctx.cfg, Debug(false))
 	if err != nil {
 		return err
 	}

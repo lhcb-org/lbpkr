@@ -442,7 +442,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		pkglist[key] = append(pkglist[key], prov)
 	}
 
-	nupdates := 0
+	toupdate := make([]string, 0, len(pkglist))
 	for _, rpms := range pkglist {
 		sort.Sort(rpms)
 		pkg := rpms[len(rpms)-1]
@@ -451,32 +451,29 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 			return err
 		}
 		if yum.RpmLessThan(pkg, update) {
-			nupdates += 1
 			if checkOnly {
 				ctx.msg.Infof("%s-%s-%s could be updated to %s\n",
 					pkg.Name(), pkg.Version(), pkg.Release(),
 					update.RpmName(),
 				)
-			} else {
-				ctx.msg.Infof("updating %s-%s-%s to %s\n",
-					pkg.Name(), pkg.Version(), pkg.Release(),
-					update.RpmName(),
-				)
-				forceInstall := false
-				doUpdate := true
-				err = ctx.InstallRPM(update.Name(), update.Version(), update.Release(), forceInstall, doUpdate)
-				if err != nil {
-					return err
-				}
 			}
+			toupdate = append(toupdate, pkg.Name())
 		}
 	}
 
 	if checkOnly {
-		ctx.msg.Infof("packages to update: %d\n", nupdates)
-	} else {
-		ctx.msg.Infof("packages updated: %d\n", nupdates)
+		ctx.msg.Infof("packages to update: %d\n", len(toupdate))
+		return err
 	}
+
+	forceInstall := false
+	doUpdate := true
+	err = ctx.InstallRPMs(toupdate, forceInstall, doUpdate)
+	if err != nil {
+		return err
+	}
+
+	ctx.msg.Infof("packages updated: %d\n", len(toupdate))
 	return err
 }
 

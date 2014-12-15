@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 )
@@ -196,6 +197,55 @@ func getRemoteData(rpath string) (io.ReadCloser, error) {
 		}
 		return resp.Body, nil
 	}
+}
+
+var (
+	rpmRe1 = regexp.MustCompile(`(.*?)-([\d\.]+)$`)
+	rpmRe2 = regexp.MustCompile(`(.*?)-([\d\.]+)-([\d]+)$`)
+)
+
+// splitRPM splits a RPM package name into name-version-release
+func splitRPM(rpm string) [3]string {
+	switch strings.Count(rpm, "-") {
+	case 0:
+		return [3]string{rpm, "", ""}
+	case 1:
+		re := rpmRe1.FindAllStringSubmatch(rpm, -1)
+		if len(re) == 1 {
+			m := re[0]
+			switch len(m) {
+			case 2:
+				return [3]string{m[1], "", ""}
+			case 3:
+				return [3]string{m[1], m[2], ""}
+			}
+		}
+	default:
+		re := rpmRe2.FindAllStringSubmatch(rpm, -1)
+		if len(re) == 1 {
+			m := re[0]
+			switch len(m) {
+			case 2:
+				return [3]string{m[1], "", ""}
+			case 3:
+				return [3]string{m[1], m[2], ""}
+			case 4:
+				return [3]string{m[1], m[2], m[3]}
+			}
+		}
+
+		re = rpmRe1.FindAllStringSubmatch(rpm, -1)
+		if len(re) == 1 {
+			m := re[0]
+			switch len(m) {
+			case 2:
+				return [3]string{m[1], m[2], ""}
+			case 3:
+				return [3]string{m[1], m[2], ""}
+			}
+		}
+	}
+	return [3]string{rpm, "", ""}
 }
 
 // EOF

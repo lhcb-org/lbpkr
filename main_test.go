@@ -75,12 +75,24 @@ func TestRPMSplit(t *testing.T) {
 			want: [3]string{"AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt", "1.0.0", ""},
 		},
 		{
+			rpm:  "AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt-10.20.30-1",
+			want: [3]string{"AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt", "10.20.30", "1"},
+		},
+		{
 			rpm:  "AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt-1.0.0-1",
 			want: [3]string{"AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt", "1.0.0", "1"},
 		},
 		{
 			rpm:  "AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt-1.0.0-71",
 			want: [3]string{"AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt", "1.0.0", "71"},
+		},
+		{
+			rpm:  "AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt-1.0-71",
+			want: [3]string{"AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt", "1.0", "71"},
+		},
+		{
+			rpm:  "AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt-10.20.30",
+			want: [3]string{"AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt", "10.20.30", ""},
 		},
 		{
 			rpm:  "AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt-1.0.0",
@@ -95,8 +107,16 @@ func TestRPMSplit(t *testing.T) {
 			want: [3]string{"LCG_67_AIDA_3.2.1_x86_64_slc6_gcc47_opt", "1.0.0", "1"},
 		},
 		{
+			rpm:  "LCG_67_AIDA_3.2.1_x86_64_slc6_gcc47_opt-10.20.30-1",
+			want: [3]string{"LCG_67_AIDA_3.2.1_x86_64_slc6_gcc47_opt", "10.20.30", "1"},
+		},
+		{
 			rpm:  "LCG_67_AIDA_3.2.1_x86_64_slc6_gcc47_opt-1.0.0-71",
 			want: [3]string{"LCG_67_AIDA_3.2.1_x86_64_slc6_gcc47_opt", "1.0.0", "71"},
+		},
+		{
+			rpm:  "LCG_67_AIDA_3.2.1_x86_64_slc6_gcc47_opt-10.20.30",
+			want: [3]string{"LCG_67_AIDA_3.2.1_x86_64_slc6_gcc47_opt", "10.20.30", ""},
 		},
 		{
 			rpm:  "LCG_67_AIDA_3.2.1_x86_64_slc6_gcc47_opt-1.0.0",

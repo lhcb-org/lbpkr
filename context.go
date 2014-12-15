@@ -488,7 +488,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		pkglist[key] = append(pkglist[key], prov)
 	}
 
-	toupdate := make([]string, 0, len(pkglist))
+	toupdate := make([]*yum.Package, 0, len(pkglist))
 	for _, rpms := range pkglist {
 		sort.Sort(rpms)
 		pkg := rpms[len(rpms)-1]
@@ -503,7 +503,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 					update.RpmName(),
 				)
 			}
-			toupdate = append(toupdate, pkg.Name())
+			toupdate = append(toupdate, update)
 		}
 	}
 
@@ -514,7 +514,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 
 	ctx.options.Force = false
 	ctx.options.Update = true
-	err = ctx.InstallRPMs(toupdate)
+	err = ctx.InstallPackages(toupdate)
 	if err != nil {
 		return err
 	}
@@ -523,16 +523,16 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 	return err
 }
 
-// install performs the whole download/install procedure (eq. yum install)
-func (ctx *Context) install(project, version, cmtconfig string) error {
-	var err error
-	ctx.msg.Infof("Installing %s/%s/%s\n", project, version, cmtconfig)
-	return err
-}
-
 // InstallRPM installs a RPM by name
 func (ctx *Context) InstallRPM(name, version, release string) error {
-	rpms := []string{name}
+	rpm := name
+	switch {
+	case version != "":
+		rpm = name + "-" + version
+	case version != "" && release != "":
+		rpm = name + "-" + version + "-" + release
+	}
+	rpms := []string{rpm}
 	return ctx.InstallRPMs(rpms)
 }
 
@@ -541,8 +541,10 @@ func (ctx *Context) InstallRPMs(rpms []string) error {
 	var err error
 
 	pkgs := make([]*yum.Package, 0, len(rpms))
-	for _, name := range rpms {
-		pkg, err := ctx.yum.FindLatestProvider(name, "", "")
+	for _, rpm := range rpms {
+		args := splitRPM(rpm)
+		name, version, release := args[0], args[1], args[2]
+		pkg, err := ctx.yum.FindLatestProvider(name, version, release)
 		if err != nil {
 			return err
 		}

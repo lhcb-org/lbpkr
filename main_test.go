@@ -71,6 +71,10 @@ func TestRPMSplit(t *testing.T) {
 		want [3]string
 	}{
 		{
+			rpm:  "AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt-1.0.0-",
+			want: [3]string{"AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt", "1.0.0", ""},
+		},
+		{
 			rpm:  "AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt-1.0.0-1",
 			want: [3]string{"AIDA-3fe9f_3.2.1_x86_64_slc6_gcc49_opt", "1.0.0", "1"},
 		},

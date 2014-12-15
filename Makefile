@@ -17,6 +17,9 @@ install:
 	@go get $(GOFLAGS) ./...
 
 test: install
+	@go test -short $(GOFLAGS) ./...
+
+all-test: install
 	@go test $(GOFLAGS) ./...
 
 bench: install
@@ -29,7 +32,7 @@ dist:
 	git fetch --all
 	git checkout master
 	git pull origin master
-	make all
+	make all-test
 	lbpkr version
 	lbpkr self bdist-rpm -version=${LBPKR_VERSION} -release=${LBPKR_RELEASE}
 

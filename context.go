@@ -523,13 +523,6 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 	return err
 }
 
-// install performs the whole download/install procedure (eq. yum install)
-func (ctx *Context) install(project, version, cmtconfig string) error {
-	var err error
-	ctx.msg.Infof("Installing %s/%s/%s\n", project, version, cmtconfig)
-	return err
-}
-
 // InstallRPM installs a RPM by name
 func (ctx *Context) InstallRPM(name, version, release string) error {
 	rpms := []string{name}

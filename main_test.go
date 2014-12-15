@@ -8,6 +8,10 @@ import (
 )
 
 func TestLbpkrSelfBdist(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	tmpdir, err := ioutil.TempDir("", "test-lbpkr-")
 	if err != nil {
 		t.Fatalf("error creating temporary directory: %v", err)
@@ -26,6 +30,10 @@ func TestLbpkrSelfBdist(t *testing.T) {
 }
 
 func TestLbpkrSelfBdistRpm(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	if _, err := exec.LookPath("rpmbuild"); err != nil {
 		t.Skip("no rpmbuild installed")
 	}
@@ -48,6 +56,10 @@ func TestLbpkrSelfBdistRpm(t *testing.T) {
 }
 
 func TestLbpkrInstallLbpkr(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	tmpdir, err := ioutil.TempDir("", "test-lbpkr-")
 	if err != nil {
 		t.Fatalf("error creating temporary directory: %v", err)

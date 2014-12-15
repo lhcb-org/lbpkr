@@ -525,7 +525,14 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 
 // InstallRPM installs a RPM by name
 func (ctx *Context) InstallRPM(name, version, release string) error {
-	rpms := []string{name}
+	rpm := name
+	switch {
+	case version != "":
+		rpm = name + "-" + version
+	case version != "" && release != "":
+		rpm = name + "-" + version + "-" + release
+	}
+	rpms := []string{rpm}
 	return ctx.InstallRPMs(rpms)
 }
 
@@ -534,8 +541,10 @@ func (ctx *Context) InstallRPMs(rpms []string) error {
 	var err error
 
 	pkgs := make([]*yum.Package, 0, len(rpms))
-	for _, name := range rpms {
-		pkg, err := ctx.yum.FindLatestProvider(name, "", "")
+	for _, rpm := range rpms {
+		args := splitRPM(rpm)
+		name, version, release := args[0], args[1], args[2]
+		pkg, err := ctx.yum.FindLatestProvider(name, version, release)
 		if err != nil {
 			return err
 		}

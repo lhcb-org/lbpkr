@@ -201,7 +201,7 @@ func getRemoteData(rpath string) (io.ReadCloser, error) {
 
 var (
 	rpmRe1 = regexp.MustCompile(`(.*?)-([\d\.]+)$`)
-	rpmRe2 = regexp.MustCompile(`(.*?)-([\d\.]+)-([\d]+)$`)
+	rpmRe2 = regexp.MustCompile(`(.*?)-([\d\.]+)-(\d*)$`)
 )
 
 // splitRPM splits a RPM package name into name-version-release

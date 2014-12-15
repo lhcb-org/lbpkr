@@ -488,7 +488,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		pkglist[key] = append(pkglist[key], prov)
 	}
 
-	toupdate := make([]string, 0, len(pkglist))
+	toupdate := make([]*yum.Package, 0, len(pkglist))
 	for _, rpms := range pkglist {
 		sort.Sort(rpms)
 		pkg := rpms[len(rpms)-1]
@@ -503,7 +503,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 					update.RpmName(),
 				)
 			}
-			toupdate = append(toupdate, pkg.Name())
+			toupdate = append(toupdate, update)
 		}
 	}
 
@@ -514,7 +514,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 
 	ctx.options.Force = false
 	ctx.options.Update = true
-	err = ctx.InstallRPMs(toupdate)
+	err = ctx.InstallPackages(toupdate)
 	if err != nil {
 		return err
 	}

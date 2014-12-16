@@ -638,6 +638,11 @@ func (ctx *Context) InstallPackages(packages []*yum.Package) error {
 			pkgset[pkg.RPMName()] = pkg
 		}
 
+		// check whether we need to update instead of just install
+		if !ctx.options.Update && ctx.isRPMInstalled(pkg.Name(), "") {
+			ctx.options.Update = true
+		}
+
 		for _, rpkg := range rpkgs {
 			if ctx.isRPMInstalled(rpkg.RPMName(), "") {
 				continue

@@ -1118,8 +1118,8 @@ func (ctx *Context) filterURLs(pkgs []*yum.Package) ([]*yum.Package, error) {
 
 // filterURL returns true if a RPM was already installed
 func (ctx *Context) filterURL(pkg *yum.Package) (bool, error) {
-	name := pkg.RPMName()
-	version := ""
+	name := pkg.Name()
+	version := pkg.Version()
 	ctx.msg.Debugf("checking for installation of [%s]...\n", name)
 	return ctx.isRPMInstalled(name, version), nil
 }

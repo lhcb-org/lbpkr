@@ -180,6 +180,16 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 	}
 
 	msg.Infof("creating [%s]... [ok]\n", rpm_fname)
+
+	msg.Infof("content of [%s]:\n", rpm_fname)
+	rpm = newCommand("rpm", "-q", "-filesbypkg", "-p", rpm_fname)
+	rpm.Stdout = os.Stdout
+	rpm.Stderr = os.Stderr
+	err = rpm.Run()
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 

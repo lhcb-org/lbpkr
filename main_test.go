@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"reflect"
+	"regexp"
 	"testing"
 )
 
@@ -78,6 +81,117 @@ func TestLbpkrInstallLbpkr(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error running install: %v", err)
 	}
+}
+
+func TestLbpkrInstallWithUpdate(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	tmpdir, err := ioutil.TempDir("", "test-lbpkr-")
+	if err != nil {
+		t.Fatalf("error creating temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tmpdir)
+
+	// install an old version
+	cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_dbg-1.0.0-12")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = tmpdir
+
+	err = cmd.Run()
+	if err != nil {
+		t.Fatalf("error running install: %v", err)
+	}
+
+	// install a new version + a new package
+	cmd = newCommand("lbpkr", "install", "-siteroot="+tmpdir, "AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_dbg-1.0.0-72", "CASTOR-9ccc5_2.1.13_6_x86_64_slc6_gcc48_dbg-1.0.0-72")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = tmpdir
+
+	err = cmd.Run()
+	if err != nil {
+		t.Fatalf("error running install: %v", err)
+	}
+
+	// make sure we have only 3 packages installed
+	cmd = newCommand("lbpkr", "installed", "-siteroot="+tmpdir)
+	buf := new(bytes.Buffer)
+	cmd.Stdout = buf
+	cmd.Stderr = buf
+	cmd.Dir = tmpdir
+
+	err = cmd.Run()
+	if err != nil {
+		t.Fatalf("error running installed: %v", err)
+	}
+
+	want := []byte(`AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_dbg-1.0.0-72
+CASTOR-9ccc5_2.1.13_6_x86_64_slc6_gcc48_dbg-1.0.0-72
+gcc_4.8.1_x86_64_slc6-1.0.0-1
+`)
+	if !reflect.DeepEqual(want, buf.Bytes()) {
+		t.Fatalf("invalid number of packages.\nwant: %s\n got: %s\n", string(want), string(buf.Bytes()))
+	}
+}
+
+func TestLbpkrInstallThenUpdate(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	tmpdir, err := ioutil.TempDir("", "test-lbpkr-")
+	if err != nil {
+		t.Fatalf("error creating temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tmpdir)
+
+	// install an old version
+	cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_dbg-1.0.0-12", "lbpkr-0.1.20141210-0")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = tmpdir
+
+	err = cmd.Run()
+	if err != nil {
+		t.Fatalf("error running install: %v", err)
+	}
+
+	// update
+	cmd = newCommand("lbpkr", "update", "-siteroot="+tmpdir)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = tmpdir
+
+	err = cmd.Run()
+	if err != nil {
+		t.Fatalf("error running install: %v", err)
+	}
+
+	// make sure we have only 3 packages installed
+	cmd = newCommand("lbpkr", "installed", "-siteroot="+tmpdir)
+	buf := new(bytes.Buffer)
+	cmd.Stdout = buf
+	cmd.Stderr = buf
+	cmd.Dir = tmpdir
+
+	err = cmd.Run()
+	if err != nil {
+		t.Fatalf("error running installed: %v", err)
+	}
+
+	want := regexp.MustCompile(`AIDA-3fe9f_3.2.1_x86_64_slc6_gcc48_dbg-1.0.0-72
+gcc_.*?
+lbpkr-.*?
+`)
+	if !want.Match(buf.Bytes()) {
+		t.Fatalf("invalid number of packages.\nwant: %s\n got: %s\n", want.String(), string(buf.Bytes()))
+	}
+
 }
 
 func TestRPMSplit(t *testing.T) {

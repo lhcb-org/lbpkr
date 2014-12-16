@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -9,6 +10,14 @@ import (
 	"regexp"
 	"testing"
 )
+
+func init() {
+	// make sure we don't inherit MYSITEROOT from outside
+	err := os.Setenv("MYSITEROOT", "")
+	if err != nil {
+		panic(fmt.Errorf("error resetting $MYSITEROOT: %v", err))
+	}
+}
 
 func TestLbpkrSelfBdist(t *testing.T) {
 	t.Parallel()

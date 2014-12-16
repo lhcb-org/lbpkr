@@ -161,7 +161,7 @@ func TestLbpkrInstallNoUpdateThenUpdate(t *testing.T) {
 
 	// install an old version
 	{
-		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20140701")
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20140620-0")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Dir = tmpdir
@@ -172,9 +172,9 @@ func TestLbpkrInstallNoUpdateThenUpdate(t *testing.T) {
 		}
 	}
 
-	// (explicitly) install a newer version - should FAIL
+	// (explicitly) install a newer version - which should FAIL
 	{
-		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20141113")
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr.0.1.20140623-0")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Dir = tmpdir
@@ -185,7 +185,7 @@ func TestLbpkrInstallNoUpdateThenUpdate(t *testing.T) {
 		}
 	}
 
-	// install _a_ newer version - should FAIL
+	// install _a_ newer version - which should FAIL
 	{
 		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr")
 		cmd.Stdout = os.Stdout

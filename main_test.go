@@ -194,6 +194,147 @@ lbpkr-.*?
 
 }
 
+func TestLbpkrDryRun(t *testing.T) {
+
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	tmpdir, err := ioutil.TempDir("", "test-lbpkr-")
+	if err != nil {
+		t.Fatalf("error creating temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tmpdir)
+
+	{
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "-dry-run", "lbpkr")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running install: %v", err)
+		}
+	}
+
+	{
+		cmd := newCommand("lbpkr", "installed", "siteroot="+tmpdir)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running installed: %v", err)
+		}
+	}
+
+	// install an old version
+	{
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20140701")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running install: %v", err)
+		}
+	}
+
+	{
+		cmd := newCommand("lbpkr", "installed", "siteroot="+tmpdir)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running installed: %v", err)
+		}
+	}
+
+	// dry-run install a new(er) version
+	{
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "-dry-run", "lbpkr-0.1.20141113")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running install: %v", err)
+		}
+	}
+
+	// install a new(er) version (that should fail)
+	{
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20141113")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err == nil {
+			t.Fatalf("running install should have FAILED")
+		}
+	}
+
+	// dry-run remove lbpkr
+	{
+		cmd := newCommand("lbpkr", "rm", "-siteroot="+tmpdir, "-dry-run", "lbpkr")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running remove: %v", err)
+		}
+	}
+
+	// install a new(er) version (that should STILL fail)
+	{
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20141113")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err == nil {
+			t.Fatalf("running install should have FAILED")
+		}
+	}
+
+	// remove lbpkr
+	{
+		cmd := newCommand("lbpkr", "rm", "-siteroot="+tmpdir, "lbpkr")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running remove: %v", err)
+		}
+	}
+
+	// install a new(er) version (that should NOW succeed)
+	{
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20141113")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running install: %v", err)
+		}
+	}
+}
+
 func TestRPMSplit(t *testing.T) {
 	t.Parallel()
 	for _, table := range []struct {

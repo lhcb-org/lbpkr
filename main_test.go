@@ -286,7 +286,7 @@ func TestLbpkrDryRun(t *testing.T) {
 	}
 
 	{
-		cmd := newCommand("lbpkr", "installed", "siteroot="+tmpdir)
+		cmd := newCommand("lbpkr", "installed", "-siteroot="+tmpdir)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Dir = tmpdir
@@ -311,7 +311,7 @@ func TestLbpkrDryRun(t *testing.T) {
 	}
 
 	{
-		cmd := newCommand("lbpkr", "installed", "siteroot="+tmpdir)
+		cmd := newCommand("lbpkr", "installed", "-siteroot="+tmpdir)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Dir = tmpdir

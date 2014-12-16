@@ -138,6 +138,72 @@ gcc_4.8.1_x86_64_slc6-1.0.0-1
 	}
 }
 
+func TestLbpkrInstallNoUpdateThenUpdate(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	tmpdir, err := ioutil.TempDir("", "test-lbpkr-")
+	if err != nil {
+		t.Fatalf("error creating temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tmpdir)
+
+	// install an old version
+	{
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20140701")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running install: %v", err)
+		}
+	}
+
+	// (explicitly) install a newer version - should FAIL
+	{
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20141113")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err == nil {
+			t.Fatalf("running install should have FAILED")
+		}
+	}
+
+	// install _a_ newer version - should FAIL
+	{
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err == nil {
+			t.Fatalf("running install should have FAILED")
+		}
+	}
+
+	// update
+	{
+		cmd := newCommand("lbpkr", "update", "-siteroot="+tmpdir)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running update: %v", err)
+		}
+	}
+
+}
+
 func TestLbpkrInstallThenUpdate(t *testing.T) {
 	t.Parallel()
 	if testing.Short() {

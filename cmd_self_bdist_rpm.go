@@ -64,6 +64,12 @@ func lbpkr_run_cmd_self_bdist_rpm(cmd *commander.Command, args []string) error {
 
 	rpmbuildroot := filepath.Join(tmpdir, "rpmbuild")
 
+	// make sure there is no hysteresis effect from outside
+	err = os.Setenv("MYSITEROOT", "")
+	if err != nil {
+		return fmt.Errorf("error resetting $MYSITEROOT: %v", err)
+	}
+
 	siteroot := ""
 	cfg := NewConfig(siteroot)
 	msg := logger.New("lbpkr")

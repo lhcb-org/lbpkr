@@ -192,6 +192,9 @@ License: BSD
 Group: Science
 SOURCE0 : %{name}-%{version}.tar.gz
 URL: {{.Url}}
+## disable automatic dependencies extraction
+## FIXME(sbinet) remove when C-sqlite3 is not needed anymore.
+AutoReqProv: no
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 

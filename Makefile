@@ -38,5 +38,6 @@ dist:
 
 release: dist
 	lbpkr self upload-rpm lbpkr-${LBPKR_VERSION}-${LBPKR_RELEASE}.x86_64.rpm
+	/bin/rm lbpkr-${LBPKR_VERSION}-${LBPKR_RELEASE}.x86_64.rpm
 
 ## EOF

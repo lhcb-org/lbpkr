@@ -8,6 +8,7 @@ import (
 )
 
 func TestLbpkrSelfBdist(t *testing.T) {
+	t.Parallel()
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
@@ -30,6 +31,7 @@ func TestLbpkrSelfBdist(t *testing.T) {
 }
 
 func TestLbpkrSelfBdistRpm(t *testing.T) {
+	t.Parallel()
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
@@ -56,6 +58,7 @@ func TestLbpkrSelfBdistRpm(t *testing.T) {
 }
 
 func TestLbpkrInstallLbpkr(t *testing.T) {
+	t.Parallel()
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
@@ -78,6 +81,7 @@ func TestLbpkrInstallLbpkr(t *testing.T) {
 }
 
 func TestRPMSplit(t *testing.T) {
+	t.Parallel()
 	for _, table := range []struct {
 		rpm  string
 		want [3]string

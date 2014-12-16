@@ -480,6 +480,9 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		checkOnly = true
 	}
 
+	ctx.options.Force = false
+	ctx.options.Update = true
+
 	pkglist := make(map[string]yum.RPMSlice)
 	// group by key/version to make sure we only try to update the newest installed
 	for _, pkg := range pkgs {
@@ -503,6 +506,15 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 					update.RPMName(),
 				)
 			}
+			if update.Name() == "lbpkr" {
+				ctx.options.Force = true
+				err = ctx.InstallPackage(update)
+				ctx.options.Force = false
+				if err != nil || len(pkglist) == 1 {
+					return err
+				}
+				continue
+			}
 			toupdate = append(toupdate, update)
 		}
 	}
@@ -512,8 +524,6 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		return err
 	}
 
-	ctx.options.Force = false
-	ctx.options.Update = true
 	err = ctx.InstallPackages(toupdate)
 	if err != nil {
 		return err

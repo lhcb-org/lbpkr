@@ -1,5 +1,5 @@
 ## simple makefile to log workflow
-.PHONY: all test clean build install
+.PHONY: all test clean build install tag dist release
 
 export LBPKR_VERSION=0.1.`date +%Y%m%d`
 export LBPKR_RELEASE=0

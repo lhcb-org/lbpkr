@@ -42,7 +42,6 @@ type Context struct {
 	libdir    string
 	initfile  string
 
-	dryrun    bool
 	extstatus map[string]External
 	reqext    []string
 	extfix    map[string]FixFct
@@ -476,7 +475,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		return err
 	}
 
-	if !checkOnly && ctx.dryrun {
+	if !checkOnly && ctx.options.DryRun {
 		checkOnly = true
 	}
 
@@ -724,7 +723,7 @@ func (ctx *Context) InstallPackages(packages []*yum.Package) error {
 		return fmt.Errorf("no RPM to install")
 	}
 
-	if ctx.dryrun {
+	if ctx.options.DryRun {
 		ctx.msg.Infof("no RPM installed (dry-run)\n")
 		return nil
 	}
@@ -944,7 +943,7 @@ func (ctx *Context) RemoveRPM(rpms [][3]string, force bool) error {
 		args = append(args, "--nodeps")
 	}
 
-	if ctx.dryrun {
+	if ctx.options.DryRun {
 		args = append(args, "--test")
 	}
 

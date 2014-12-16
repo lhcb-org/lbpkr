@@ -14,8 +14,8 @@ type RPM interface {
 	Flags() string
 	StandardVersion() []string
 
-	RpmName() string
-	RpmFileName() string
+	RPMName() string
+	RPMFileName() string
 	//Url() string
 
 	// ID returns the unique identifier of this RPM
@@ -54,11 +54,11 @@ func (rpm *rpmBase) StandardVersion() []string {
 	return strings.Split(rpm.version, ".")
 }
 
-func (rpm *rpmBase) RpmName() string {
+func (rpm *rpmBase) RPMName() string {
 	return fmt.Sprintf("%s-%s-%s", rpm.name, rpm.version, rpm.release)
 }
 
-func (rpm *rpmBase) RpmFileName() string {
+func (rpm *rpmBase) RPMFileName() string {
 	return fmt.Sprintf("%s-%s-%s.rpm", rpm.name, rpm.version, rpm.release)
 }
 
@@ -86,15 +86,15 @@ func (rpm *rpmBase) ProvideMatches(p RPM) bool {
 
 	switch rpm.Flags() {
 	case "EQ", "eq", "==":
-		return RpmEqual(p, rpm)
+		return RPMEqual(p, rpm)
 	case "LT", "lt", "<":
-		return RpmLessThan(p, rpm)
+		return RPMLessThan(p, rpm)
 	case "GT", "gt", ">":
-		return !(RpmEqual(p, rpm) || RpmLessThan(p, rpm))
+		return !(RPMEqual(p, rpm) || RPMLessThan(p, rpm))
 	case "LE", "le", "<=":
-		return RpmEqual(p, rpm) || RpmLessThan(p, rpm)
+		return RPMEqual(p, rpm) || RPMLessThan(p, rpm)
 	case "GE", "ge", ">=":
-		return !RpmLessThan(p, rpm)
+		return !RPMLessThan(p, rpm)
 	default:
 		panic(fmt.Errorf("invalid Flags %q (package=%v %T)", rpm.Flags(), rpm.Name(), rpm))
 	}
@@ -102,7 +102,7 @@ func (rpm *rpmBase) ProvideMatches(p RPM) bool {
 	return false
 }
 
-func RpmEqual(i, j RPM) bool {
+func RPMEqual(i, j RPM) bool {
 	if i.Name() != j.Name() {
 		return false
 	}
@@ -118,7 +118,7 @@ func RpmEqual(i, j RPM) bool {
 	return i.Release() == j.Release()
 }
 
-func RpmLessThan(i, j RPM) bool {
+func RPMLessThan(i, j RPM) bool {
 	if i.Name() != j.Name() {
 		return i.Name() < j.Name()
 	}
@@ -289,7 +289,7 @@ func (p Packages) Less(i, j int) bool {
 	pi := p[i]
 	pj := p[j]
 
-	return RpmLessThan(pi, pj)
+	return RPMLessThan(pi, pj)
 }
 
 type RPMSlice []RPM
@@ -306,5 +306,5 @@ func (p RPMSlice) Less(i, j int) bool {
 	pi := p[i]
 	pj := p[j]
 
-	return RpmLessThan(pi, pj)
+	return RPMLessThan(pi, pj)
 }

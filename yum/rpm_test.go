@@ -206,7 +206,7 @@ func TestOrderWithDifferentName(t *testing.T) {
 	// checking simple comparison
 	p1 := NewProvides(name, v1, rel, "", "EQ", nil)
 	p2 := NewProvides(name+"z", v1, rel, "", "EQ", nil)
-	if !RpmLessThan(p1, p2) {
+	if !RPMLessThan(p1, p2) {
 		t.Fatalf("expected %s < %s\n", p1, p2)
 	}
 }

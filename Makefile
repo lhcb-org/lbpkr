@@ -29,7 +29,7 @@ clean:
 	@go clean $(GOFLAGS) -i ./...
 
 tag:
-	git tag ${LBPKR_VERSION}-${LBPKR_RELEASE}
+	git tag lbpkr-${LBPKR_VERSION}-${LBPKR_RELEASE}
 
 dist:
 	git fetch --all

@@ -206,7 +206,8 @@ Commands:
     rm              remove a RPM from the yum repository
     rpm             pass through command-args to the RPM binary
     self            admin/internal operations for lbpkr
-    update          update RPMs from the yum repository
+    update          update RPMs from the yum repository (bump the release number)
+    upgrade         upgrade RPMs from the yum repository (bump the version number)
     version         print out script version
 
 Use "lbpkr help <command>" for more information about a command.

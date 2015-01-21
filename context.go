@@ -27,6 +27,33 @@ type External struct {
 }
 type FixFct func(*Context) error
 
+type Mode int
+
+func (m Mode) Has(o Mode) bool {
+	return m&o != 0
+}
+
+func (m Mode) check() {
+	if m.Has(UpdateMode) && m.Has(UpgradeMode) {
+		panic("lbpkr: invalid mode (update && upgrade)")
+	}
+}
+
+func (m Mode) String() string {
+	return fmt.Sprintf("Mode{Install=%v, Update=%v, Upgrade=%v, value=%d}",
+		m.Has(InstallMode),
+		m.Has(UpdateMode),
+		m.Has(UpgradeMode),
+		int(m),
+	)
+}
+
+const (
+	InstallMode Mode = 1 << iota
+	UpdateMode
+	UpgradeMode
+)
+
 type Context struct {
 	msg       *logger.Logger
 	cfg       Config
@@ -46,13 +73,15 @@ type Context struct {
 	reqext    []string
 	extfix    map[string]FixFct
 
+	installdb map[[3]string]struct{} // list of installed packages
+
 	// options for the rpm binary
 	options struct {
-		Force  bool // force rpm installation (by-passing any check)
-		DryRun bool // dry run. do not actually run the command
-		NoDeps bool // do not install package dependencies
-		JustDb bool // update the database, but do not modify the filesystem
-		Update bool // update the packages
+		Force   bool // force rpm installation (by-passing any check)
+		DryRun  bool // dry run. do not actually run the command
+		NoDeps  bool // do not install package dependencies
+		JustDb  bool // update the database, but do not modify the filesystem
+		Package Mode // update mode of packages (Install|Update|Upgrade)
 	}
 
 	ndls int // number of concurrent downloads
@@ -86,10 +115,11 @@ func EnableDryRun(dryrun bool) func(*Context) {
 	}
 }
 
-// EnableUpdate
-func EnableUpdate(update bool) func(*Context) {
+// EnablePackageMode toggles between various update modes for packages (Install|Update|Upgrade)
+func EnablePackageMode(mode Mode) func(*Context) {
 	return func(ctx *Context) {
-		ctx.options.Update = update
+		ctx.options.Package |= mode
+		ctx.options.Package.check()
 	}
 }
 
@@ -125,6 +155,7 @@ func New(cfg Config, options ...func(*Context)) (*Context, error) {
 		bindir:    filepath.Join(siteroot, "usr", "bin"),
 		libdir:    filepath.Join(siteroot, "lib"),
 		initfile:  filepath.Join(siteroot, "etc", "repoinit"),
+		installdb: nil,
 		ndls:      runtime.NumCPU(),
 		sigch:     make(chan os.Signal),
 		subcmds:   make([]*exec.Cmd, 0),
@@ -467,7 +498,7 @@ enabled=1
 	return err
 }
 
-// checkUpdates checks whether packages could be updated in the repository
+// checkUpdates checks whether packages could be updated/upgraded in the repository
 func (ctx *Context) checkUpdates(checkOnly bool) error {
 	var err error
 	pkgs, err := ctx.listInstalledPackages()
@@ -480,7 +511,26 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 	}
 
 	ctx.options.Force = false
-	ctx.options.Update = true
+
+	compare := yum.RPMLessThan
+	switch {
+	case ctx.options.Package.Has(UpgradeMode):
+		// consider version+release
+		compare = yum.RPMLessThan
+
+	case ctx.options.Package.Has(UpdateMode):
+		// consider only packages with same version
+		compare = func(i, j yum.RPM) bool {
+			if i.Name() != j.Name() {
+				return false
+			}
+
+			if i.Version() != j.Version() {
+				return false
+			}
+			return i.Release() < j.Release()
+		}
+	}
 
 	pkglist := make(map[string]yum.RPMSlice)
 	// group by key/version to make sure we only try to update the newest installed
@@ -490,7 +540,8 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		pkglist[key] = append(pkglist[key], prov)
 	}
 
-	toupdate := make([]*yum.Package, 0, len(pkglist))
+	updateLbpkr := false
+	toupdate := make([]Package, 0, len(pkglist))
 	for _, rpms := range pkglist {
 		sort.Sort(rpms)
 		pkg := rpms[len(rpms)-1]
@@ -498,24 +549,37 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		if err != nil {
 			return err
 		}
-		if yum.RPMLessThan(pkg, update) {
+		if update.Name() == "lbpkr" {
 			if checkOnly {
-				ctx.msg.Infof("%s-%s-%s could be updated to %s\n",
-					pkg.Name(), pkg.Version(), pkg.Release(),
+				ctx.msg.Infof("%s could be updated to %s\n",
+					pkg.RPMName(),
+					update.RPMName(),
+				)
+				continue
+			}
+			ctx.options.Force = true
+			err = ctx.InstallPackage(Package{Package: update, Mode: UpgradeMode})
+			ctx.options.Force = false
+			if err != nil || len(pkglist) == 1 {
+				return err
+			}
+			updateLbpkr = true
+			continue
+		}
+		if compare(pkg, update) {
+			if checkOnly {
+				ctx.msg.Infof("%s could be updated to %s\n",
+					pkg.RPMName(),
 					update.RPMName(),
 				)
 			}
-			if update.Name() == "lbpkr" {
-				ctx.options.Force = true
-				err = ctx.InstallPackage(update)
-				ctx.options.Force = false
-				if err != nil || len(pkglist) == 1 {
-					return err
-				}
-				continue
-			}
-			toupdate = append(toupdate, update)
+			toupdate = append(toupdate, Package{update, ctx.options.Package})
 		}
+	}
+
+	// if only the 'lbpkr' package was updated, then don't consider it as an error
+	if updateLbpkr && len(toupdate) <= 0 {
+		return err
 	}
 
 	if checkOnly {
@@ -530,6 +594,77 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 
 	ctx.msg.Infof("packages updated: %d\n", len(toupdate))
 	return err
+}
+
+// getNotInstalledPackageDeps returns the list of dependencies for package pkg which have not
+// yet been installed
+func (ctx *Context) getNotInstalledPackageDeps(pkg Package) ([]Package, error) {
+	var err error
+	pkgset := make(map[string]Package)
+
+	processed := make(map[string]Package)
+	var collect func(pkg Package) ([]Package, error)
+
+	collect = func(pkg Package) ([]Package, error) {
+		if _, dup := processed[pkg.ID()]; dup {
+			return nil, nil
+		}
+		rpkgs, err := ctx.yum.PackageDeps(pkg.Package, 1)
+		if err != nil {
+			return nil, err
+		}
+		processed[pkg.ID()] = pkg
+		var pkgset = make(map[string]Package)
+
+		mode := ctx.options.Package
+		// check whether we need to update or just install
+		if !mode.Has(UpdateMode) && ctx.isRPMInstalled(pkg.Name(), pkg.Version(), "") {
+			mode |= UpdateMode
+		}
+		if !mode.Has(InstallMode) && !mode.Has(UpdateMode) &&
+			!ctx.isRPMInstalled(pkg.Name(), "", "") {
+			mode |= InstallMode
+		}
+
+		pkg.Mode = mode
+		if !ctx.isRPMInstalled(pkg.Name(), pkg.Version(), pkg.Release()) {
+			pkgset[pkg.RPMName()] = pkg
+		}
+
+		for _, rpkg := range rpkgs {
+			if ctx.isRPMInstalled(rpkg.RPMName(), "", "") {
+				continue
+			}
+			opkgs, err := collect(Package{rpkg, mode})
+			if err != nil {
+				return nil, err
+			}
+			for _, opkg := range opkgs {
+				pkgset[opkg.RPMName()] = opkg
+			}
+		}
+		pkgs := make([]Package, 0, len(pkgset))
+		for _, p := range pkgset {
+			pkgs = append(pkgs, p)
+		}
+		return pkgs, err
+	}
+
+	pkgs, err := collect(pkg)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range pkgs {
+		pkgset[p.RPMName()] = p
+	}
+
+	pkgs = pkgs[:0]
+	for _, p := range pkgset {
+		pkgs = append(pkgs, p)
+	}
+
+	return pkgs, nil
 }
 
 // InstallRPM installs a RPM by name
@@ -549,7 +684,7 @@ func (ctx *Context) InstallRPM(name, version, release string) error {
 func (ctx *Context) InstallRPMs(rpms []string) error {
 	var err error
 
-	pkgs := make([]*yum.Package, 0, len(rpms))
+	pkgs := make([]Package, 0, len(rpms))
 	for _, rpm := range rpms {
 		args := splitRPM(rpm)
 		name, version, release := args[0], args[1], args[2]
@@ -562,10 +697,10 @@ func (ctx *Context) InstallRPMs(rpms []string) error {
 		//        a dependency against glibc through cgo+SQLite.
 		//        ==> generate the RPM with the proper deps ?
 		if name == "lbpkr" {
-			// install/update lbpkr first.
+			// install/update/upgrade lbpkr first.
 			force := ctx.options.Force
 			ctx.options.Force = true
-			err = ctx.InstallPackage(pkg)
+			err = ctx.InstallPackage(Package{pkg, InstallMode | UpgradeMode})
 			ctx.options.Force = force
 			if err != nil || len(rpms) == 1 {
 				return err
@@ -573,7 +708,7 @@ func (ctx *Context) InstallRPMs(rpms []string) error {
 			continue
 		}
 
-		pkgs = append(pkgs, pkg)
+		pkgs = append(pkgs, Package{pkg, InstallMode})
 	}
 
 	err = ctx.InstallPackages(pkgs)
@@ -610,13 +745,13 @@ func (ctx *Context) InstallProject(name, version, release, platforms string) err
 
 	projname := name + "_" + version
 	ctx.msg.Infof("installing project name=%q version=%q for archs=%v\n", name, version, archs)
-	pkgs := make([]*yum.Package, 0, len(archs))
+	pkgs := make([]Package, 0, len(archs))
 	for _, arch := range archs {
 		pkg, err := ctx.yum.FindLatestProvider(projname+"_"+arch, "", release)
 		if err != nil {
 			return err
 		}
-		pkgs = append(pkgs, pkg)
+		pkgs = append(pkgs, Package{pkg, InstallMode})
 	}
 
 	err = ctx.InstallPackages(pkgs)
@@ -624,57 +759,16 @@ func (ctx *Context) InstallProject(name, version, release, platforms string) err
 }
 
 // InstallPackage installs a specific RPM, checking if not already installed
-func (ctx *Context) InstallPackage(pkg *yum.Package) error {
-	pkgs := []*yum.Package{pkg}
+func (ctx *Context) InstallPackage(pkg Package) error {
+	pkgs := []Package{pkg}
 	return ctx.InstallPackages(pkgs)
 }
 
 // InstallPackages installs a list of specific RPMs, checking if not already installed
-func (ctx *Context) InstallPackages(packages []*yum.Package) error {
+func (ctx *Context) InstallPackages(packages []Package) error {
 	var err error
-	var pkgs []*yum.Package
-	pkgset := make(map[string]*yum.Package)
-
-	processed := make(map[string]*yum.Package)
-	var collect func(pkg *yum.Package) ([]*yum.Package, error)
-
-	collect = func(pkg *yum.Package) ([]*yum.Package, error) {
-		if _, dup := processed[pkg.ID()]; dup {
-			return nil, nil
-		}
-		rpkgs, err := ctx.yum.PackageDeps(pkg, 1)
-		if err != nil {
-			return nil, err
-		}
-		processed[pkg.ID()] = pkg
-		var pkgset = make(map[string]*yum.Package)
-		if !ctx.isRPMInstalled(pkg.Name(), pkg.Version()) {
-			pkgset[pkg.RPMName()] = pkg
-		}
-
-		// check whether we need to update instead of just install
-		if !ctx.options.Update && ctx.isRPMInstalled(pkg.Name(), "") {
-			ctx.options.Update = true
-		}
-
-		for _, rpkg := range rpkgs {
-			if ctx.isRPMInstalled(rpkg.RPMName(), "") {
-				continue
-			}
-			opkgs, err := collect(rpkg)
-			if err != nil {
-				return nil, err
-			}
-			for _, opkg := range opkgs {
-				pkgset[opkg.RPMName()] = opkg
-			}
-		}
-		pkgs := make([]*yum.Package, 0, len(pkgset))
-		for _, p := range pkgset {
-			pkgs = append(pkgs, p)
-		}
-		return pkgs, err
-	}
+	pkgs := make([]Package, 0, len(packages))
+	pkgset := make(map[string]Package)
 
 	for _, pkg := range packages {
 		dodeps := " and dependencies"
@@ -691,8 +785,8 @@ func (ctx *Context) InstallPackages(packages []*yum.Package) error {
 			pkgs = append(pkgs, pkg)
 			continue
 		}
-		var opkgs []*yum.Package
-		opkgs, err = collect(pkg)
+		var opkgs []Package
+		opkgs, err = ctx.getNotInstalledPackageDeps(pkg)
 		if err != nil {
 			ctx.msg.Errorf("required-packages error: %v\n", err)
 			return err
@@ -739,14 +833,14 @@ func (ctx *Context) InstallPackages(packages []*yum.Package) error {
 		return nil
 	}
 
-	// download the files
-	files, err := ctx.downloadFiles(filtered, ctx.tmpdir)
+	// download the packages
+	err = ctx.downloadPackages(filtered, ctx.tmpdir)
 	if err != nil {
 		return err
 	}
 
-	// install these files
-	err = ctx.installFiles(files, ctx.tmpdir)
+	// install these packages
+	err = ctx.installPackages(filtered, ctx.tmpdir)
 	return err
 }
 
@@ -858,8 +952,8 @@ func (ctx *Context) Provides(filename string) ([]*yum.Package, error) {
 	for _, rpm := range rpms {
 		rpmfile := filepath.Join(ctx.tmpdir, rpm.RPMFileName())
 		if _, errstat := os.Stat(rpmfile); errstat != nil {
-			// try to re-download the file
-			_, errdl := ctx.downloadFiles([]*yum.Package{rpm}, ctx.tmpdir)
+			// try to re-download the package
+			errdl := ctx.downloadPackages([]Package{{Package: rpm}}, ctx.tmpdir)
 			if errdl != nil {
 				err = fmt.Errorf("lbpkr: no such file [%s] (%v)", rpmfile, errstat)
 				return nil, err
@@ -1101,11 +1195,11 @@ func (ctx *Context) rpm(display bool, args ...string) ([]byte, error) {
 }
 
 // filterURLs filters out RPMs already installed
-func (ctx *Context) filterURLs(pkgs []*yum.Package) ([]*yum.Package, error) {
+func (ctx *Context) filterURLs(pkgs []Package) ([]Package, error) {
 	var err error
-	filtered := make([]*yum.Package, 0, len(pkgs))
+	filtered := make([]Package, 0, len(pkgs))
 	for _, pkg := range pkgs {
-		installed, err2 := ctx.filterURL(pkg)
+		installed, err2 := ctx.filterURL(pkg.Package)
 		err = err2
 		if installed {
 			ctx.msg.Debugf("already installed: %s\n", pkg.RPMName())
@@ -1117,18 +1211,30 @@ func (ctx *Context) filterURLs(pkgs []*yum.Package) ([]*yum.Package, error) {
 }
 
 // filterURL returns true if a RPM was already installed
-func (ctx *Context) filterURL(pkg *yum.Package) (bool, error) {
+func (ctx *Context) filterURL(pkg yum.RPM) (bool, error) {
 	name := pkg.Name()
 	version := pkg.Version()
+	release := pkg.Release()
 	ctx.msg.Debugf("checking for installation of [%s]...\n", name)
-	return ctx.isRPMInstalled(name, version), nil
+	return ctx.isRPMInstalled(name, version, release), nil
 }
 
 // isRPMInstalled checks whether a given RPM package is already installed
-func (ctx *Context) isRPMInstalled(name, version string) bool {
+func (ctx *Context) isRPMInstalled(name, version, release string) bool {
+	if ctx.installdb == nil {
+		ctx.initInstalledPackages()
+	}
+	if ctx.installdb != nil {
+		_, ok := ctx.installdb[[3]string{name, version, release}]
+		return ok
+	}
+
 	fullname := name
 	if version != "" {
-		fullname += "." + version
+		fullname += "-" + version
+		if release != "" {
+			fullname += "-" + release
+		}
 	}
 	out, err := ctx.rpm(false, "-q", fullname)
 	if err != nil {
@@ -1136,6 +1242,24 @@ func (ctx *Context) isRPMInstalled(name, version string) bool {
 	}
 	installed := err == nil
 	return installed
+}
+
+// initInstalledPackages populates the cache of installed packages
+func (ctx *Context) initInstalledPackages() {
+	installed, err := ctx.listInstalledPackages()
+	if err != nil {
+		ctx.msg.Errorf("lbpkr: %v\n", err)
+		return
+	}
+
+	installdb := make(map[[3]string]struct{}, len(installed)*3)
+	for _, v := range installed {
+		installdb[[3]string{v[0], "", ""}] = struct{}{}
+		installdb[[3]string{v[0], v[1], ""}] = struct{}{}
+		installdb[[3]string{v[0], v[1], v[2]}] = struct{}{}
+	}
+
+	ctx.installdb = installdb
 }
 
 // listInstalledPackages checks whether a given RPM package is already installed
@@ -1167,12 +1291,11 @@ func (ctx *Context) listInstalledPackages() ([][3]string, error) {
 	return list, err
 }
 
-// downloadFiles downloads a list of packages
-func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, error) {
-	files := make([]string, 0, len(pkgs))
+// downloadPackages downloads a list of packages
+func (ctx *Context) downloadPackages(pkgs []Package, dir string) error {
 	var err error
 
-	pkgset := make(map[string]*yum.Package)
+	pkgset := make(map[string]Package)
 
 	for _, pkg := range pkgs {
 		fname := pkg.RPMFileName()
@@ -1192,16 +1315,15 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 		ipkg += 1
 		fname := pkg.RPMFileName()
 		fpath := filepath.Join(dir, fname)
-		files = append(files, fname)
 
-		needs_dl := true
+		needsDl := true
 		if path_exists(fpath) {
 			if ok := ctx.checkRpmFile(fpath); ok {
-				needs_dl = false
+				needsDl = false
 			}
 		}
 
-		if !needs_dl {
+		if !needsDl {
 			ctx.msg.Debugf("%s already downloaded\n", fname)
 			mux.Lock()
 			done += 1
@@ -1210,9 +1332,9 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 		}
 
 		todl += 1
-		go func(ipkg int, pkg *yum.Package) {
+		go func(ipkg int, pkg Package) {
 			select {
-			case errch <- ctx.downloadFile(pkg, dir):
+			case errch <- ctx.downloadPackage(pkg, dir):
 				mux.Lock()
 				done += 1
 				mux.Unlock()
@@ -1229,14 +1351,14 @@ func (ctx *Context) downloadFiles(pkgs []*yum.Package, dir string) ([]string, er
 		if err != nil {
 			close(quit)
 			ctx.msg.Errorf("error downloading a RPM: %v\n", err)
-			return nil, err
+			return err
 		}
 	}
-	return files, err
+	return err
 }
 
-// downloadFile downloads a given RPM package under dir
-func (ctx *Context) downloadFile(pkg *yum.Package, dir string) error {
+// downloadPackage downloads a given RPM package under dir
+func (ctx *Context) downloadPackage(pkg Package, dir string) error {
 	var err error
 	fname := pkg.RPMFileName()
 	fpath := filepath.Join(dir, fname)
@@ -1269,34 +1391,68 @@ func (ctx *Context) downloadFile(pkg *yum.Package, dir string) error {
 	return err
 }
 
-// installFiles installs some RPM files given the location of the RPM DB
-func (ctx *Context) installFiles(files []string, rpmdir string) error {
-	var err error
-	args := []string{"-ivh", "--oldpackage"}
-	if ctx.options.Update || ctx.cfg.RpmUpdate() {
-		args = []string{"-Uvh"}
+// installPackages installs some RPM files given the location of the RPM DB
+func (ctx *Context) installPackages(pkgs []Package, rpmdir string) error {
+
+	// split the install between packages to be installed (anew) and packages to be updated
+	// assume that we can safely first update the to-be-updated packages
+	// and then install the other ones.
+	//
+	// FIXME(sbinet): we could/should instead order the input packages via their dependency
+	// and install/update each one in turn.
+	// but finding the correct order is very time consuming (at least with a naive algorithm)
+	// finding a way to extract that order from `rpm` would be great.
+
+	installCmd := []string{"-ivh", "--oldpackage"}
+	updateCmd := []string{"-Uvh"}
+	add := func(v string) {
+		installCmd = append(installCmd, v)
+		updateCmd = append(updateCmd, v)
 	}
+
 	if ctx.options.Force || ctx.options.NoDeps {
-		args = append(args, "--nodeps")
+		add("--nodeps")
 	}
 	if ctx.options.JustDb {
-		args = append(args, "--justdb")
+		add("--justdb")
 	}
 	if ctx.options.DryRun {
-		args = append(args, "--test")
+		add("--test")
 	}
 
-	for _, fname := range files {
-		args = append(args, filepath.Join(rpmdir, fname))
+	install := []string{}
+	update := []string{}
+	for _, pkg := range pkgs {
+		fname := filepath.Join(rpmdir, pkg.RPMFileName())
+		switch {
+		case pkg.Mode.Has(UpdateMode) || pkg.Mode.Has(UpgradeMode) || ctx.cfg.RpmUpdate():
+			update = append(update, fname)
+		default:
+			install = append(install, fname)
+		}
 	}
 
-	ctx.msg.Infof("installing [%d] RPMs...\n", len(files))
-	out, err := ctx.rpm(true, args...)
-	if err != nil {
-		ctx.msg.Errorf("rpm install command failed: %v\n%v\n", err, string(out))
-		return err
+	if len(update) > 0 {
+		ctx.msg.Infof("updating [%d] RPMs...\n", len(update))
+		updateCmd = append(updateCmd, update...)
+		out, err := ctx.rpm(true, updateCmd...)
+		if err != nil {
+			ctx.msg.Errorf("rpm install command failed: %v\n%v\n", err, string(out))
+			return err
+		}
 	}
-	return err
+
+	if len(install) > 0 {
+		ctx.msg.Infof("installing [%d] RPMs...\n", len(install))
+		installCmd = append(installCmd, install...)
+		out, err := ctx.rpm(true, installCmd...)
+		if err != nil {
+			ctx.msg.Errorf("rpm install command failed: %v\n%v\n", err, string(out))
+			return err
+		}
+	}
+
+	return nil
 }
 
 // checkRpmFile checks the integrity of a RPM file

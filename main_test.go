@@ -172,29 +172,16 @@ func TestLbpkrInstallNoUpdateThenUpdate(t *testing.T) {
 		}
 	}
 
-	// (explicitly) install a newer version - which should FAIL
+	// (explicitly) install a newer version
 	{
-		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr.0.1.20140623-0")
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20140623-0")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Dir = tmpdir
 
 		err = cmd.Run()
-		if err == nil {
-			t.Fatalf("running install should have FAILED")
-		}
-	}
-
-	// install _a_ newer version - which should FAIL
-	{
-		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = tmpdir
-
-		err = cmd.Run()
-		if err == nil {
-			t.Fatalf("running install should have FAILED")
+		if err != nil {
+			t.Fatalf("error running install: %v", err)
 		}
 	}
 
@@ -344,19 +331,6 @@ func TestLbpkrDryRun(t *testing.T) {
 		}
 	}
 
-	// install a new(er) version (that should fail)
-	{
-		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20141113")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = tmpdir
-
-		err = cmd.Run()
-		if err == nil {
-			t.Fatalf("running install should have FAILED")
-		}
-	}
-
 	// dry-run remove lbpkr
 	{
 		cmd := newCommand("lbpkr", "rm", "-siteroot="+tmpdir, "-dry-run", "lbpkr")
@@ -367,19 +341,6 @@ func TestLbpkrDryRun(t *testing.T) {
 		err = cmd.Run()
 		if err != nil {
 			t.Fatalf("error running remove: %v", err)
-		}
-	}
-
-	// install a new(er) version (that should STILL fail)
-	{
-		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20141113")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = tmpdir
-
-		err = cmd.Run()
-		if err == nil {
-			t.Fatalf("running install should have FAILED")
 		}
 	}
 
@@ -396,7 +357,7 @@ func TestLbpkrDryRun(t *testing.T) {
 		}
 	}
 
-	// install a new(er) version (that should NOW succeed)
+	// install a new(er) version
 	{
 		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "lbpkr-0.1.20141113")
 		cmd.Stdout = os.Stdout
@@ -407,6 +368,107 @@ func TestLbpkrDryRun(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error running install: %v", err)
 		}
+	}
+}
+
+func TestUpdateNotUpgrade(t *testing.T) {
+
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	tmpdir, err := ioutil.TempDir("", "test-lbpkr-")
+	if err != nil {
+		t.Fatalf("error creating temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tmpdir)
+
+	{
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "DBASE_AppConfig-3.200.0-1")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running install: %v", err)
+		}
+
+		// make sure we have only 3 packages installed
+		cmd = newCommand("lbpkr", "installed", "-siteroot="+tmpdir)
+		buf := new(bytes.Buffer)
+		cmd.Stdout = buf
+		cmd.Stderr = buf
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running installed: %v", err)
+		}
+
+		want := []byte(`CMT-v1r20p20090520-1
+COMPAT-1.17.0-0
+DBASE_AppConfig-3.200.0-1
+DBASE_common-1.0.0-1
+LBSCRIPTS-8.1.1-1
+LBSCRIPTS_v8r1p1-1.0.0-1
+`)
+		if !reflect.DeepEqual(want, buf.Bytes()) {
+			t.Fatalf("invalid number of packages.\nwant: %s\n got: %s\n", string(want), string(buf.Bytes()))
+		}
+
+	}
+
+	{
+
+		cmd := newCommand("lbpkr", "update", "-siteroot="+tmpdir)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err == nil {
+			t.Fatalf("error running update should have FAILED")
+		}
+	}
+
+	// check installing a newer does not update
+	{
+		cmd := newCommand("lbpkr", "install", "-siteroot="+tmpdir, "DBASE_AppConfig-3.206.0-1")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running install: %v", err)
+		}
+
+		// make sure we have only 3 packages installed
+		cmd = newCommand("lbpkr", "installed", "-siteroot="+tmpdir)
+		buf := new(bytes.Buffer)
+		cmd.Stdout = buf
+		cmd.Stderr = buf
+		cmd.Dir = tmpdir
+
+		err = cmd.Run()
+		if err != nil {
+			t.Fatalf("error running installed: %v", err)
+		}
+
+		want := []byte(`CMT-v1r20p20090520-1
+COMPAT-1.17.0-0
+DBASE_AppConfig-3.200.0-1
+DBASE_AppConfig-3.206.0-1
+DBASE_common-1.0.0-1
+LBSCRIPTS-8.1.1-1
+LBSCRIPTS_v8r1p1-1.0.0-1
+`)
+		if !reflect.DeepEqual(want, buf.Bytes()) {
+			t.Fatalf("invalid number of packages.\nwant: %s\n got: %s\n", string(want), string(buf.Bytes()))
+		}
+
 	}
 }
 

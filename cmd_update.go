@@ -11,7 +11,7 @@ func lbpkr_make_cmd_update() *commander.Command {
 	cmd := &commander.Command{
 		Run:       lbpkr_run_cmd_update,
 		UsageLine: "update [options]",
-		Short:     "update RPMs from the yum repository",
+		Short:     "update RPMs from the yum repository (bump the release number)",
 		Long: `
 update updates RPMs from the yum repository.
 
@@ -52,6 +52,7 @@ func lbpkr_run_cmd_update(cmd *commander.Command, args []string) error {
 		EnableDryRun(dry),
 		EnableNoDeps(nodeps),
 		EnableJustDb(justdb),
+		EnablePackageMode(InstallMode|UpdateMode),
 	)
 	if err != nil {
 		return err

@@ -1,6 +1,7 @@
 package yum
 
 import (
+	"crypto/tls"
 	"io"
 	"net/http"
 	"net/url"
@@ -42,7 +43,12 @@ func getRemoteData(rpath string) (io.ReadCloser, error) {
 		return f, nil
 
 	default:
-		resp, err := http.Get(rpath)
+		client := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+		}
+		resp, err := client.Get(rpath)
 		if err != nil {
 			return nil, err
 		}

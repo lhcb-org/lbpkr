@@ -3,6 +3,7 @@ package main
 import (
 	"archive/tar"
 	"compress/gzip"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -191,7 +192,12 @@ func getRemoteData(rpath string) (io.ReadCloser, error) {
 		return f, nil
 
 	default:
-		resp, err := http.Get(rpath)
+		client := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+		}
+		resp, err := client.Get(rpath)
 		if err != nil {
 			return nil, err
 		}

@@ -1,5 +1,5 @@
 package main
 
-const Version = "0.1.20150121"
+const Version = "0.1.20150126"
 
 // EOF

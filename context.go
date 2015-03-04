@@ -576,14 +576,17 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 				}
 				continue
 			}
-			ctx.options.Force = true
-			err = ctx.InstallPackage(Package{Package: update, Mode: UpgradeMode})
-			ctx.options.Force = false
-			if err != nil || len(pkglist) == 1 {
-				return err
+
+			if yum.RPMLessThan(pkg, update) {
+				ctx.options.Force = true
+				err = ctx.InstallPackage(Package{Package: update, Mode: UpgradeMode})
+				ctx.options.Force = false
+				if err != nil || len(pkglist) == 1 {
+					return err
+				}
+				updateLbpkr = true
+				continue
 			}
-			updateLbpkr = true
-			continue
 		}
 		if compare.Func(pkg, update) {
 			if checkOnly {

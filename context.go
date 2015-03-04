@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"text/tabwriter"
 	"time"
 
 	"github.com/gonuts/config"
@@ -512,29 +513,16 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 
 	ctx.options.Force = false
 
-	const (
-		upgradeMode = iota
-		updateMode
-	)
-	compare := struct {
-		Mode int
-		Name string
-		Func func(i, j yum.RPM) bool
-	}{
-		Mode: upgradeMode,
-		Name: "upgrade",
-		Func: yum.RPMLessThan,
+	type Manifest struct {
+		Old  yum.RPM
+		New  yum.RPM
+		Mode Mode
 	}
-	switch {
-	case ctx.options.Package.Has(UpgradeMode):
-		// consider version+release
-		compare.Func = yum.RPMLessThan
-		compare.Mode = upgradeMode
-		compare.Name = "upgrade"
 
-	case ctx.options.Package.Has(UpdateMode):
-		// consider only packages with same version
-		compare.Func = func(i, j yum.RPM) bool {
+	type cmpFunc func(i, j yum.RPM) bool
+	var (
+		upgradeFunc cmpFunc = yum.RPMLessThan
+		updateFunc  cmpFunc = func(i, j yum.RPM) bool {
 			if i.Name() != j.Name() {
 				return false
 			}
@@ -544,7 +532,28 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 			}
 			return i.Release() < j.Release()
 		}
-		compare.Mode = updateMode
+	)
+
+	compare := struct {
+		Mode Mode
+		Name string
+		Func cmpFunc
+	}{
+		Mode: UpgradeMode,
+		Name: "upgrade",
+		Func: upgradeFunc,
+	}
+	switch {
+	case ctx.options.Package.Has(UpgradeMode):
+		// consider version+release
+		compare.Func = upgradeFunc
+		compare.Mode = UpgradeMode
+		compare.Name = "upgrade"
+
+	case ctx.options.Package.Has(UpdateMode):
+		// consider only packages with same version
+		compare.Func = updateFunc
+		compare.Mode = UpdateMode
 		compare.Name = "Update"
 	}
 
@@ -557,7 +566,8 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 	}
 
 	updateLbpkr := false
-	toupdate := make([]Package, 0, len(pkglist))
+	manifest := make([]Manifest, 0, len(pkglist))
+	toprocess := make([]Package, 0, len(pkglist))
 	for _, rpms := range pkglist {
 		sort.Sort(rpms)
 		pkg := rpms[len(rpms)-1]
@@ -568,10 +578,12 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		if update.Name() == "lbpkr" {
 			if checkOnly {
 				if yum.RPMLessThan(pkg, update) {
-					ctx.msg.Infof("%s could be %sd to %s\n",
-						pkg.RPMName(),
-						compare.Name,
-						update.RPMName(),
+					manifest = append(manifest,
+						Manifest{
+							Old:  pkg,
+							New:  update,
+							Mode: UpgradeMode,
+						},
 					)
 				}
 				continue
@@ -588,34 +600,71 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 				continue
 			}
 		}
-		if compare.Func(pkg, update) {
-			if checkOnly {
-				ctx.msg.Infof("%s could be %sd to %s\n",
-					pkg.RPMName(),
-					compare.Name,
-					update.RPMName(),
+		if checkOnly {
+			switch {
+			case updateFunc(pkg, update):
+				manifest = append(manifest,
+					Manifest{
+						Old:  pkg,
+						New:  update,
+						Mode: UpdateMode,
+					},
+				)
+			case upgradeFunc(pkg, update):
+				manifest = append(manifest,
+					Manifest{
+						Old:  pkg,
+						New:  update,
+						Mode: UpgradeMode,
+					},
 				)
 			}
-			toupdate = append(toupdate, Package{update, ctx.options.Package})
+		}
+		if compare.Func(pkg, update) {
+			toprocess = append(toprocess, Package{update, ctx.options.Package})
 		}
 	}
 
 	// if only the 'lbpkr' package was updated, then don't consider it as an error
-	if updateLbpkr && len(toupdate) <= 0 {
+	if updateLbpkr && len(toprocess) <= 0 {
 		return err
 	}
 
 	if checkOnly {
-		ctx.msg.Infof("packages to %s: %d\n", compare.Name, len(toupdate))
+		upgrade := 0
+		update := 0
+		w := tabwriter.NewWriter(os.Stdout, 0, 8, 0, '\t', 0)
+		for _, m := range manifest {
+			mode := "update"
+			if m.Mode == UpgradeMode {
+				mode = "upgrade"
+				upgrade++
+			} else {
+				update++
+			}
+			fmt.Fprintf(w, "%s\t%s-%s\t-> %s-%s\t(%v)\n",
+				m.Old.Name(),
+				m.Old.Version(), m.Old.Release(),
+				m.New.Version(), m.New.Release(),
+				mode,
+			)
+		}
+		w.Flush()
+		if upgrade > 0 {
+			ctx.msg.Infof("packages to upgrade: %d\n", upgrade)
+		}
+		if update > 0 {
+			ctx.msg.Infof("packages to update:  %d\n", update)
+		}
 		return err
 	}
 
-	err = ctx.InstallPackages(toupdate)
+	err = ctx.InstallPackages(toprocess)
 	if err != nil {
 		return err
 	}
 
-	ctx.msg.Infof("packages %sd: %d\n", compare.Name, len(toupdate))
+	ctx.msg.Infof("packages %sd: %d\n", compare.Name, len(toprocess))
 	return err
 }
 

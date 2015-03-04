@@ -47,7 +47,14 @@ func lbpkr_run_cmd_check(cmd *commander.Command, args []string) error {
 	}
 	defer ctx.Close()
 
-	ctx.msg.Infof("checking for RPMs updates\n")
+	mode := "upgrade"
+	switch {
+	case ctx.options.Package.Has(UpgradeMode):
+		mode = "upgrade"
+	case ctx.options.Package.Has(UpdateMode):
+		mode = "update"
+	}
+	ctx.msg.Infof("checking for RPMs %ss\n", mode)
 	checkOnly := true
 	err = ctx.Update(checkOnly)
 	return err

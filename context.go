@@ -512,15 +512,29 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 
 	ctx.options.Force = false
 
-	compare := yum.RPMLessThan
+	const (
+		upgradeMode = iota
+		updateMode
+	)
+	compare := struct {
+		Mode int
+		Name string
+		Func func(i, j yum.RPM) bool
+	}{
+		Mode: upgradeMode,
+		Name: "upgrade",
+		Func: yum.RPMLessThan,
+	}
 	switch {
 	case ctx.options.Package.Has(UpgradeMode):
 		// consider version+release
-		compare = yum.RPMLessThan
+		compare.Func = yum.RPMLessThan
+		compare.Mode = upgradeMode
+		compare.Name = "upgrade"
 
 	case ctx.options.Package.Has(UpdateMode):
 		// consider only packages with same version
-		compare = func(i, j yum.RPM) bool {
+		compare.Func = func(i, j yum.RPM) bool {
 			if i.Name() != j.Name() {
 				return false
 			}
@@ -530,6 +544,8 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 			}
 			return i.Release() < j.Release()
 		}
+		compare.Mode = updateMode
+		compare.Name = "Update"
 	}
 
 	pkglist := make(map[string]yum.RPMSlice)
@@ -551,10 +567,13 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		}
 		if update.Name() == "lbpkr" {
 			if checkOnly {
-				ctx.msg.Infof("%s could be updated to %s\n",
-					pkg.RPMName(),
-					update.RPMName(),
-				)
+				if yum.RPMLessThan(pkg, update) {
+					ctx.msg.Infof("%s could be %sd to %s\n",
+						pkg.RPMName(),
+						compare.Name,
+						update.RPMName(),
+					)
+				}
 				continue
 			}
 			ctx.options.Force = true
@@ -566,10 +585,11 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 			updateLbpkr = true
 			continue
 		}
-		if compare(pkg, update) {
+		if compare.Func(pkg, update) {
 			if checkOnly {
-				ctx.msg.Infof("%s could be updated to %s\n",
+				ctx.msg.Infof("%s could be %sd to %s\n",
 					pkg.RPMName(),
+					compare.Name,
 					update.RPMName(),
 				)
 			}
@@ -583,7 +603,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 	}
 
 	if checkOnly {
-		ctx.msg.Infof("packages to update: %d\n", len(toupdate))
+		ctx.msg.Infof("packages to %s: %d\n", compare.Name, len(toupdate))
 		return err
 	}
 
@@ -592,7 +612,7 @@ func (ctx *Context) checkUpdates(checkOnly bool) error {
 		return err
 	}
 
-	ctx.msg.Infof("packages updated: %d\n", len(toupdate))
+	ctx.msg.Infof("packages %sd: %d\n", compare.Name, len(toupdate))
 	return err
 }
 

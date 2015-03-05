@@ -791,21 +791,95 @@ func (ctx *Context) InstallRPMs(rpms []string) error {
 func (ctx *Context) InstallProject(name, version, release, platforms string) error {
 	var err error
 
-	archs := make([]string, 0, 2)
+	install := make([]Package, 0, 2)
+	plist := make([]Package, 0, 2)
+	versions := make([]string, 0, 1)
+
+	// find all available project versions
+	switch version {
+	case "":
+		pname := name + `_(?P<ProjectVersion>.*?)_index`
+		projs, err := ctx.yum.ListPackages(pname, "", "")
+		if err != nil {
+			return err
+		}
+		re := regexp.MustCompile(pname)
+		for _, proj := range projs {
+			sub := re.FindStringSubmatch(proj.Name())
+			if len(sub) > 0 {
+				versions = append(versions, sub[1])
+			}
+		}
+
+	default:
+		versions = []string{version}
+	}
+
+	// collect available projects+versions
+	{
+		vers := strings.Join(versions, "|")
+		pname := name + "_(" + vers + `)_(?P<ProjectArch>.*?)`
+		pkgs, err := ctx.yum.ListPackages(pname, "", "")
+		if err != nil {
+			return err
+		}
+		re := regexp.MustCompile(pname)
+		for _, pkg := range pkgs {
+			sub := re.FindStringSubmatch(pkg.Name())
+			if len(sub) > 0 {
+				if strings.HasSuffix(pkg.Name(), "_index") {
+					continue
+				}
+				plist = append(plist, Package{pkg, InstallMode})
+			}
+		}
+	}
+
+	if len(plist) <= 0 {
+		ctx.msg.Errorf("could not find a project with name=%q version=%q and archs=%q\n",
+			name, version, platforms,
+		)
+
+		// get list of all projects
+		re := regexp.MustCompile(`(?P<ProjectName>.*?)_(?P<ProjectVersion>.*?)_index`)
+		set := make(map[string][]string)
+		pkgs, err := ctx.yum.ListPackages("", "", "")
+		if err != nil {
+			return err
+		}
+		for _, pkg := range pkgs {
+			sub := re.FindStringSubmatch(pkg.Name())
+			if len(sub) <= 0 {
+				continue
+			}
+			set[sub[1]] = append(set[sub[1]], sub[2])
+		}
+		pnames := make([]string, 0, len(set))
+		for k := range set {
+			pnames = append(pnames, k)
+		}
+		sort.Strings(pnames)
+		ctx.msg.Infof("Available projects: %d\n", len(pnames))
+		w := tabwriter.NewWriter(os.Stdout, 0, 8, 0, '\t', 0)
+		for _, p := range pnames {
+			fmt.Fprintf(w, "%s\t%s\n", p, strings.Join(set[p], ", "))
+		}
+		w.Flush()
+
+		return fmt.Errorf("could not find a project with name=%q version=%q and archs=%q",
+			name, version, platforms,
+		)
+	}
+
 	if platforms == "" {
 		// if no CMTCONFIG defined, we'll default to "ALL"
 		platforms = os.Getenv("CMTCONFIG")
 	}
 
+	archs := make([]string, 0, 2)
 	switch platforms {
 	case "", "ALL", "all":
-		// FIXME(sbinet) find a better way to get the list of all CMTCONFIGs
-		// FIXME(sbinet) the list of all CMTCONFIGs should also be predicated on a project version
-		//               (because the list of available platforms depend on the project version!)
-		archs = []string{
-			"x86_64_slc6_gcc48_dbg",
-			"x86_64_slc6_gcc48_opt",
-		}
+		archs = nil
 	default:
 		for _, v := range strings.Split(platforms, ",") {
 			v = strings.TrimSpace(v)
@@ -815,18 +889,56 @@ func (ctx *Context) InstallProject(name, version, release, platforms string) err
 		}
 	}
 
-	projname := name + "_" + version
-	ctx.msg.Infof("installing project name=%q version=%q for archs=%v\n", name, version, archs)
-	pkgs := make([]Package, 0, len(archs))
-	for _, arch := range archs {
-		pkg, err := ctx.yum.FindLatestProvider(projname+"_"+arch, "", release)
-		if err != nil {
-			return err
+	{
+		archset := make(map[string]struct{})
+		arch := `.*`
+		if len(archs) > 0 {
+			arch = "(" + strings.Join(archs, "|") + ")"
 		}
-		pkgs = append(pkgs, Package{pkg, InstallMode})
+		pname := regexp.MustCompile(name + `_(?P<ProjectVersion>.*?)_(?P<ProjectArch>` + arch + ")")
+		for _, v := range plist {
+			sub := pname.FindStringSubmatch(v.Name())
+			if len(sub) <= 0 {
+				continue
+			}
+			install = append(install, v)
+			archset[sub[2]] = struct{}{}
+		}
+
+		if len(archset) <= 0 {
+			return fmt.Errorf("could not find a project with name=%q version=%q and platforms=%v",
+				name, version, platforms,
+			)
+		}
+
+		archs = archs[:0]
+		for k := range archset {
+			archs = append(archs, k)
+		}
 	}
 
-	err = ctx.InstallPackages(pkgs)
+	ctx.msg.Infof("installing project name=%q version=%q for archs=%v\n",
+		name, version, archs,
+	)
+
+	if len(install) <= 0 {
+		ctx.msg.Errorf("found NO project matching this description\n")
+		return fmt.Errorf("could not find a project with name=%q version=%q and archs=%v",
+			name, version, archs,
+		)
+	}
+
+	ctx.msg.Infof("found %d project(s) matching this description:\n", len(install))
+	pnames := make([]string, 0, len(install))
+	for _, pkg := range install {
+		pnames = append(pnames, pkg.Name())
+	}
+	sort.Strings(pnames)
+	for _, pkg := range pnames {
+		fmt.Printf("%s\n", pkg)
+	}
+
+	err = ctx.InstallPackages(install)
 	return err
 }
 

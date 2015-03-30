@@ -873,7 +873,9 @@ func (ctx *Context) InstallProject(name, version, release, platforms string) err
 
 	if platforms == "" {
 		// if no CMTCONFIG defined, we'll default to "ALL"
-		platforms = os.Getenv("CMTCONFIG")
+		// CMTCONFIG is of the form        'x86_64-slc6-gcc48-opt'
+		// but the RPM-platform names are: 'x86_64_slc6_gcc48_opt'
+		platforms = strings.Replace(os.Getenv("CMTCONFIG"), "-", "_", -1)
 	}
 
 	archs := make([]string, 0, 2)

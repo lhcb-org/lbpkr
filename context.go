@@ -1291,9 +1291,18 @@ func (ctx *Context) RemoveRPM(rpms [][3]string, force bool) error {
 // dependency list of any of the given RPMs.
 func (ctx *Context) XorphansRPM(rpms [][3]string) error {
 	var err error
-	installed, err := ctx.listInstalledPackages()
+	pkgs, err := ctx.listInstalledPackages()
 	if err != nil {
 		return err
+	}
+
+	installed := make([]*yum.Package, 0, len(pkgs))
+	for _, pkg := range pkgs {
+		p, err := ctx.yum.FindLatestProvider(pkg[0], pkg[1], pkg[2])
+		if err != nil {
+			return err
+		}
+		installed = append(installed, p)
 	}
 
 	pkgset := make(map[string]*yum.Package)

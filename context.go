@@ -1299,7 +1299,12 @@ func (ctx *Context) XorphansRPM(rpms [][3]string) error {
 	pkgset := make(map[string]*yum.Package)
 
 	for _, rpm := range rpms {
-		pkgs, err := ctx.ListPackageDeps(rpm[0], rpm[1], rpm[2], -1)
+		pkg, err := ctx.yum.FindLatestProvider(rpm[0], rpm[1], rpm[2])
+		if err != nil {
+			return err
+		}
+
+		pkgs, err := ctx.yum.RequiredPackages(pkg, -1)
 		if err != nil {
 			return err
 		}

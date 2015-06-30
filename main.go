@@ -31,6 +31,7 @@ func init() {
 			lbpkr_make_cmd_self(),
 			lbpkr_make_cmd_update(),
 			lbpkr_make_cmd_version(),
+			lbpkr_make_cmd_xorphans(),
 		},
 		Flag: *flag.NewFlagSet("lbpkr", flag.ContinueOnError),
 	}

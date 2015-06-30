@@ -1287,6 +1287,51 @@ func (ctx *Context) RemoveRPM(rpms [][3]string, force bool) error {
 	return err
 }
 
+// XorphansRPM retrieves and prints the list of installed packages not in the
+// dependency list of any of the given RPMs.
+func (ctx *Context) XorphansRPM(rpms [][3]string) error {
+	var err error
+	installed, err := ctx.ListInstalledPackages("", "", "")
+	if err != nil {
+		return err
+	}
+
+	pkgset := make(map[string]*yum.Package)
+
+	for _, rpm := range rpms {
+		pkgs, err := ctx.ListPackageDeps(rpm[0], rpm[1], rpm[2], -1)
+		if err != nil {
+			return err
+		}
+
+		for _, pkg := range pkgs {
+			pkgset[pkg.RPMName()] = pkg
+		}
+	}
+
+	orphans := make([]*yum.Package, 0, len(installed)/4)
+	for _, pkg := range installed {
+		_, ok := pkgset[pkg.RPMName()]
+		if ok {
+			continue
+		}
+		orphans = append(orphans, pkg)
+	}
+
+	if len(orphans) <= 0 {
+		ctx.msg.Infof("no orphan found\n")
+		return nil
+	}
+
+	sort.Sort(yum.Packages(orphans))
+
+	ctx.msg.Infof("found %d orphan(s):\n", len(orphans))
+	for _, pkg := range orphans {
+		fmt.Printf("%s\n", pkg.ID())
+	}
+	return err
+}
+
 // Rpm runs the rpm command.
 func (ctx *Context) Rpm(args ...string) error {
 	_, err := ctx.rpm(true, args...)

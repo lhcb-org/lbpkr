@@ -411,8 +411,8 @@ func TestUpdateNotUpgrade(t *testing.T) {
 COMPAT-1.17.0-0
 DBASE_AppConfig-3.200.0-1
 DBASE_common-1.0.0-1
-LBSCRIPTS-8.3.1-1
-LBSCRIPTS_v8r3p1-1.0.0-1
+LBSCRIPTS-8.4.1-1
+LBSCRIPTS_v8r4p1-1.0.0-2
 `)
 		if !reflect.DeepEqual(want, buf.Bytes()) {
 			t.Fatalf("invalid number of packages.\nwant: %s\n got: %s\n", string(want), string(buf.Bytes()))
@@ -462,8 +462,8 @@ COMPAT-1.17.0-0
 DBASE_AppConfig-3.200.0-1
 DBASE_AppConfig-3.206.0-1
 DBASE_common-1.0.0-1
-LBSCRIPTS-8.3.1-1
-LBSCRIPTS_v8r3p1-1.0.0-1
+LBSCRIPTS-8.4.1-1
+LBSCRIPTS_v8r4p1-1.0.0-2
 `)
 		if !reflect.DeepEqual(want, buf.Bytes()) {
 			t.Fatalf("invalid number of packages.\nwant: %s\n got: %s\n", string(want), string(buf.Bytes()))

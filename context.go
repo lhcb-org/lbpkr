@@ -1291,7 +1291,7 @@ func (ctx *Context) RemoveRPM(rpms [][3]string, force bool) error {
 // dependency list of any of the given RPMs.
 func (ctx *Context) XorphansRPM(rpms [][3]string) error {
 	var err error
-	installed, err := ctx.ListInstalledPackages("", "", "")
+	installed, err := ctx.listInstalledPackages()
 	if err != nil {
 		return err
 	}

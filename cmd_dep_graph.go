@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"strconv"
 
-	graph "code.google.com/p/gographviz"
+	graph "github.com/awalterschulze/gographviz"
 	"github.com/gonuts/commander"
 	"github.com/gonuts/flag"
 	"github.com/lhcb-org/lbpkr/yum"

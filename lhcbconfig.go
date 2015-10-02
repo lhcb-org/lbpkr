@@ -185,5 +185,34 @@ func (cfg *lhcbConfig) InitYum(ctx *Context) error {
 		}
 	}
 
+	// lhcb incubator
+	{
+		repo := filepath.Join(repodir, "lhcbincubator.repo")
+		f, err := os.Create(repo)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		err = ctx.writeYumRepo(f, map[string]string{
+			"name": "lhcbincubator",
+			"url":  repourl + "/incubator",
+		})
+		if err != nil {
+			return err
+		}
+
+		err = f.Sync()
+		if err != nil {
+			return err
+		}
+
+		err = f.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	
 	return err
 }
